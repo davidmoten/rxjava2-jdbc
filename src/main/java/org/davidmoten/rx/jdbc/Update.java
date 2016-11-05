@@ -24,7 +24,7 @@ public class Update {
             return con.prepareStatement(sql);
         };
         Function<PreparedStatement, Single<Integer>> singleFactory = ps -> Single.just(ps.executeUpdate());
-        Consumer<PreparedStatement> disposer = p -> p.close();
+        Consumer<PreparedStatement> disposer = ps -> Util.closeAll(ps);
         return Single.using(resourceFactory, singleFactory, disposer);
     }
 
@@ -36,7 +36,7 @@ public class Update {
             return con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         };
         Function<PreparedStatement, Flowable<T>> singleFactory = ps -> create(ps, mapper);
-        Consumer<PreparedStatement> disposer = ps -> ps.close();
+        Consumer<PreparedStatement> disposer = ps -> Util.closeAll(ps);
         return Flowable.using(resourceFactory, singleFactory, disposer);
     }
 

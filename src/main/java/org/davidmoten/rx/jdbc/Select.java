@@ -30,7 +30,7 @@ public class Select {
                 emitter.onComplete();
             }
         };
-        Consumer<ResultSet> disposeState = rs -> Util.closeSilently(rs);
+        Consumer<ResultSet> disposeState = rs -> Util.closeAll(rs);
         return Flowable.generate(initialState, generator, disposeState);
     }
     
