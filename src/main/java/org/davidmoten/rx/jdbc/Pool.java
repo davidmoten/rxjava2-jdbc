@@ -1,6 +1,5 @@
 package org.davidmoten.rx.jdbc;
 
-import java.util.Optional;
 import java.util.concurrent.Callable;
 
 import io.reactivex.BackpressureStrategy;
@@ -20,19 +19,22 @@ public class Pool<T> {
     }
 
     public Flowable<T> members() {
-        return subject.toFlowable(BackpressureStrategy.BUFFER).share().map(member -> member.value);
+        return subject.toFlowable(BackpressureStrategy.BUFFER).share().filter(member -> member.checkout()).map(member -> member.value);
     }
 
-    public synchronized Optional<Member<T>> checkout() throws Exception {
+    public boolean checkout() throws Exception {
+        //TODO handle asynchronous calls
         for (int i = 0; i < members.length; i++) {
             if (members[i] == null) {
                 members[i] = new Member<T>(factory.call());
-                return Optional.of(members[i]);
+                subject.onNext(members[i]);
+                return true;
             } else if (members[i].checkout()) {
-                return Optional.of(members[i]);
+                subject.onNext(members[i]);
+                return true;
             }
         }
-        return Optional.empty();
+        return false;
     }
 
     public void checkin(Member<T> member) {

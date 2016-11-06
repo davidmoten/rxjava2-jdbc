@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 final class Member<T> {
 
     final T value;
-    private final AtomicBoolean inUse = new AtomicBoolean(true);
+    private final AtomicBoolean inUse = new AtomicBoolean(false);
 
     public Member(T value) {
         this.value = value;
