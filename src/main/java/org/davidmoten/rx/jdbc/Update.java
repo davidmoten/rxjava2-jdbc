@@ -30,15 +30,20 @@ public class Update {
                 Util::closeAll);
     }
 
-    public static <T> Flowable<T> create(Callable<Connection> connectionFactory, List<Object> parameters, String sql,
+    public static <T> Flowable<T> createReturnGeneratedKeys(Flowable<Connection> connections, List<Object> parameters, String sql,
             Function<? super ResultSet, T> mapper) {
-        Callable<? extends PreparedStatement> resourceFactory = () -> {
-            Connection con = connectionFactory.call();
-            return Util.setParameters(con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS), parameters);
-        };
-        Function<PreparedStatement, Flowable<T>> singleFactory = ps -> create(ps, mapper);
-        Consumer<PreparedStatement> disposer = ps -> Util.closeAll(ps);
-        return Flowable.using(resourceFactory, singleFactory, disposer);
+        return connections //
+                .firstOrError() //
+                .toFlowable() //
+                .flatMap(con -> {
+                    Callable<? extends PreparedStatement> resourceFactory = () -> {
+                        return Util.setParameters(con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS),
+                                parameters);
+                    };
+                    Function<PreparedStatement, Flowable<T>> singleFactory = ps -> create(ps, mapper);
+                    Consumer<PreparedStatement> disposer = ps -> Util.closeAll(ps);
+                    return Flowable.using(resourceFactory, singleFactory, disposer);
+                });
     }
 
     private static <T> Flowable<T> create(PreparedStatement ps, Function<? super ResultSet, T> mapper) {

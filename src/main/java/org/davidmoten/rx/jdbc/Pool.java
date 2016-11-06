@@ -2,8 +2,6 @@ package org.davidmoten.rx.jdbc;
 
 import java.util.concurrent.Callable;
 
-import org.reactivestreams.Publisher;
-
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.subjects.PublishSubject;
@@ -20,6 +18,8 @@ public class Pool<T> {
 				.mergeWith(subject.toFlowable(BackpressureStrategy.BUFFER)) //
 				.share() //
 				.filter(member -> member.checkout());
+		//need at least one subscriber otherwise if subscribers got to zero then up again we will create another pool
+		members.materialize().ignoreElements().subscribe();
 	}
 
 	public Flowable<Member<T>> members() {
