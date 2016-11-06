@@ -12,7 +12,7 @@ public final class Pool<T> {
 
     private final Flowable<Member<T>> members;
 
-    public Pool(Callable<T> factory,  Predicate<T> healthy,Consumer<T> disposer, int maxSize, long retryDelayMs) {
+    public Pool(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer, int maxSize, long retryDelayMs) {
         PublishSubject<Member<T>> subject = PublishSubject.create();
         Flowable<Member<T>> cachedMembers = Flowable //
                 .range(1, maxSize) //
