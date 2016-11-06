@@ -20,22 +20,22 @@ public class Select {
 				.firstOrError()//
 				.toFlowable() //
 				.flatMap(con -> {
-			Callable<ResultSet> initialState = () -> {
-				PreparedStatement ps = con.prepareStatement(sql);
-				// TODO set parameters
-				ResultSet rs = ps.executeQuery();
-				return rs;
-			};
-			BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
-				if (rs.next()) {
-					emitter.onNext(mapper.apply(rs));
-				} else {
-					emitter.onComplete();
-				}
-			};
-			Consumer<ResultSet> disposeState = rs -> Util.closeAll(rs);
-			return Flowable.generate(initialState, generator, disposeState);
-		});
+					Callable<ResultSet> initialState = () -> {
+						PreparedStatement ps = con.prepareStatement(sql);
+						// TODO set parameters
+						ResultSet rs = ps.executeQuery();
+						return rs;
+					};
+					BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
+						if (rs.next()) {
+							emitter.onNext(mapper.apply(rs));
+						} else {
+							emitter.onComplete();
+						}
+					};
+					Consumer<ResultSet> disposeState = rs -> Util.closeAll(rs);
+					return Flowable.generate(initialState, generator, disposeState);
+				});
 	}
 
 }
