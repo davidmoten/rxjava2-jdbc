@@ -28,4 +28,15 @@ public final class Member<T> {
 		return value;
 	}
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Member [value=");
+        builder.append(value);
+        builder.append(", inUse=");
+        builder.append(inUse);
+        builder.append("]");
+        return builder.toString();
+    }
+
 }
