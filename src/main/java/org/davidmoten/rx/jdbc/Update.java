@@ -19,7 +19,7 @@ public class Update {
 
 	public static Single<Integer> create(Flowable<Connection> connections, List<Object> parameters, String sql) {
 		return connections //
-				.firstOrError() // 
+				.firstOrError() //
 				.flatMap(con -> Single.<Integer, PreparedStatement>using( //
 						() -> Util.setParameters(con.prepareStatement(sql), parameters), //
 						ps -> Single.<Integer>just(ps.executeUpdate()), //
@@ -30,8 +30,7 @@ public class Update {
 			Function<? super ResultSet, T> mapper) {
 		Callable<PreparedStatement> resourceFactory = () -> {
 			Connection con = connectionFactory.call();
-			// TODO set parameters
-			return con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			return Util.setParameters(con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS), parameters);
 		};
 		Function<PreparedStatement, Flowable<T>> singleFactory = ps -> create(ps, mapper);
 		Consumer<PreparedStatement> disposer = ps -> Util.closeAll(ps);
@@ -58,6 +57,5 @@ public class Update {
 		};
 		return Flowable.generate(initialState, generator, disposer);
 	}
-	
 
 }
