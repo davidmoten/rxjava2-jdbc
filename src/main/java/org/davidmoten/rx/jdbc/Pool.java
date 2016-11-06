@@ -11,6 +11,7 @@ public class Pool<T> {
     private final Flowable<Member<T>> members;
 
     public Pool(Callable<T> factory, int maxSize) {
+        //TODO wishful thinking!!! won't work.
         PublishSubject<Member<T>> subject = PublishSubject.create();
         this.members = Flowable //
                 .range(1, maxSize) //
