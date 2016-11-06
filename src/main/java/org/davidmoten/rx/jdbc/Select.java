@@ -16,7 +16,7 @@ public class Select {
 	public static <T> Flowable<T> create(Flowable<Connection> connections, List<Object> parameters, String sql,
 			Function<? super ResultSet, T> mapper) {
 		return connections //
-				.firstOrError()//
+				.firstOrError() //
 				.toFlowable() //
 				.flatMap(con -> Select.<T>create(con, sql, parameters, mapper));
 	}
