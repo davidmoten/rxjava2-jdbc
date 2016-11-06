@@ -1,9 +1,11 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 public class Util {
     
@@ -45,5 +47,10 @@ public class Util {
             }
         }
     }
+    
+     static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters) {
+		//TODO
+		return ps;
+	}
 
 }

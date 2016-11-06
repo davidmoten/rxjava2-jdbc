@@ -1,7 +1,6 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -19,23 +18,22 @@ public class Select {
 		return connections //
 				.firstOrError()//
 				.toFlowable() //
-				.flatMap(con -> {
-					Callable<ResultSet> initialState = () -> {
-						PreparedStatement ps = con.prepareStatement(sql);
-						// TODO set parameters
-						ResultSet rs = ps.executeQuery();
-						return rs;
-					};
-					BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
-						if (rs.next()) {
-							emitter.onNext(mapper.apply(rs));
-						} else {
-							emitter.onComplete();
-						}
-					};
-					Consumer<ResultSet> disposeState = rs -> Util.closeAll(rs);
-					return Flowable.generate(initialState, generator, disposeState);
-				});
+				.flatMap(con -> Select.<T>create(con, sql, parameters, mapper));
+	}
+
+	private static <T> Flowable<? extends T> create(Connection con, String sql, List<Object> parameters,
+			Function<? super ResultSet, T> mapper) {
+		Callable<ResultSet> initialState = () -> Util.setParameters(con.prepareStatement(sql), parameters)
+				.getResultSet();
+		BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
+			if (rs.next()) {
+				emitter.onNext(mapper.apply(rs));
+			} else {
+				emitter.onComplete();
+			}
+		};
+		Consumer<ResultSet> disposeState = rs -> Util.closeAll(rs);
+		return Flowable.generate(initialState, generator, disposeState);
 	}
 
 }
