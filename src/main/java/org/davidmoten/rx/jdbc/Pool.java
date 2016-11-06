@@ -4,26 +4,22 @@ import java.util.concurrent.Callable;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Predicate;
 import io.reactivex.subjects.PublishSubject;
 
-public class Pool<T> {
+public final class Pool<T> {
 
     private final Flowable<Member<T>> members;
 
-    public Pool(Callable<T> factory, int maxSize) {
-        //TODO wishful thinking!!! won't work.
+    public Pool(Callable<T> factory,  Predicate<T> healthy,Consumer<T> disposer, int maxSize, long retryDelayMs) {
         PublishSubject<Member<T>> subject = PublishSubject.create();
-        this.members = Flowable //
+        Flowable<Member<T>> cachedMembers = Flowable //
                 .range(1, maxSize) //
-                .map(n -> new Member<T>(factory.call(), subject)) //
-                .mergeWith(subject.toFlowable(BackpressureStrategy.BUFFER)) //
-                .share() //
-                .doOnNext(m -> System.out.println("candidate: " + m)) //
-                .filter(member -> member.checkout()) //
-                .doOnNext(m -> System.out.println("checked out: " + m));
-        // need at least one subscriber otherwise if subscribers got to zero
-        // then up again we will create another maxSize members
-        members.test(0);
+                .map(n -> new Member<T>(subject, factory, healthy, disposer, retryDelayMs)).cache();
+        this.members = subject.toFlowable(BackpressureStrategy.BUFFER) //
+                .mergeWith(cachedMembers) //
+                .flatMap(member -> member.checkout().toFlowable());
     }
 
     public Flowable<Member<T>> members() {
