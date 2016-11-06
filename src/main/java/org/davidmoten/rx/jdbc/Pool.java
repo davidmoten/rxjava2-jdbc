@@ -2,6 +2,8 @@ package org.davidmoten.rx.jdbc;
 
 import java.util.concurrent.Callable;
 
+import org.reactivestreams.Publisher;
+
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.subjects.PublishSubject;
