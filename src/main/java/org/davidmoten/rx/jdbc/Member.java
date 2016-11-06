@@ -55,7 +55,7 @@ public final class Member<T> {
                     return Maybe.empty();
                 }
             }
-        }).retryWhen(e -> Flowable.timer(retryDelayMs, TimeUnit.MILLISECONDS));
+        }).retryWhen(errors -> errors.flatMap(error -> Flowable.timer(retryDelayMs, TimeUnit.SECONDS)));
     }
 
     public void checkin() {
