@@ -32,7 +32,7 @@ public class Update {
 
     public static <T> Flowable<T> create(Callable<Connection> connectionFactory, List<Object> parameters, String sql,
             Function<? super ResultSet, T> mapper) {
-        Callable<PreparedStatement> resourceFactory = () -> {
+        Callable<? extends PreparedStatement> resourceFactory = () -> {
             Connection con = connectionFactory.call();
             return Util.setParameters(con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS), parameters);
         };
