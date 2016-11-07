@@ -15,7 +15,11 @@ import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
-public class Update {
+public final class Update {
+	
+	private Update() {
+		//prevent instantiation
+	}
 
 	public static Flowable<Integer> create(Flowable<Connection> connections, Flowable<List<Object>> parameterGroups,
 			String sql) {

@@ -12,7 +12,11 @@ import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
-public class Select {
+public final class Select {
+	
+	private Select() {
+		//prevent instantiation
+	}
 
     public static <T> Flowable<T> create(Flowable<Connection> connections, Flowable<List<Object>> parameters,
             String sql, Function<? super ResultSet, T> mapper) {
