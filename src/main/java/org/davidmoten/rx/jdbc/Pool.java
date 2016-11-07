@@ -19,7 +19,7 @@ public final class Pool<T> {
                 .map(n -> new Member<T>(subject, factory, healthy, disposer, retryDelayMs)).cache();
         this.members = subject.toFlowable(BackpressureStrategy.BUFFER) //
                 .mergeWith(cachedMembers) //
-                // delay errors, maxConcurrent = 1
+                // delay errors, maxConcurrent = 1 (don't request more than needed)
                 .flatMap(member -> member.checkout().toFlowable(), true, 1);
     }
 
