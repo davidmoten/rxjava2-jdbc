@@ -22,7 +22,7 @@ public class Update {
 		return connections //
 				.firstOrError() //
 				.toFlowable() //
-				.flatMap(con -> create(con, sql, parameterGroups));
+				.flatMap(con -> create(con, sql, parameterGroups), true, 1);
 	}
 
 	private static Flowable<Integer> create(Connection con, String sql, Flowable<List<Object>> parameterGroups) {
@@ -40,24 +40,27 @@ public class Update {
 		});
 	}
 
-	public static <T> Flowable<T> createReturnGeneratedKeys(Flowable<Connection> connections, List<Object> parameters,
-			String sql, Function<? super ResultSet, T> mapper) {
+	public static <T> Flowable<T> createReturnGeneratedKeys(Flowable<Connection> connections,
+			Flowable<List<Object>> parameterGroups, String sql, Function<? super ResultSet, T> mapper) {
 		return connections //
 				.firstOrError() //
 				.toFlowable() //
-				.flatMap(con -> {
-					Callable<? extends PreparedStatement> resourceFactory = () -> {
-						return Util.setParameters(con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS),
-								parameters);
-					};
-					Function<PreparedStatement, Flowable<T>> singleFactory = ps -> create(ps, mapper);
-					Consumer<PreparedStatement> disposer = ps -> Util.closeAll(ps);
-					return Flowable.using(resourceFactory, singleFactory, disposer);
-				});
+				.flatMap(con -> createReturnGeneratedKeys(con, parameterGroups, sql, mapper), true, 1);
 	}
 
-	private static <T> Flowable<T> create(PreparedStatement ps, Function<? super ResultSet, T> mapper) {
+	private static <T> Flowable<T> createReturnGeneratedKeys(Connection con, Flowable<List<Object>> parameterGroups,
+			String sql, Function<? super ResultSet, T> mapper) {
+		Callable<PreparedStatement> resourceFactory = () -> con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+		Function<PreparedStatement, Flowable<T>> obsFactory = ps -> parameterGroups
+				.flatMap(parameters -> create(ps, parameters, mapper));
+		Consumer<PreparedStatement> disposer = ps -> ps.close();
+		return Flowable.using(resourceFactory, obsFactory, disposer);
+	}
+
+	private static <T> Flowable<T> create(PreparedStatement ps, List<Object> parameters,
+			Function<? super ResultSet, T> mapper) {
 		Callable<ResultSet> initialState = () -> {
+			Util.setParameters(ps, parameters);
 			ps.execute();
 			return ps.getGeneratedKeys();
 		};
