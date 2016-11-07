@@ -52,7 +52,7 @@ public class Update {
 			String sql, Function<? super ResultSet, T> mapper) {
 		Callable<PreparedStatement> resourceFactory = () -> con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 		Function<PreparedStatement, Flowable<T>> obsFactory = ps -> parameterGroups
-				.flatMap(parameters -> create(ps, parameters, mapper));
+				.flatMap(parameters -> create(ps, parameters, mapper), true, 1);
 		Consumer<PreparedStatement> disposer = ps -> ps.close();
 		return Flowable.using(resourceFactory, obsFactory, disposer);
 	}
