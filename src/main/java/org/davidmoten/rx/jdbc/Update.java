@@ -34,8 +34,10 @@ public class Update {
 	}
 
 	private static Single<Integer> create(PreparedStatement ps, List<Object> parameters) {
-		Util.setParameters(ps, parameters);
-		return Single.fromCallable(() -> ps.executeUpdate());
+		return Single.fromCallable(() -> {
+			Util.setParameters(ps, parameters);
+			return ps.executeUpdate();
+		});
 	}
 
 	public static <T> Flowable<T> createReturnGeneratedKeys(Flowable<Connection> connections, List<Object> parameters,
