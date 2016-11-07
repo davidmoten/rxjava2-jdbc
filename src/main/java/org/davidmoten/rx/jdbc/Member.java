@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
+import io.reactivex.MaybeSource;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.subjects.PublishSubject;
@@ -47,15 +48,23 @@ public final class Member<T> {
                             return Maybe.empty();
                         }
                     } else {
-                        return Maybe.empty();
+                        return dispose();
                     }
                 } catch (Throwable e) {
-                    disposer.accept(value);
-                    state.set(NOT_INITIALIZED_NOT_IN_USE);
-                    return Maybe.empty();
+                    return dispose();
                 }
             }
         }).retryWhen(errors -> errors.flatMap(error -> Flowable.timer(retryDelayMs, TimeUnit.SECONDS)));
+    }
+
+    private MaybeSource<? extends Member<T>> dispose() {
+        try {
+            disposer.accept(value);
+            state.set(NOT_INITIALIZED_NOT_IN_USE);
+            return Maybe.empty();
+        } catch (Throwable t) {
+            return Maybe.error(new DisposerShouldNotThrowException(t));
+        }
     }
 
     public void checkin() {
