@@ -37,6 +37,7 @@ public final class Member<T> {
     public Maybe<Member<T>> checkout() {
         return Maybe.defer(() -> {
             if (state.compareAndSet(NOT_INITIALIZED_NOT_IN_USE, INITIALIZED_IN_USE)) {
+                // errors thrown by factory.call() handled in retryWhen
                 value = factory.call();
                 return Maybe.just(Member.this);
             } else {
@@ -60,11 +61,12 @@ public final class Member<T> {
     private MaybeSource<? extends Member<T>> dispose() {
         try {
             disposer.accept(value);
-            state.set(NOT_INITIALIZED_NOT_IN_USE);
-            return Maybe.empty();
         } catch (Throwable t) {
-            return Maybe.error(new DisposerShouldNotThrowException(t));
+            // ignore
         }
+        // TODO handle race?
+        state.set(NOT_INITIALIZED_NOT_IN_USE);
+        return Maybe.empty();
     }
 
     public void checkin() {
