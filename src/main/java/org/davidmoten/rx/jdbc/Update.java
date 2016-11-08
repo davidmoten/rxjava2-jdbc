@@ -70,12 +70,7 @@ public enum Update {
 				emitter.onComplete();
 			}
 		};
-		Consumer<ResultSet> disposer = rs -> {
-			try {
-				rs.close();
-			} catch (SQLException e) {
-			}
-		};
+		Consumer<ResultSet> disposer = rs -> Util.closeSilently(rs);
 		return Flowable.generate(initialState, generator, disposer);
 	}
 

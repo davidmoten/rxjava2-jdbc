@@ -45,10 +45,8 @@ public enum Select {
                 emitter.onComplete();
             }
         };
-        Consumer<ResultSet> disposeState = rs -> rs.close();
+        Consumer<ResultSet> disposeState = rs -> Util.closeSilently(rs);
         return Flowable.generate(initialState, generator, disposeState);
     }
-
-    
 
 }
