@@ -1,10 +1,8 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -27,17 +25,17 @@ public enum Update {
 	}
 
 	private static Flowable<Integer> create(Connection con, String sql, Flowable<List<Object>> parameterGroups) {
-		Callable<PreparedStatement> resourceFactory = () -> con.prepareStatement(sql);
-		Function<PreparedStatement, Flowable<Integer>> observableFactory = ps -> parameterGroups
+		Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql);
+		Function<NamedPreparedStatement, Flowable<Integer>> observableFactory = ps -> parameterGroups
 				.flatMap(parameters -> create(ps, parameters).toFlowable());
-		Consumer<PreparedStatement> disposer = ps -> ps.close();
+		Consumer<NamedPreparedStatement> disposer = ps -> Util.closePreparedStatementAndConnection(ps.ps);
 		return Flowable.using(resourceFactory, observableFactory, disposer, true);
 	}
 
-	private static Single<Integer> create(PreparedStatement ps, List<Object> parameters) {
+	private static Single<Integer> create(NamedPreparedStatement ps, List<Object> parameters) {
 		return Single.fromCallable(() -> {
-			Util.setParameters(ps, parameters);
-			return ps.executeUpdate();
+			Util.setParameters(ps.ps, parameters, ps.names);
+			return ps.ps.executeUpdate();
 		});
 	}
 
@@ -51,19 +49,19 @@ public enum Update {
 
 	private static <T> Flowable<T> createReturnGeneratedKeys(Connection con, Flowable<List<Object>> parameterGroups,
 			String sql, Function<? super ResultSet, T> mapper) {
-		Callable<PreparedStatement> resourceFactory = () -> con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-		Function<PreparedStatement, Flowable<T>> obsFactory = ps -> parameterGroups
+		Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepareReturnGeneratedKeys(con, sql);
+		Function<NamedPreparedStatement, Flowable<T>> obsFactory = ps -> parameterGroups
 				.flatMap(parameters -> create(ps, parameters, mapper), true, 1);
-		Consumer<PreparedStatement> disposer = ps -> ps.close();
+		Consumer<NamedPreparedStatement> disposer = ps ->  Util.closePreparedStatementAndConnection(ps.ps);
 		return Flowable.using(resourceFactory, obsFactory, disposer);
 	}
 
-	private static <T> Flowable<T> create(PreparedStatement ps, List<Object> parameters,
+	private static <T> Flowable<T> create(NamedPreparedStatement ps, List<Object> parameters,
 			Function<? super ResultSet, T> mapper) {
 		Callable<ResultSet> initialState = () -> {
-			Util.setParameters(ps, parameters);
-			ps.execute();
-			return ps.getGeneratedKeys();
+			Util.setParameters(ps.ps, parameters, ps.names);
+			ps.ps.execute();
+			return ps.ps.getGeneratedKeys();
 		};
 		BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
 			if (rs.next()) {

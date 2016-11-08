@@ -22,13 +22,14 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-public class Util {
+public enum Util {
+    ;
 
     private static final Logger log = LoggerFactory.getLogger(Util.class);
 
@@ -198,17 +199,15 @@ public class Util {
             throw new RuntimeException(e);
         }
     }
-    
-    private static void setNamedParameters(PreparedStatement ps, List<Parameter> parameters,
-            List<String> names) throws SQLException {
+
+    private static void setNamedParameters(PreparedStatement ps, List<Parameter> parameters, List<String> names)
+            throws SQLException {
         Map<String, Parameter> map = new HashMap<String, Parameter>();
         for (Parameter p : parameters) {
             if (p.hasName()) {
                 map.put(p.name(), p);
             } else {
-                throw new SQLException(
-                        "named parameters were expected but this parameter did not have a name: "
-                                + p);
+                throw new SQLException("named parameters were expected but this parameter did not have a name: " + p);
             }
         }
         List<Parameter> list = new ArrayList<Parameter>();
@@ -221,18 +220,51 @@ public class Util {
         Util.setParameters(ps, list, true);
     }
 
-    static void setParameters(PreparedStatement ps, List<Parameter> parameters, List<String> names)
+    static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters, List<String> names)
             throws SQLException {
+        List<Parameter> params = parameters.stream().map(o -> {
+            if (o instanceof Parameter) {
+                return (Parameter) o;
+            } else {
+                return new Parameter(o);
+            }
+        }).collect(Collectors.toList());
         if (names.isEmpty()) {
-            Util.setParameters(ps, parameters, false);
+            Util.setParameters(ps, params, false);
         } else {
-            Util.setNamedParameters(ps, parameters, names);
+            Util.setNamedParameters(ps, params, names);
+        }
+        return ps;
+    }
+
+    static void closeSilently(AutoCloseable c) {
+        try {
+            c.close();
+        } catch (Exception e) {
+            // ignore
         }
     }
 
-    public static Statement setParameters(PreparedStatement ps, List<Object> parameters) {
-        // TODO Auto-generated method stub
-        return null;
+    static void closePreparedStatementAndConnection(PreparedStatement ps) {
+        Connection con = null;
+        try {
+            con = ps.getConnection();
+        } catch (SQLException e) {
+        }
+        closeSilently(ps);
+        if (con != null) {
+            closeSilently(con);
+        }
+    }
+
+    static NamedPreparedStatement prepare(Connection con, String sql) throws SQLException {
+        SqlWithNames s = SqlWithNames.parse(sql);
+        return new NamedPreparedStatement(con.prepareStatement(s.sql()), s.names());
+    }
+
+    static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql) throws SQLException {
+        SqlWithNames s = SqlWithNames.parse(sql);
+        return new NamedPreparedStatement(con.prepareStatement(s.sql(), Statement.RETURN_GENERATED_KEYS), s.names());
     }
 
 }
