@@ -39,6 +39,7 @@ public final class Member<T> {
 
     public Maybe<Member<T>> checkout() {
         return Maybe.defer(() -> {
+            // CAS loop for modifications to state of this member
             while (true) {
                 State s = state.get();
                 if (s.value == NOT_INITIALIZED_NOT_IN_USE) {
@@ -80,6 +81,7 @@ public final class Member<T> {
             // ignore
         }
         state.set(new State(NOT_INITIALIZED_NOT_IN_USE));
+        //schedule reconsideration of this member in retryDelayMs
         worker.schedule(() -> subject.onNext(Member.this), retryDelayMs, TimeUnit.MILLISECONDS);
         return Maybe.empty();
     }
