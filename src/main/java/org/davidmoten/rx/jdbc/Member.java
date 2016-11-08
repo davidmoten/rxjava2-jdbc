@@ -80,6 +80,7 @@ public final class Member<T> {
         } catch (Throwable t) {
             // ignore
         }
+        value = null;
         state.set(new State(NOT_INITIALIZED_NOT_IN_USE));
         //schedule reconsideration of this member in retryDelayMs
         worker.schedule(() -> subject.onNext(Member.this), retryDelayMs, TimeUnit.MILLISECONDS);
