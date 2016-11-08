@@ -52,7 +52,7 @@ public final class Member<T> {
                         return Maybe.just(Member.this);
                     }
                 }
-                if (s.value == INITIALIZED_NOT_IN_USE) {
+                else if (s.value == INITIALIZED_NOT_IN_USE) {
                     if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
                         try {
                             if (healthy.test(value)) {
@@ -65,7 +65,7 @@ public final class Member<T> {
                         }
                     }
                 }
-                if (s.value == INITIALIZED_IN_USE) {
+                else if (s.value == INITIALIZED_IN_USE) {
                     if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
                         return Maybe.empty();
                     }
