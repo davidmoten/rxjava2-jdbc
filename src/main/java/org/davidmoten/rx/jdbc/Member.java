@@ -40,22 +40,20 @@ public final class Member<T> {
                 // errors thrown by factory.call() handled in retryWhen
                 value = factory.call();
                 return Maybe.just(Member.this);
-            } else {
+            } else if (state.compareAndSet(INITIALIZED_NOT_IN_USE, INITIALIZED_IN_USE)) {
                 try {
                     if (healthy.test(value)) {
-                        if (state.compareAndSet(INITIALIZED_NOT_IN_USE, INITIALIZED_IN_USE)) {
-                            return Maybe.just(Member.this);
-                        } else {
-                            return Maybe.empty();
-                        }
+                        return Maybe.just(Member.this);
                     } else {
                         return dispose();
                     }
                 } catch (Throwable e) {
                     return dispose();
                 }
+            } else {
+                return Maybe.empty();
             }
-        }).retryWhen(errors -> errors.flatMap(error -> Flowable.timer(retryDelayMs, TimeUnit.SECONDS)));
+        }).retryWhen(errors -> errors.flatMap(e -> Flowable.timer(retryDelayMs, TimeUnit.SECONDS)));
     }
 
     private MaybeSource<? extends Member<T>> dispose() {
@@ -64,7 +62,6 @@ public final class Member<T> {
         } catch (Throwable t) {
             // ignore
         }
-        // TODO handle race?
         state.set(NOT_INITIALIZED_NOT_IN_USE);
         return Maybe.empty();
     }
