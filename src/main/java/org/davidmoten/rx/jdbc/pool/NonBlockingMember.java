@@ -1,42 +1,36 @@
-package org.davidmoten.rx.jdbc;
+package org.davidmoten.rx.jdbc.pool;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
 import io.reactivex.Scheduler.Worker;
-import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
-public final class Member<T> {
+public final class NonBlockingMember<T> implements Member<T> {
 
     private static final int NOT_INITIALIZED_NOT_IN_USE = 0;
     private static final int INITIALIZED_IN_USE = 1;
     private static final int INITIALIZED_NOT_IN_USE = 2;
-    private final AtomicReference<State> state = new AtomicReference<>(new State(NOT_INITIALIZED_NOT_IN_USE));
+    private final AtomicReference<State> state = new AtomicReference<>(
+            new State(NOT_INITIALIZED_NOT_IN_USE));
 
     private volatile T value;
-    private final PublishSubject<Member<T>> subject;
-    private final Callable<T> factory;
-    private final long retryDelayMs;
-    private final Predicate<T> healthy;
-    private final Consumer<T> disposer;
-    private final Worker worker;
+    private final Subject<Member<T>> subject;
 
-    public Member(PublishSubject<Member<T>> subject, Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer,
-            long retryDelayMs) {
-        this.subject = subject;
-        this.factory = factory;
-        this.healthy = healthy;
-        this.disposer = disposer;
-        this.retryDelayMs = retryDelayMs;
+    private final Worker worker;
+    private final NonBlockingPool<T> pool;
+
+    public NonBlockingMember(NonBlockingPool<T> pool) {
+        this.pool = pool;
         this.worker = Schedulers.computation().createWorker();
+        this.subject = PublishSubject.<Member<T>> create().toSerialized();
     }
 
+    @Override
     public Maybe<Member<T>> checkout() {
         return Maybe.defer(() -> {
             // CAS loop for modifications to state of this member
@@ -45,18 +39,17 @@ public final class Member<T> {
                 if (s.value == NOT_INITIALIZED_NOT_IN_USE) {
                     if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
                         try {
-                            value = factory.call();
+                            value = pool.factory.call();
                         } catch (Throwable e) {
                             return dispose();
                         }
-                        return Maybe.just(Member.this);
+                        return Maybe.just(NonBlockingMember.this);
                     }
-                }
-                else if (s.value == INITIALIZED_NOT_IN_USE) {
+                } else if (s.value == INITIALIZED_NOT_IN_USE) {
                     if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
                         try {
-                            if (healthy.test(value)) {
-                                return Maybe.just(Member.this);
+                            if (pool.healthy.test(value)) {
+                                return Maybe.just(NonBlockingMember.this);
                             } else {
                                 return dispose();
                             }
@@ -64,8 +57,7 @@ public final class Member<T> {
                             return dispose();
                         }
                     }
-                }
-                else if (s.value == INITIALIZED_IN_USE) {
+                } else if (s.value == INITIALIZED_IN_USE) {
                     if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
                         return Maybe.empty();
                     }
@@ -76,22 +68,25 @@ public final class Member<T> {
 
     private MaybeSource<? extends Member<T>> dispose() {
         try {
-            disposer.accept(value);
+            pool.disposer.accept(value);
         } catch (Throwable t) {
             // ignore
         }
         value = null;
         state.set(new State(NOT_INITIALIZED_NOT_IN_USE));
-        //schedule reconsideration of this member in retryDelayMs
-        worker.schedule(() -> subject.onNext(Member.this), retryDelayMs, TimeUnit.MILLISECONDS);
+        // schedule reconsideration of this member in retryDelayMs
+        worker.schedule(() -> subject.onNext(NonBlockingMember.this), pool.retryDelayMs,
+                TimeUnit.MILLISECONDS);
         return Maybe.empty();
     }
 
+    @Override
     public void checkin() {
         state.set(new State(INITIALIZED_NOT_IN_USE));
         subject.onNext(this);
     }
 
+    @Override
     public T value() {
         return value;
     }
