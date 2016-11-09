@@ -1,6 +1,5 @@
 package org.davidmoten.rx.pool;
 
-import java.util.Arrays;
 import java.util.concurrent.Callable;
 
 import com.github.davidmoten.guavamini.Preconditions;
