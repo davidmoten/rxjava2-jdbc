@@ -2,7 +2,6 @@ package org.davidmoten.rx.jdbc.pool;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.pool.MemberFactory;
 import org.davidmoten.rx.pool.NonBlockingMember;
 import org.davidmoten.rx.pool.NonBlockingPool;
@@ -28,7 +27,7 @@ public class PoolTest {
 
     @Test
     public void testCreate() {
-        Database db = DatabaseCreator.create();
+        DatabaseCreator.create(1);
     }
 
 }

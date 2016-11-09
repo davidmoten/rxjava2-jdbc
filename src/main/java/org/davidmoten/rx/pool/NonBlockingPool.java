@@ -61,7 +61,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
     }
 
     @Override
-    public void shutdown() {
+    public void close() {
         // TODO
     }
 

@@ -24,4 +24,19 @@ public interface ConnectionProvider {
      */
     void close();
 
+    public static ConnectionProvider from(Connection con) {
+        return new ConnectionProvider() {
+
+            @Override
+            public Connection get() {
+                return con;
+            }
+
+            @Override
+            public void close() {
+                // do nothing as con was not created by this provider
+            }
+        };
+    }
+
 }

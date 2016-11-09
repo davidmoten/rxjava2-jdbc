@@ -30,8 +30,8 @@ public class NonBlockingConnectionPool implements Pool<Connection> {
     }
 
     @Override
-    public void shutdown() {
-        pool.shutdown();
+    public void close() {
+        pool.close();
     }
 
 }

@@ -3,6 +3,7 @@ package org.davidmoten.rx.jdbc.pool;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.ConnectionProvider;
@@ -13,37 +14,43 @@ public class DatabaseCreator {
 
     private static AtomicInteger dbNumber = new AtomicInteger();
 
-    public static String nextUrl() {
+    public static Database create(int maxSize) {
+        return Database
+                .from(new NonBlockingConnectionPool(connectionProvider(nextUrl()), maxSize, 1000));
+    }
+
+    private static ConnectionProvider connectionProvider(String url) {
+        return new ConnectionProvider() {
+
+            private final AtomicBoolean once = new AtomicBoolean(false);
+
+            @Override
+            public Connection get() {
+                try {
+                    Connection c = DriverManager.getConnection(url);
+                    synchronized (this) {
+                        if (once.compareAndSet(false, true)) {
+                            createDatabase(c);
+                        }
+                    }
+                    return c;
+                } catch (SQLException e) {
+                    throw new SQLRuntimeException(e);
+                }
+            }
+
+            @Override
+            public void close() {
+                //
+            }
+        };
+    }
+
+    private static String nextUrl() {
         return "jdbc:h2:mem:test" + dbNumber.incrementAndGet() + ";DB_CLOSE_DELAY=-1";
     }
 
-    public static Database create() {
-        return Database.from(nextConnection());
-    }
-
-    public static Database createDatabase(ConnectionProvider cp) {
-        Database db = Database.from(cp);
-        Connection con = cp.get();
-        createDatabase(con);
-        try {
-            con.close();
-        } catch (SQLException e) {
-            throw new SQLRuntimeException(e);
-        }
-        return db;
-    }
-
-    static Connection nextConnection() {
-        try {
-            Connection con = DriverManager.getConnection(DatabaseCreator.nextUrl());
-            createDatabase(con);
-            return con;
-        } catch (SQLException e) {
-            throw new SQLRuntimeException(e);
-        }
-    }
-
-    public static void createDatabase(Connection c) {
+    private static void createDatabase(Connection c) {
         try {
             c.setAutoCommit(true);
             c.prepareStatement(

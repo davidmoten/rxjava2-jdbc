@@ -4,12 +4,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Types;
 
+import org.davidmoten.rx.pool.Pool;
+
 public class Database implements AutoCloseable {
 
-    private final ConnectionProvider cp;
+    private final Pool<Connection> pool;
 
-    public Database(ConnectionProvider cp) {
-        this.cp = cp;
+    public Database(Pool<Connection> pool) {
+        this.pool = pool;
     }
 
     public static final Object NULL_CLOB = new Object();
@@ -39,28 +41,13 @@ public class Database implements AutoCloseable {
             return bytes;
     }
 
-    public static Database from(ConnectionProvider cp) {
-        return new Database(cp);
-    }
-
-    public static Database from(Connection con) {
-        return new Database(new ConnectionProvider() {
-
-            @Override
-            public Connection get() {
-                return con;
-            }
-
-            @Override
-            public void close() {
-                Util.closeSilently(con);
-            }
-        });
+    public static Database from(Pool<Connection> pool) {
+        return new Database(pool);
     }
 
     @Override
     public void close() throws Exception {
-        cp.close();
+        pool.close();
     }
 
 }
