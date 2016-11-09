@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
 import io.reactivex.Scheduler.Worker;
-import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 
@@ -26,7 +25,7 @@ public final class NonBlockingMember<T> implements Member<T> {
 
     public NonBlockingMember(NonBlockingPool<T> pool) {
         this.pool = pool;
-        this.worker = Schedulers.computation().createWorker();
+        this.worker = pool.scheduler.createWorker();
         this.subject = PublishSubject.<Member<T>> create().toSerialized();
     }
 
