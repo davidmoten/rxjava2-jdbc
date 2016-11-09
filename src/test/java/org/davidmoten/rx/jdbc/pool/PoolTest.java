@@ -10,7 +10,11 @@ import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
 import org.junit.Test;
 
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 import io.reactivex.subscribers.TestSubscriber;
 
 public class PoolTest {
@@ -19,7 +23,7 @@ public class PoolTest {
     public void test() throws InterruptedException {
         AtomicInteger count = new AtomicInteger();
         MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(
-                pool);
+                pool, null);
         Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet())
                 .healthy(n -> true).disposer(n -> {
                 }).maxSize(3).retryDelayMs(1000).memberFactory(memberFactory)
@@ -40,6 +44,24 @@ public class PoolTest {
         ts.request(10);
         ts.assertValueCount(10) //
                 .assertNotTerminated();
+    }
+
+    @Test
+    public void test2() {
+        Subject<Integer> subject = PublishSubject.<Integer> create().toSerialized();
+        subject.toFlowable(BackpressureStrategy.BUFFER) //
+                .mergeWith(Flowable.range(1, 5)) //
+                .doOnNext(n -> subject.onNext(10)) //
+                .doOnNext(System.out::println) //
+                .take(20) //
+                .subscribe();
+        subject.onNext(2);
+    }
+
+    @Test
+    public void test3() {
+        Flowable.range(1, 4).mergeWith(Flowable.range(100, 2)).take(10)
+                .doOnNext(System.out::println).subscribe();
     }
 
 }

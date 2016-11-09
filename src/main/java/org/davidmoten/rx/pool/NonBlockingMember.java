@@ -9,7 +9,7 @@ import io.reactivex.Scheduler.Worker;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 
-public final class NonBlockingMember<T> implements Member<T> {
+public class NonBlockingMember<T> implements Member<T> {
 
     private static final int NOT_INITIALIZED_NOT_IN_USE = 0;
     private static final int INITIALIZED_IN_USE = 1;
@@ -22,9 +22,11 @@ public final class NonBlockingMember<T> implements Member<T> {
 
     private final Worker worker;
     private final NonBlockingPool<T> pool;
+    private final Member<T> proxy;
 
-    public NonBlockingMember(NonBlockingPool<T> pool) {
+    public NonBlockingMember(NonBlockingPool<T> pool, Member<T> proxy) {
         this.pool = pool;
+        this.proxy = proxy;
         this.worker = pool.scheduler.createWorker();
         this.subject = PublishSubject.<Member<T>> create().toSerialized();
     }
@@ -42,13 +44,13 @@ public final class NonBlockingMember<T> implements Member<T> {
                         } catch (Throwable e) {
                             return dispose();
                         }
-                        return Maybe.just(NonBlockingMember.this);
+                        return Maybe.just(proxy);
                     }
                 } else if (s.value == INITIALIZED_NOT_IN_USE) {
                     if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
                         try {
                             if (pool.healthy.test(value)) {
-                                return Maybe.just(NonBlockingMember.this);
+                                return Maybe.just(proxy);
                             } else {
                                 return dispose();
                             }

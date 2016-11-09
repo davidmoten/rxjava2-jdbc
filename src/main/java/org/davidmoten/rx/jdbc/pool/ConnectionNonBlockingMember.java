@@ -30,7 +30,7 @@ public class ConnectionNonBlockingMember implements Connection, Member<Connectio
     private final Member<Connection> member;
 
     public ConnectionNonBlockingMember(NonBlockingPool<Connection> pool) {
-        member = new NonBlockingMember<Connection>(pool);
+        member = new NonBlockingMember<Connection>(pool, this);
     }
 
     private Connection con() {
