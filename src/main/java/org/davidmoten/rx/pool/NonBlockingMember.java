@@ -18,7 +18,6 @@ public class NonBlockingMember<T> implements Member<T> {
             new State(NOT_INITIALIZED_NOT_IN_USE));
 
     private volatile T value;
-    private final Subject<Member<T>> subject;
 
     private final Worker worker;
     private final NonBlockingPool<T> pool;
@@ -28,7 +27,6 @@ public class NonBlockingMember<T> implements Member<T> {
         this.pool = pool;
         this.proxy = proxy;
         this.worker = pool.scheduler.createWorker();
-        this.subject = PublishSubject.<Member<T>> create().toSerialized();
     }
 
     @Override
@@ -76,7 +74,7 @@ public class NonBlockingMember<T> implements Member<T> {
         value = null;
         state.set(new State(NOT_INITIALIZED_NOT_IN_USE));
         // schedule reconsideration of this member in retryDelayMs
-        worker.schedule(() -> subject.onNext(NonBlockingMember.this), pool.retryDelayMs,
+        worker.schedule(() -> pool.subject.onNext(NonBlockingMember.this), pool.retryDelayMs,
                 TimeUnit.MILLISECONDS);
         return Maybe.empty();
     }
@@ -85,7 +83,7 @@ public class NonBlockingMember<T> implements Member<T> {
     public void checkin() {
         state.set(new State(INITIALIZED_NOT_IN_USE));
         System.out.println("checked in and reported to subject " + this);
-        subject.onNext(this);
+        pool.subject.onNext(this);
     }
 
     @Override

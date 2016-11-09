@@ -52,17 +52,18 @@ public final class NonBlockingPool<T> implements Pool<T> {
                 .doOnRequest(n -> System.out.println("cachedMembers request=" + n));
 
         Flowable<Member<T>> a = subject //
+        		.toSerialized()
                 .doOnNext(m -> System.out.println("leaving subject " + m)) //
                 .toFlowable(BackpressureStrategy.BUFFER) //
                 .doOnNext(m -> System.out.println("subject emitted " + m))
                 .doOnRequest(n -> System.out.println("a request=" + n));
 
-        this.members = Flowable.merge(Arrays.asList(a, cachedMembers), 2, 1) //
+        this.members = Flowable.merge(Arrays.asList(a, cachedMembers)) //
                 .doOnRequest(n -> System.out.println("merge request=" + n)) //
                 // delay errors, maxConcurrent = 1 (don't request more than
                 // needed)
                 .doOnNext(m -> System.out.println("pre-checkout emitted " + m)) //
-                .<Member<T>> flatMap(member -> member.checkout().toFlowable(), true, 1, 1) //
+                .<Member<T>> flatMap(member -> member.checkout().toFlowable()) //
                 .doOnRequest(n -> System.out.println("members request=" + n));
     }
 
