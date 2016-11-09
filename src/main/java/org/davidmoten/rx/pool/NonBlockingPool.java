@@ -49,6 +49,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
                 .doOnNext(m -> System.out.println("created " + m)) //
                 .cache();
         this.members = subject //
+                .doOnNext(m -> System.out.println("leaving subject " + m)) //
                 .toFlowable(BackpressureStrategy.BUFFER) //
                 .doOnNext(m -> System.out.println("subject emitted " + m)) //
                 .mergeWith(cachedMembers) //

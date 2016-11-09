@@ -53,7 +53,7 @@ public class PoolTest {
                 .mergeWith(Flowable.range(1, 5)) //
                 .doOnNext(n -> subject.onNext(10)) //
                 .doOnNext(System.out::println) //
-                .take(20) //
+                .take(8) //
                 .subscribe();
         subject.onNext(2);
     }

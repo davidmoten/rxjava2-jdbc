@@ -84,6 +84,7 @@ public class NonBlockingMember<T> implements Member<T> {
     @Override
     public void checkin() {
         state.set(new State(INITIALIZED_NOT_IN_USE));
+        System.out.println("checked in and reported to subject " + this);
         subject.onNext(this);
     }
 
