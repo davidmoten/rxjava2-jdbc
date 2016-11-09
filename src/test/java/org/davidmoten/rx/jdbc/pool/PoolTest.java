@@ -21,7 +21,7 @@ import io.reactivex.subscribers.TestSubscriber;
 public class PoolTest {
 
 	@Test
-	public void test() throws InterruptedException {
+	public void testSimplePool() throws InterruptedException {
 		AtomicInteger count = new AtomicInteger();
 		MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(pool,
 				null);
@@ -36,7 +36,8 @@ public class PoolTest {
 		pool.members() //
 				.doOnNext(m -> m.checkin()) //
 				.doOnNext(System.out::println) //
-		        .test(3);
+		        .test(4)
+		        .assertValueCount(4);
 	}
 
 	@Test
