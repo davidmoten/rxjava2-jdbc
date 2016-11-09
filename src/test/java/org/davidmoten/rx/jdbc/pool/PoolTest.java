@@ -11,15 +11,9 @@ import org.davidmoten.rx.pool.MemberFactory;
 import org.davidmoten.rx.pool.NonBlockingMember;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
-import org.junit.Assert;
 import org.junit.Test;
 
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
 import io.reactivex.schedulers.Schedulers;
-import io.reactivex.subjects.PublishSubject;
-import io.reactivex.subjects.Subject;
 import io.reactivex.subscribers.TestSubscriber;
 
 public class PoolTest {
