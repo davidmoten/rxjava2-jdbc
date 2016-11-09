@@ -2,6 +2,7 @@ package org.davidmoten.rx.jdbc.pool;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.davidmoten.rx.jdbc.Database;
 import org.junit.Test;
 
 import io.reactivex.schedulers.Schedulers;
@@ -24,6 +25,11 @@ public class PoolTest {
                 Schedulers.computation());
         pool.members() //
                 .forEach(System.out::println);
+    }
+
+    @Test
+    public void testCreate() {
+        Database db = DatabaseCreator.create();
     }
 
 }
