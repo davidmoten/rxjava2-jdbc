@@ -79,7 +79,8 @@ public enum Util {
      * @param params
      * @throws SQLException
      */
-    static void setParameters(PreparedStatement ps, List<Parameter> params, boolean namesAllowed) throws SQLException {
+    static void setParameters(PreparedStatement ps, List<Parameter> params, boolean namesAllowed)
+            throws SQLException {
         for (int i = 1; i <= params.size(); i++) {
             if (params.get(i - 1).hasName() && !namesAllowed)
                 throw new SQLException("named parameter found but sql does not contain names");
@@ -133,14 +134,16 @@ public enum Util {
      * @param cls
      * @throws SQLException
      */
-    private static void setBlob(PreparedStatement ps, int i, Object o, Class<?> cls) throws SQLException {
+    private static void setBlob(PreparedStatement ps, int i, Object o, Class<?> cls)
+            throws SQLException {
         final InputStream is;
         if (o instanceof byte[]) {
             is = new ByteArrayInputStream((byte[]) o);
         } else if (o instanceof InputStream)
             is = (InputStream) o;
         else
-            throw new RuntimeException("cannot insert parameter of type " + cls + " into blob column " + i);
+            throw new RuntimeException(
+                    "cannot insert parameter of type " + cls + " into blob column " + i);
         Blob c = ps.getConnection().createBlob();
         OutputStream os = c.setBinaryStream(1);
         copy(is, os);
@@ -156,14 +159,16 @@ public enum Util {
      * @param cls
      * @throws SQLException
      */
-    private static void setClob(PreparedStatement ps, int i, Object o, Class<?> cls) throws SQLException {
+    private static void setClob(PreparedStatement ps, int i, Object o, Class<?> cls)
+            throws SQLException {
         final Reader r;
         if (o instanceof String)
             r = new StringReader((String) o);
         else if (o instanceof Reader)
             r = (Reader) o;
         else
-            throw new RuntimeException("cannot insert parameter of type " + cls + " into clob column " + i);
+            throw new RuntimeException(
+                    "cannot insert parameter of type " + cls + " into clob column " + i);
         Clob c = ps.getConnection().createClob();
         Writer w = c.setCharacterStream(1);
         copy(r, w);
@@ -200,14 +205,16 @@ public enum Util {
         }
     }
 
-    private static void setNamedParameters(PreparedStatement ps, List<Parameter> parameters, List<String> names)
-            throws SQLException {
+    private static void setNamedParameters(PreparedStatement ps, List<Parameter> parameters,
+            List<String> names) throws SQLException {
         Map<String, Parameter> map = new HashMap<String, Parameter>();
         for (Parameter p : parameters) {
             if (p.hasName()) {
                 map.put(p.name(), p);
             } else {
-                throw new SQLException("named parameters were expected but this parameter did not have a name: " + p);
+                throw new SQLException(
+                        "named parameters were expected but this parameter did not have a name: "
+                                + p);
             }
         }
         List<Parameter> list = new ArrayList<Parameter>();
@@ -220,8 +227,8 @@ public enum Util {
         Util.setParameters(ps, list, true);
     }
 
-    static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters, List<String> names)
-            throws SQLException {
+    static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters,
+            List<String> names) throws SQLException {
         List<Parameter> params = parameters.stream().map(o -> {
             if (o instanceof Parameter) {
                 return (Parameter) o;
@@ -237,7 +244,7 @@ public enum Util {
         return ps;
     }
 
-    static void closeSilently(AutoCloseable c) {
+    public static void closeSilently(AutoCloseable c) {
         try {
             c.close();
         } catch (Exception e) {
@@ -262,9 +269,11 @@ public enum Util {
         return new NamedPreparedStatement(con.prepareStatement(s.sql()), s.names());
     }
 
-    static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql) throws SQLException {
+    static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql)
+            throws SQLException {
         SqlWithNames s = SqlWithNames.parse(sql);
-        return new NamedPreparedStatement(con.prepareStatement(s.sql(), Statement.RETURN_GENERATED_KEYS), s.names());
+        return new NamedPreparedStatement(
+                con.prepareStatement(s.sql(), Statement.RETURN_GENERATED_KEYS), s.names());
     }
 
 }

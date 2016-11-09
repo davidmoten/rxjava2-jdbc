@@ -1,4 +1,4 @@
-package org.davidmoten.rx.jdbc.pool;
+package org.davidmoten.rx.pool;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;

@@ -19,6 +19,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
+import org.davidmoten.rx.pool.Member;
+import org.davidmoten.rx.pool.NonBlockingMember;
+import org.davidmoten.rx.pool.NonBlockingPool;
+
 import io.reactivex.Maybe;
 
 public class ConnectionNonBlockingMember implements Connection, Member<Connection> {

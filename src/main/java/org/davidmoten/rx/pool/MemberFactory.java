@@ -1,4 +1,4 @@
-package org.davidmoten.rx.jdbc.pool;
+package org.davidmoten.rx.pool;
 
 public interface MemberFactory<T, P extends Pool<T>> {
 

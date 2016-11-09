@@ -3,6 +3,10 @@ package org.davidmoten.rx.jdbc.pool;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
+import org.davidmoten.rx.pool.MemberFactory;
+import org.davidmoten.rx.pool.NonBlockingMember;
+import org.davidmoten.rx.pool.NonBlockingPool;
+import org.davidmoten.rx.pool.Pool;
 import org.junit.Test;
 
 import io.reactivex.schedulers.Schedulers;
