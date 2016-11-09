@@ -14,15 +14,10 @@ public class PoolTest {
         AtomicInteger count = new AtomicInteger();
         MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(
                 pool);
-        Pool<Integer> pool = new NonBlockingPool<Integer>( //
-                () -> count.incrementAndGet(), //
-                n -> true, //
-                n -> {
-                } , //
-                3, //
-                1000, //
-                memberFactory, //
-                Schedulers.computation());
+        Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet())
+                .healthy(n -> true).disposer(n -> {
+                }).maxSize(3).retryDelayMs(1000).memberFactory(memberFactory)
+                .scheduler(Schedulers.computation()).build();
         pool.members() //
                 .forEach(System.out::println);
     }
