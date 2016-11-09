@@ -2,7 +2,7 @@ package org.davidmoten.rx.pool;
 
 import io.reactivex.Maybe;
 
-public interface Member<T> {
+public interface Member<T> extends AutoCloseable{
 
     Maybe<? extends Member<T>> checkout();
 
@@ -15,5 +15,5 @@ public interface Member<T> {
      * @return the value of the pooled member
      */
     T value();
-
+    
 }

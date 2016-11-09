@@ -12,8 +12,10 @@ public class NonBlockingMember<T> implements Member<T> {
     private static final int NOT_INITIALIZED_NOT_IN_USE = 0;
     private static final int INITIALIZED_IN_USE = 1;
     private static final int INITIALIZED_NOT_IN_USE = 2;
+
     private final AtomicReference<State> state = new AtomicReference<>(
             new State(NOT_INITIALIZED_NOT_IN_USE));
+    
 
     private volatile T value;
 
@@ -58,7 +60,7 @@ public class NonBlockingMember<T> implements Member<T> {
                     if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
                         return Maybe.empty();
                     }
-                }
+                } 
             }
         });
     }
@@ -106,5 +108,10 @@ public class NonBlockingMember<T> implements Member<T> {
         builder.append("]");
         return builder.toString();
     }
+
+	@Override
+	public void close() throws Exception {
+		//TODO
+	}
 
 }
