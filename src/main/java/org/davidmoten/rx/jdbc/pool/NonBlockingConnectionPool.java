@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc.pool;
 
 import java.sql.Connection;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Util;
@@ -12,27 +13,27 @@ import io.reactivex.Flowable;
 
 public class NonBlockingConnectionPool implements Pool<Connection> {
 
-    private final NonBlockingPool<Connection> pool;
+    private final AtomicReference<NonBlockingPool<Connection>> pool = new AtomicReference<NonBlockingPool<Connection>>();
 
     public NonBlockingConnectionPool(ConnectionProvider cp, int maxSize, long retryDelayMs) {
-        pool = NonBlockingPool.factory(() -> cp.get()) //
+        pool.set( NonBlockingPool.factory(() -> cp.get()) //
                 .healthy(c -> true) //
                 .disposer(Util::closeSilently) //
                 .maxSize(maxSize) //
                 .retryDelayMs(retryDelayMs) //
                 .memberFactory(
-                        p -> new ConnectionNonBlockingMember(NonBlockingConnectionPool.this.pool)) //
-                .build();
+                        p -> new ConnectionNonBlockingMember(pool.get())) //
+                .build());
     }
 
     @Override
     public Flowable<Member<Connection>> members() {
-        return pool.members();
+        return pool.get().members();
     }
 
     @Override
     public void close() {
-        pool.close();
+        pool.get().close();
     }
 
 }
