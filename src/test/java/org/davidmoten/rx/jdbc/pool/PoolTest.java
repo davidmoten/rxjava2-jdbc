@@ -48,9 +48,10 @@ public class PoolTest {
 
     @Test
     public void test2() {
-        Subject<Integer> subject = PublishSubject.<Integer> create().toSerialized();
+        Subject<Integer> subject = PublishSubject.<Integer> create();
         subject.toFlowable(BackpressureStrategy.BUFFER) //
-                .mergeWith(Flowable.range(1, 5)) //
+                .mergeWith(Flowable.range(1, 5).cache()) //
+                .flatMap(x -> Flowable.just(x)) //
                 .doOnNext(n -> subject.onNext(10)) //
                 .doOnNext(System.out::println) //
                 .take(8) //
