@@ -1,6 +1,9 @@
 package org.davidmoten.rx.jdbc.pool;
 
+import static org.junit.Assert.assertTrue;
+
 import java.sql.Connection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
@@ -8,6 +11,7 @@ import org.davidmoten.rx.pool.MemberFactory;
 import org.davidmoten.rx.pool.NonBlockingMember;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
+import org.junit.Assert;
 import org.junit.Test;
 
 import io.reactivex.BackpressureStrategy;
@@ -47,30 +51,13 @@ public class PoolTest {
 				.doOnNext(c -> {
 					c.close();
 				}) //
-				.test(10); //
-		// ts.request(10);
-		ts.assertValueCount(10) //
+				.test(4); //
+		ts.assertValueCount(4) //
 				.assertNotTerminated();
-	}
-
-	@Test
-	public void test2() {
-		Flowable<Integer> a = Flowable.range(1, 5).cache();
-		Subject<Integer> subject = PublishSubject.<Integer>create();
-		subject.toFlowable(BackpressureStrategy.BUFFER) //
-				.mergeWith(a) //
-				.flatMap(x -> Flowable.just(x)) //
-				.doOnNext(n -> subject.onNext(10)) //
-				.doOnNext(System.out::println) //
-				.flatMap(x -> Maybe.just(x).toFlowable())//
-				.take(8) //
-				.subscribe();
-		// subject.onNext(2);
-	}
-
-	@Test
-	public void test3() {
-		Flowable.range(1, 4).mergeWith(Flowable.range(100, 2)).take(10).doOnNext(System.out::println).subscribe();
+		List<Object> list = ts.getEvents().get(0);
+		assertTrue(list.get(0)==list.get(1));
+		assertTrue(list.get(0)==list.get(2));
+		assertTrue(list.get(0)==list.get(3));
 	}
 
 }
