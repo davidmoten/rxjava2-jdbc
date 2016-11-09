@@ -36,7 +36,7 @@ public class PoolTest {
 		pool.members() //
 				.doOnNext(m -> m.checkin()) //
 				.doOnNext(System.out::println) //
-		        .test().awaitTerminalEvent();
+		        .test(3);
 	}
 
 	@Test

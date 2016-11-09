@@ -40,13 +40,13 @@ public class NonBlockingMember<T> implements Member<T> {
 						} catch (Throwable e) {
 							return dispose();
 						}
-						return Maybe.just(proxy);
+						return Maybe.just(ifNull(proxy, NonBlockingMember.this));
 					}
 				} else if (s.value == INITIALIZED_NOT_IN_USE) {
 					if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
 						try {
 							if (pool.healthy.test(value)) {
-								return Maybe.just(proxy);
+								return Maybe.just(ifNull(proxy, NonBlockingMember.this));
 							} else {
 								return dispose();
 							}
@@ -61,6 +61,13 @@ public class NonBlockingMember<T> implements Member<T> {
 				}
 			}
 		});
+	}
+
+	private Member<T> ifNull(Member<T> proxy, Member<T> other) {
+		if (proxy == null)
+			return other;
+		else
+			return proxy;
 	}
 
 	private MaybeSource<? extends Member<T>> dispose() {
