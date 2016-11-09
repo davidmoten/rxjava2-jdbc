@@ -6,8 +6,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
 import io.reactivex.Scheduler.Worker;
-import io.reactivex.subjects.PublishSubject;
-import io.reactivex.subjects.Subject;
 
 public class NonBlockingMember<T> implements Member<T> {
 
