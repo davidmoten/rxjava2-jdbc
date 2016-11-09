@@ -89,7 +89,8 @@ public class ConnectionNonBlockingMember implements Connection, Member<Connectio
 
     @Override
     public void close() throws SQLException {
-        con().close();
+        // doesn't close the underlying connection, just releases it for reuse
+        member.checkin();
     }
 
     @Override
@@ -328,7 +329,9 @@ public class ConnectionNonBlockingMember implements Connection, Member<Connectio
 
     @Override
     public Connection value() {
-        return member.value();
+        // must return this rather than delegated member.value because close
+        // will check it in rather than close the connection properly
+        return this;
     }
 
 }

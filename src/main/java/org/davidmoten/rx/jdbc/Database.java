@@ -6,6 +6,8 @@ import java.sql.Types;
 
 import org.davidmoten.rx.pool.Pool;
 
+import io.reactivex.Flowable;
+
 public class Database implements AutoCloseable {
 
     private final Pool<Connection> pool;
@@ -43,6 +45,10 @@ public class Database implements AutoCloseable {
 
     public static Database from(Pool<Connection> pool) {
         return new Database(pool);
+    }
+
+    public Flowable<Connection> connections() {
+        return pool.members().map(m -> m.value());
     }
 
     @Override
