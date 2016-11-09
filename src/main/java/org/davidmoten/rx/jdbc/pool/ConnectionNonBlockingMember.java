@@ -313,7 +313,7 @@ public class ConnectionNonBlockingMember implements Connection, Member<Connectio
     }
 
     @Override
-    public Maybe<Member<Connection>> checkout() {
+    public Maybe<? extends Member<Connection>> checkout() {
         return member.checkout();
     }
 

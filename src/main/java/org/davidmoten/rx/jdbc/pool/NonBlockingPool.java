@@ -11,8 +11,6 @@ import io.reactivex.subjects.PublishSubject;
 
 public final class NonBlockingPool<T> implements Pool<T> {
 
-    private final Flowable<Member<T>> members;
-
     final PublishSubject<Member<T>> subject;
     final Callable<T> factory;
     final Predicate<T> healthy;
@@ -21,6 +19,8 @@ public final class NonBlockingPool<T> implements Pool<T> {
     final long retryDelayMs;
     final MemberFactory<T, NonBlockingPool<T>> memberFactory;
     final Scheduler scheduler;
+
+    private final Flowable<Member<T>> members;
 
     public NonBlockingPool(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer,
             int maxSize, long retryDelayMs, MemberFactory<T, NonBlockingPool<T>> memberFactory,
