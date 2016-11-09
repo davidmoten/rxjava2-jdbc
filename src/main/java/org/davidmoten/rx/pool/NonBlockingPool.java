@@ -46,12 +46,15 @@ public final class NonBlockingPool<T> implements Pool<T> {
         Flowable<Member<T>> cachedMembers = Flowable //
                 .range(1, maxSize) //
                 .map(n -> memberFactory.create(NonBlockingPool.this)) //
+                .doOnNext(m -> System.out.println("created " + m)) //
                 .cache();
         this.members = subject //
                 .toFlowable(BackpressureStrategy.BUFFER) //
+                .doOnNext(m -> System.out.println("subject emitted " + m)) //
                 .mergeWith(cachedMembers) //
                 // delay errors, maxConcurrent = 1 (don't request more than
                 // needed)
+                .doOnNext(m -> System.out.println("pre-checkout emitted " + m)) //
                 .flatMap(member -> member.checkout().toFlowable(), true, 1);
     }
 

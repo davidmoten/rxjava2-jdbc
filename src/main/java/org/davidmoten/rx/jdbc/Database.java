@@ -48,7 +48,7 @@ public class Database implements AutoCloseable {
     }
 
     public Flowable<Connection> connections() {
-        return pool.members().map(m -> m.value());
+        return pool.members().cast(Connection.class);
     }
 
     @Override

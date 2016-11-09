@@ -20,7 +20,8 @@ public class NonBlockingConnectionPool implements Pool<Connection> {
                 .disposer(Util::closeSilently) //
                 .maxSize(maxSize) //
                 .retryDelayMs(retryDelayMs) //
-                .memberFactory(p -> new ConnectionNonBlockingMember(p)) //
+                .memberFactory(
+                        p -> new ConnectionNonBlockingMember(NonBlockingConnectionPool.this.pool)) //
                 .build();
     }
 

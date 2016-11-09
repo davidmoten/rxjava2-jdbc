@@ -1,5 +1,6 @@
 package org.davidmoten.rx.jdbc.pool;
 
+import java.sql.Connection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
@@ -10,6 +11,7 @@ import org.davidmoten.rx.pool.Pool;
 import org.junit.Test;
 
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subscribers.TestSubscriber;
 
 public class PoolTest {
 
@@ -27,13 +29,16 @@ public class PoolTest {
     }
 
     @Test
-    public void testCreate() {
+    public void testConnectionPoolRecyles() {
         Database db = DatabaseCreator.create(2);
-        db.connections() //
-                .take(3) //
+        TestSubscriber<Connection> ts = db.connections() //
                 .doOnNext(System.out::println) //
-                .test() //
-                .assertValueCount(2) //
+                .doOnNext(c -> {
+                    c.close();
+                }) //
+                .test(0); //
+        ts.request(10);
+        ts.assertValueCount(10) //
                 .assertNotTerminated();
     }
 
