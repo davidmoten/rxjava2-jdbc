@@ -56,4 +56,8 @@ public class Database implements AutoCloseable {
         pool.close();
     }
 
+    public SelectBuilder select(String sql) {
+        return new SelectBuilder(sql);
+    }
+
 }
