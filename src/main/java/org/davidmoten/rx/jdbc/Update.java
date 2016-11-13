@@ -82,12 +82,7 @@ public enum Update {
     }
 
     private static Publisher<? extends Integer> toFlowable(int[] a) {
-        // TODO should not need to copy array to emit as Flowable
-        Integer[] b = new Integer[a.length];
-        for (int i = 0; i < a.length; i++) {
-            b[i] = a[i];
-        }
-        return Flowable.fromArray(b);
+        return Flowable.range(0, a.length).map(i -> a[i]);
     }
 
     private static Completable createAddBatch(NamedPreparedStatement ps, List<Object> parameters) {
