@@ -3,24 +3,43 @@ package org.davidmoten.rx.jdbc;
 import java.util.ArrayList;
 import java.util.List;
 
-final class SqlWithNames {
+final class SqlInfo {
     private final String sql;
     private final List<String> names;
+    private final int numQuestionMarks;
 
-    SqlWithNames(String sql, List<String> names) {
+    SqlInfo(String sql, List<String> names) {
         this.sql = sql;
         this.names = names;
+        if (names.isEmpty()){
+            numQuestionMarks = Util.countQuestionMarkParameters(sql);
+        } else {
+            numQuestionMarks = 0;
+        }
+        
     }
 
     String sql() {
         return sql;
+    }
+    
+    int numParameters() {
+        if (names.isEmpty()){
+            return numQuestionMarks;
+        } else {
+            return names.size();
+        }
+    }
+    
+    int numQuestionMarks() {
+        return numQuestionMarks;
     }
 
     List<String> names() {
         return names;
     }
     
-    static SqlWithNames parse(String namedSql) {
+    static SqlInfo parse(String namedSql) {
         // was originally using regular expressions, but they didn't work well
         // for ignoring parameter-like strings inside quotes.
         List<String> names = new ArrayList<String>();
@@ -57,7 +76,7 @@ final class SqlWithNames {
             }
             parsedQuery.append(c);
         }
-        return new SqlWithNames(parsedQuery.toString(), names);
+        return new SqlInfo(parsedQuery.toString(), names);
     }
 
     // Visible for testing

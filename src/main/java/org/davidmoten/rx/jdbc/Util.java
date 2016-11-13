@@ -265,15 +265,46 @@ public enum Util {
     }
 
     static NamedPreparedStatement prepare(Connection con, String sql) throws SQLException {
-        SqlWithNames s = SqlWithNames.parse(sql);
+        SqlInfo s = SqlInfo.parse(sql);
         return new NamedPreparedStatement(con.prepareStatement(s.sql()), s.names());
     }
 
     static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql)
             throws SQLException {
-        SqlWithNames s = SqlWithNames.parse(sql);
+        SqlInfo s = SqlInfo.parse(sql);
         return new NamedPreparedStatement(
                 con.prepareStatement(s.sql(), Statement.RETURN_GENERATED_KEYS), s.names());
+    }
+
+    // Visible for testing
+    static int countQuestionMarkParameters(String sql) {
+        // was originally using regular expressions, but they didn't work well
+        // for ignoring parameter-like strings inside quotes.
+        int count = 0;
+        int length = sql.length();
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        for (int i = 0; i < length; i++) {
+            char c = sql.charAt(i);
+            if (inSingleQuote) {
+                if (c == '\'') {
+                    inSingleQuote = false;
+                }
+            } else if (inDoubleQuote) {
+                if (c == '"') {
+                    inDoubleQuote = false;
+                }
+            } else {
+                if (c == '\'') {
+                    inSingleQuote = true;
+                } else if (c == '"') {
+                    inDoubleQuote = true;
+                } else if (c == '?') {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
 }
