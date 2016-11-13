@@ -2,7 +2,6 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -40,6 +39,7 @@ public enum Update {
         Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql);
         Function<NamedPreparedStatement, Flowable<Integer>> observableFactory = ps -> parameterGroups
                 .flatMap(parameters -> create(ps, parameters).toFlowable());
+        //TODO make singleton
         Consumer<NamedPreparedStatement> disposer = ps -> Util
                 .closePreparedStatementAndConnection(ps.ps);
         return Flowable.using(resourceFactory, observableFactory, disposer, true);
@@ -60,6 +60,7 @@ public enum Update {
                 }
             });
         };
+        //TODO make singleton
         Consumer<NamedPreparedStatement> disposer = ps -> Util
                 .closePreparedStatementAndConnection(ps.ps);
         return Flowable.using(resourceFactory, observableFactory, disposer, true);
@@ -109,6 +110,7 @@ public enum Update {
                 .prepareReturnGeneratedKeys(con, sql);
         Function<NamedPreparedStatement, Flowable<T>> obsFactory = ps -> parameterGroups
                 .flatMap(parameters -> create(ps, parameters, mapper), true, 1);
+        //TODO make singleton
         Consumer<NamedPreparedStatement> disposer = ps -> Util
                 .closePreparedStatementAndConnection(ps.ps);
         return Flowable.using(resourceFactory, obsFactory, disposer);
@@ -121,6 +123,7 @@ public enum Update {
             ps.ps.execute();
             return ps.ps.getGeneratedKeys();
         };
+        //TODO make singleton
         BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
             if (rs.next()) {
                 emitter.onNext(mapper.apply(rs));
@@ -128,6 +131,7 @@ public enum Update {
                 emitter.onComplete();
             }
         };
+        //TODO make singleton
         Consumer<ResultSet> disposer = rs -> Util.closeSilently(rs);
         return Flowable.generate(initialState, generator, disposer);
     }
