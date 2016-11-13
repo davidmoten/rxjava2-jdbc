@@ -11,26 +11,26 @@ final class SqlInfo {
     SqlInfo(String sql, List<String> names) {
         this.sql = sql;
         this.names = names;
-        if (names.isEmpty()){
+        if (names.isEmpty()) {
             numQuestionMarks = Util.countQuestionMarkParameters(sql);
         } else {
             numQuestionMarks = 0;
         }
-        
+
     }
 
     String sql() {
         return sql;
     }
-    
+
     int numParameters() {
-        if (names.isEmpty()){
+        if (names.isEmpty()) {
             return numQuestionMarks;
         } else {
             return names.size();
         }
     }
-    
+
     int numQuestionMarks() {
         return numQuestionMarks;
     }
@@ -38,7 +38,7 @@ final class SqlInfo {
     List<String> names() {
         return names;
     }
-    
+
     static SqlInfo parse(String namedSql) {
         // was originally using regular expressions, but they didn't work well
         // for ignoring parameter-like strings inside quotes.
