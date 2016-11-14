@@ -59,5 +59,14 @@ public class Database implements AutoCloseable {
     public SelectBuilder select(String sql) {
         return new SelectBuilder(sql);
     }
+    
+    public TransactedBuilder<Object> transacted() {
+        //TODO
+        return new TransactedBuilder<Object>(() -> null);
+    }
+    
+    public static <T> TransactedBuilder<T> tx(Tx<T> tx) {
+        return new TransactedBuilder(() -> tx);
+    }
 
 }
