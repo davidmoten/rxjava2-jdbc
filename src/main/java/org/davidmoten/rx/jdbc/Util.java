@@ -28,6 +28,9 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.reactivex.FlowableTransformer;
+import io.reactivex.functions.Consumer;
+
 public enum Util {
     ;
 
@@ -263,6 +266,10 @@ public enum Util {
             closeSilently(con);
         }
     }
+    
+    static void closePreparedStatementAndConnection(NamedPreparedStatement ps) {
+        closePreparedStatementAndConnection(ps.ps);
+    }
 
     static NamedPreparedStatement prepare(Connection con, String sql) throws SQLException {
         SqlInfo s = SqlInfo.parse(sql);
@@ -306,5 +313,20 @@ public enum Util {
         }
         return count;
     }
+
+    public static void commit(PreparedStatement ps) throws SQLException {
+        ps.getConnection().commit();
+    }
+
+    public static void rollback(PreparedStatement ps) throws SQLException {
+        ps.getConnection().rollback();
+    }
+    
+    public static final Consumer<PreparedStatement> CLOSE_PS_AND_CONNECTION = new Consumer<PreparedStatement>() {
+
+        @Override
+        public void accept(PreparedStatement ps) throws Exception {
+           Util.closePreparedStatementAndConnection(ps);
+        }};
 
 }

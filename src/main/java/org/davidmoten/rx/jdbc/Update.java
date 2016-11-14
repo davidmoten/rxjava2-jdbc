@@ -33,15 +33,15 @@ public enum Update {
                 .toFlowable() //
                 .flatMap(con -> create(con, sql, parameterGroups, batchSize), true, 1);
     }
-    
+
     private static Flowable<Integer> create(Connection con, String sql,
             Flowable<List<Object>> parameterGroups) {
         Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql);
         Function<NamedPreparedStatement, Flowable<Integer>> observableFactory = ps -> parameterGroups
-                .flatMap(parameters -> create(ps, parameters).toFlowable());
-        //TODO make singleton
-        Consumer<NamedPreparedStatement> disposer = ps -> Util
-                .closePreparedStatementAndConnection(ps.ps);
+                .flatMap(parameters -> create(ps, parameters).toFlowable()) //
+                .doOnComplete(() -> Util.commit(ps.ps)) //
+                .doOnError(e -> Util.rollback(ps.ps));
+        Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(resourceFactory, observableFactory, disposer, true);
     }
 
@@ -52,17 +52,19 @@ public enum Update {
             int[] count = new int[1];
             return parameterGroups.flatMap(parameters -> {
                 count[0] += 1;
+                Flowable<Integer> result;
                 if (count[0] == batchSize) {
                     count[0] = 0;
-                    return createExecuteBatch(ps, parameters);
+                    result = createExecuteBatch(ps, parameters);
                 } else {
-                    return createAddBatch(ps, parameters).toFlowable();
+                    result = createAddBatch(ps, parameters).toFlowable();
                 }
+                return result //
+                        .doOnComplete(() -> Util.commit(ps.ps)) //
+                        .doOnError(e -> Util.rollback(ps.ps));
             });
         };
-        //TODO make singleton
-        Consumer<NamedPreparedStatement> disposer = ps -> Util
-                .closePreparedStatementAndConnection(ps.ps);
+        Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(resourceFactory, observableFactory, disposer, true);
     }
 
@@ -109,10 +111,10 @@ public enum Update {
         Callable<NamedPreparedStatement> resourceFactory = () -> Util
                 .prepareReturnGeneratedKeys(con, sql);
         Function<NamedPreparedStatement, Flowable<T>> obsFactory = ps -> parameterGroups
-                .flatMap(parameters -> create(ps, parameters, mapper), true, 1);
-        //TODO make singleton
-        Consumer<NamedPreparedStatement> disposer = ps -> Util
-                .closePreparedStatementAndConnection(ps.ps);
+                .flatMap(parameters -> create(ps, parameters, mapper), true, 1) //
+                .doOnComplete(() -> Util.commit(ps.ps)) //
+                .doOnError(e -> Util.rollback(ps.ps));
+        Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(resourceFactory, obsFactory, disposer);
     }
 
@@ -123,7 +125,6 @@ public enum Update {
             ps.ps.execute();
             return ps.ps.getGeneratedKeys();
         };
-        //TODO make singleton
         BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
             if (rs.next()) {
                 emitter.onNext(mapper.apply(rs));
@@ -131,8 +132,7 @@ public enum Update {
                 emitter.onComplete();
             }
         };
-        //TODO make singleton
-        Consumer<ResultSet> disposer = rs -> Util.closeSilently(rs);
+        Consumer<ResultSet> disposer = Util::closeSilently;
         return Flowable.generate(initialState, generator, disposer);
     }
 
