@@ -1,6 +1,5 @@
 package org.davidmoten.rx.jdbc;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.github.davidmoten.guavamini.Lists;
@@ -8,13 +7,14 @@ import com.github.davidmoten.guavamini.Lists;
 /**
  * Encapsulates a query parameter.
  */
-final class Parameter {
+public class Parameter {
 
     private final String name;
     /**
      * Actual query parameter value to be encapsulated.
      */
     private final Object value;
+    private final boolean isForOutput;
 
     /**
      * Constructor.
@@ -28,6 +28,7 @@ final class Parameter {
     Parameter(String name, Object value) {
         this.name = name;
         this.value = value;
+        this.isForOutput = false;
     }
 
     /**
@@ -45,6 +46,10 @@ final class Parameter {
 
     String name() {
         return name;
+    }
+    
+    boolean isForOutput() {
+        return isForOutput;
     }
 
     public static ParameterListBuilder named(String name, String value) {

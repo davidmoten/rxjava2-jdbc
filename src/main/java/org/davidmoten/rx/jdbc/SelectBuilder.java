@@ -1,5 +1,6 @@
 package org.davidmoten.rx.jdbc;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,12 +14,15 @@ public class SelectBuilder {
 
     private final String sql;
     private final SqlInfo sqlInfo;
-    private List<Object> list = null;
+    private final Flowable<Connection> connections;
 
+    //mutable
+    private List<Object> list = null;
     private Flowable<List<Object>> parameters = null;
 
-    public SelectBuilder(String sql) {
+    public SelectBuilder(String sql, Flowable<Connection> connections) {
         this.sql = sql;
+        this.connections = connections;
         this.sqlInfo = SqlInfo.parse(sql);
     }
 
@@ -60,6 +64,10 @@ public class SelectBuilder {
 
     public SelectBuilder parameters(Object... values) {
         return parameterList(Arrays.asList(values));
+    }
+
+    public <T> Flowable<T> getAs(Class<T> cls) {
+        return Select.create(connections, parameters, sql, rs -> Util.mapObject(rs, cls, 1)); 
     }
 
 }

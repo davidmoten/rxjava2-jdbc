@@ -9,7 +9,11 @@ public class DatabaseTest {
     public void test() {
         Database db = DatabaseCreator.create(5);
         db.select("select score from person where name=?") //
-                .parameters("fred", "john");
+                .parameters("fred", "john") //
+                .getAs(Double.class) //
+                .test() //
+                .assertValues(1.0,2.0) //
+                .assertComplete();
     }
 
 }
