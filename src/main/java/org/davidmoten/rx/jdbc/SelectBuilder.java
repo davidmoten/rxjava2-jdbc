@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.github.davidmoten.guavamini.Lists;
@@ -58,7 +59,7 @@ public class SelectBuilder {
     }
 
     public SelectBuilder parameters(Object... values) {
-        return parameters(Flowable.fromArray(values));
+        return parameterList(Arrays.asList(values));
     }
 
 }
