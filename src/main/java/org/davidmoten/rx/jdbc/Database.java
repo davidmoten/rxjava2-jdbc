@@ -7,7 +7,6 @@ import java.sql.Types;
 import org.davidmoten.rx.pool.Pool;
 
 import io.reactivex.Flowable;
-import io.reactivex.Observable;
 import io.reactivex.functions.Action;
 
 public class Database implements AutoCloseable {
@@ -42,10 +41,10 @@ public class Database implements AutoCloseable {
         return new SelectBuilder(sql, connections());
     }
 
-    public static <T> Database tx(Tx<T> tx) {
-        TxImpl<T> t = (TxImpl<T>) tx;
+    public TransactedBuilder tx(Tx<?> tx) {
+        TxImpl<?> t = (TxImpl<?>) tx;
         TransactedConnection c = t.connection().fork();
-        return new Database(Flowable.<Connection>just(c), () ->{});
+        return new TransactedBuilder(c);
     }
 
     public static final Object NULL_CLOB = new Object();

@@ -1,12 +1,9 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.github.davidmoten.guavamini.Lists;
@@ -17,13 +14,13 @@ import io.reactivex.Notification;
 
 public class SelectBuilder {
 
-    private final String sql;
+    final String sql;
     private final SqlInfo sqlInfo;
-    private final Flowable<Connection> connections;
+    final Flowable<Connection> connections;
 
     // mutable
     private List<Object> list = null;
-    private Flowable<List<Object>> parameters = null;
+    Flowable<List<Object>> parameters = null;
 
     public SelectBuilder(String sql, Flowable<Connection> connections) {
         this.sql = sql;
@@ -87,31 +84,13 @@ public class SelectBuilder {
                 rs -> Util.mapObject(rs, cls, 1));
     }
 
-    private void resolveParameters() {
+    void resolveParameters() {
         if (list != null) {
             parameters = Flowable.fromIterable(list).buffer(sqlInfo.numParameters());
         }
     }
 
-    public <T> Flowable<Tx<T>> getInTransaction(Class<T> cls) {
-        resolveParameters();
-        AtomicReference<Connection> connection = new AtomicReference<Connection>();
-        return Select
-                .create(connections.firstOrError() //
-                        .doOnSuccess(c -> connection.set(c)), //
-                parameters, //
-                sql, //
-                rs -> Util.mapObject(rs, cls, 1)) //
-                .materialize() //
-                .map(n -> toTx(n, connection.get()));
-    }
-
-    private static <T> Tx<T> toTx(Notification<T> n, Connection con) {
-        if (n.isOnComplete())
-            return new TxImpl<T>(con, null, null, true);
-        else if (n.isOnNext())
-            return new TxImpl<T>(con, n.getValue(), null, false);
-        else
-            return new TxImpl<T>(con, null, n.getError(), false);
+    public TransactedSelectBuilder transacted() {
+        return new TransactedSelectBuilder(this);
     }
 }

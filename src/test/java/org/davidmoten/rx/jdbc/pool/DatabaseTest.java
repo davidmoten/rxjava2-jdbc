@@ -54,10 +54,27 @@ public class DatabaseTest {
         Flowable<Tx<Integer>> o = db() //
                 .select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
-                .getInTransaction(Integer.class);
+                .transacted() //
+                .getAs(Integer.class);
         o.test() //
                 .assertValueCount(3) //
                 .assertComplete();
+    }
+
+    @Test
+    public void testSelectTransactedChained() {
+        Database db = db();
+        db //
+                .select("select score from person where name=?") //
+                .parameters("FRED", "JOSEPH") //
+                .transacted() //
+                .getAs(Integer.class) //
+                .filter(Tx.valuesOnly()) //
+                .flatMap(tx -> db //
+                        .tx(tx) //
+                        .select("select name from person where score = ?") //
+                        .parameters(tx.value())
+                        .getAs(String.class));
     }
 
 }

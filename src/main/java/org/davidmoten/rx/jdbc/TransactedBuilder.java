@@ -1,13 +1,27 @@
 package org.davidmoten.rx.jdbc;
 
-import java.util.concurrent.Callable;
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-public class TransactedBuilder<T> {
+import com.github.davidmoten.guavamini.Lists;
+import com.github.davidmoten.guavamini.Preconditions;
 
-    private final Callable<Tx<T>> txFactory;
+import io.reactivex.Flowable;
 
-    public TransactedBuilder(Callable<Tx<T>> txFactory) {
-        this.txFactory = txFactory;
+public class TransactedBuilder {
+
+    private final Flowable<Connection> connections;
+    private SelectBuilder selectBuilder;
+
+    public TransactedBuilder(TransactedConnection con) {
+        this.connections = Flowable.just(con);
+    }
+
+    public TransactedSelectBuilder select(String sql) {
+        this.selectBuilder = new SelectBuilder(sql, connections);
+        return selectBuilder.transacted();
     }
 
 }

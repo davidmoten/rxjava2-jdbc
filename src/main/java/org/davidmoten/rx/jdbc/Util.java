@@ -422,6 +422,7 @@ public enum Util {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T mapObject(final ResultSet rs, Class<T> cls, int i) {
         return (T) autoMap(getObject(rs, cls, i), cls);
     }
