@@ -11,7 +11,8 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingQuestionMark() {
-        db().select("select score from person where name=?") //
+        db() //
+                .select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .getAs(Integer.class) //
                 .test() //
@@ -21,7 +22,8 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingName() {
-        db().select("select score from person where name=:name") //
+        db() //
+                .select("select score from person where name=:name") //
                 .parameter("name", "FRED") //
                 .parameter("name", "JOSEPH") //
                 .getAs(Integer.class) //
@@ -31,8 +33,16 @@ public class DatabaseTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testSelectUsingNameWithoutSpecifyingName() {
-        db().select("select score from person where name=:name") //
+    public void testSelectUsingNameWithoutSpecifyingNameThrowsImmediately() {
+        db() //
+                .select("select score from person where name=:name") //
+                .parameters("FRED", "JOSEPH");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSelectParametersSpecifiedWhenNoneExpectedThrowsImmediately() {
+        db() //
+                .select("select score from person") //
                 .parameters("FRED", "JOSEPH");
     }
 
