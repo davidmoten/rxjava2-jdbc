@@ -2,7 +2,6 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.github.davidmoten.guavamini.Lists;
@@ -16,7 +15,7 @@ public class SelectBuilder {
     private final SqlInfo sqlInfo;
     private final Flowable<Connection> connections;
 
-    //mutable
+    // mutable
     private List<Object> list = null;
     private Flowable<List<Object>> parameters = null;
 
@@ -27,7 +26,7 @@ public class SelectBuilder {
     }
 
     public SelectBuilder parameters(Flowable<List<Object>> parameters) {
-        Preconditions.checkArgument(list ==null);
+        Preconditions.checkArgument(list == null);
         if (this.parameters == null)
             this.parameters = parameters;
         else
@@ -36,7 +35,7 @@ public class SelectBuilder {
     }
 
     public SelectBuilder parameterList(List<Object> values) {
-        Preconditions.checkArgument(list ==null);
+        Preconditions.checkArgument(list == null);
         if (this.parameters == null)
             this.parameters = Flowable.just(values);
         else
@@ -45,7 +44,7 @@ public class SelectBuilder {
     }
 
     public SelectBuilder parameterList(Object... values) {
-        Preconditions.checkArgument(list ==null);
+        Preconditions.checkArgument(list == null);
         if (this.parameters == null)
             this.parameters = Flowable.just(Lists.newArrayList(values));
         else
@@ -55,7 +54,7 @@ public class SelectBuilder {
 
     public SelectBuilder parameter(String name, Object value) {
         Preconditions.checkArgument(parameters == null);
-        if (list == null){
+        if (list == null) {
             list = new ArrayList<>();
         }
         this.list.add(new Parameter(name, value));
@@ -63,11 +62,11 @@ public class SelectBuilder {
     }
 
     public SelectBuilder parameters(Object... values) {
-        return parameterList(Arrays.asList(values));
+        return parameters(Flowable.fromArray(values).buffer(sqlInfo.numParameters()));
     }
 
     public <T> Flowable<T> getAs(Class<T> cls) {
-        return Select.create(connections, parameters, sql, rs -> Util.mapObject(rs, cls, 1)); 
+        return Select.create(connections, parameters, sql, rs -> Util.mapObject(rs, cls, 1));
     }
 
 }

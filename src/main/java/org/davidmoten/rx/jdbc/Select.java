@@ -15,30 +15,30 @@ import io.reactivex.functions.Function;
 public enum Select {
     ;
 
-    public static <T> Flowable<T> create(Flowable<Connection> connections, Flowable<List<Object>> parameters,
-            String sql, Function<? super ResultSet, T> mapper) {
+    public static <T> Flowable<T> create(Flowable<Connection> connections,
+            Flowable<List<Object>> parameters, String sql, Function<? super ResultSet, T> mapper) {
         return connections //
                 .firstOrError() //
                 .toFlowable() //
                 .flatMap(con -> create(con, sql, parameters, mapper));
     }
 
-    private static <T> Flowable<T> create(Connection con, String sql, Flowable<List<Object>> parameterGroups,
-            Function<? super ResultSet, T> mapper) {
+    private static <T> Flowable<T> create(Connection con, String sql,
+            Flowable<List<Object>> parameterGroups, Function<? super ResultSet, T> mapper) {
         Callable<NamedPreparedStatement> initialState = () -> Util.prepare(con, sql);
         Function<NamedPreparedStatement, Flowable<T>> observableFactory = ps -> parameterGroups
                 .flatMap(parameters -> create(con, ps.ps, parameters, mapper, ps.names), true, 1) //
                 ;
-        //TODO singleton
+        // TODO singleton
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(initialState, observableFactory, disposer, true);
     }
 
-    private static <T> Flowable<? extends T> create(Connection con, PreparedStatement ps, List<Object> parameters,
-            Function<? super ResultSet, T> mapper, List<String> names) {
+    private static <T> Flowable<? extends T> create(Connection con, PreparedStatement ps,
+            List<Object> parameters, Function<? super ResultSet, T> mapper, List<String> names) {
         Callable<ResultSet> initialState = () -> Util //
                 .setParameters(ps, parameters, names) //
-                .getResultSet();
+                .executeQuery();
         BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
             if (rs.next()) {
                 emitter.onNext(mapper.apply(rs));
@@ -46,7 +46,7 @@ public enum Select {
                 emitter.onComplete();
             }
         };
-        //TODO singleton
+        // TODO singleton
         Consumer<ResultSet> disposeState = rs -> Util.closeSilently(rs);
         return Flowable.generate(initialState, generator, disposeState);
     }

@@ -274,7 +274,8 @@ public enum Util {
 
     static NamedPreparedStatement prepare(Connection con, String sql) throws SQLException {
         SqlInfo s = SqlInfo.parse(sql);
-        return new NamedPreparedStatement(con.prepareStatement(s.sql()), s.names());
+        return new NamedPreparedStatement(con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_READ_ONLY), s.names());
     }
 
     static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql)
@@ -335,7 +336,7 @@ public enum Util {
 
     /**
      * Converts from java.sql Types to common java types like java.util.Date and
-     * numeric types. 
+     * numeric types.
      * 
      * @param o
      * @param cls

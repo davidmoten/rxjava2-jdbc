@@ -7,12 +7,12 @@ public class DatabaseTest {
 
     @Test
     public void test() {
-        Database db = DatabaseCreator.create(5);
+        Database db = DatabaseCreator.create(1);
         db.select("select score from person where name=?") //
-                .parameters("fred", "john") //
-                .getAs(Double.class) //
+                .parameters("FRED", "JOSEPH") //
+                .getAs(Integer.class) //
                 .test() //
-                .assertValues(1.0,2.0) //
+                .assertValues(21, 34) //
                 .assertComplete();
     }
 

@@ -46,6 +46,16 @@ public class DatabaseCreator {
         };
     }
 
+    static Connection connection() {
+        try {
+            Connection c = DriverManager.getConnection(nextUrl());
+            createDatabase(c);
+            return c;
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
+
     private static String nextUrl() {
         return "jdbc:h2:mem:test" + dbNumber.incrementAndGet() + ";DB_CLOSE_DELAY=-1";
     }
