@@ -1,7 +1,5 @@
 package org.davidmoten.rx.jdbc;
 
-import java.sql.Connection;
-
 public interface Tx<T> {
 
     boolean isValue();
@@ -14,9 +12,4 @@ public interface Tx<T> {
 
     Throwable throwable();
 
-    Connection connection();
-
-    void commit();
-
-    void rollback();
 }
