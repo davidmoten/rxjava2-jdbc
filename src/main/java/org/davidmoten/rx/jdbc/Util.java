@@ -216,7 +216,7 @@ public enum Util {
             if (p.hasName()) {
                 map.put(p.name(), p);
             } else {
-                throw new SQLException(
+                throw new ParameterMissingNameException(
                         "named parameters were expected but this parameter did not have a name: "
                                 + p);
             }

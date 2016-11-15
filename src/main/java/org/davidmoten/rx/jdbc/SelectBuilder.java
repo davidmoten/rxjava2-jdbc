@@ -2,6 +2,7 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.github.davidmoten.guavamini.Lists;
@@ -65,6 +66,8 @@ public class SelectBuilder {
         Preconditions.checkArgument(list == null);
         Preconditions.checkArgument(values.length % sqlInfo.numParameters() == 0,
                 "number of values should be a multiple of number of parameters in sql: " + sql);
+        Preconditions.checkArgument(Arrays.stream(values).allMatch(o -> sqlInfo.names().isEmpty()
+                || (o instanceof Parameter && ((Parameter) o).hasName())));
         return parameters(Flowable.fromArray(values).buffer(sqlInfo.numParameters()));
     }
 
