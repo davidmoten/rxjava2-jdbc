@@ -1,14 +1,19 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.github.davidmoten.guavamini.Lists;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.Notification;
 
 public class SelectBuilder {
 
@@ -77,10 +82,113 @@ public class SelectBuilder {
     }
 
     public <T> Flowable<T> getAs(Class<T> cls) {
+        resolveParameters();
+        return Select.create(connections.firstOrError(), parameters, sql,
+                rs -> Util.mapObject(rs, cls, 1));
+    }
+
+    private void resolveParameters() {
         if (list != null) {
             parameters = Flowable.fromIterable(list).buffer(sqlInfo.numParameters());
         }
-        return Select.create(connections, parameters, sql, rs -> Util.mapObject(rs, cls, 1));
+    }
+
+    public <T> Flowable<Tx<T>> getInTransaction(Class<T> cls) {
+        resolveParameters();
+        AtomicReference<Connection> connection = new AtomicReference<Connection>();
+        AtomicInteger counter = new AtomicInteger(0);
+        return Select
+                .create(connections.firstOrError() //
+                        .doOnSuccess(c -> connection.set(c)), //
+                parameters, //
+                sql, //
+                rs -> Util.mapObject(rs, cls, 1)) //
+                .materialize() //
+                .map(n -> toTx(n, connection.get(), counter));
+    }
+
+    private static <T> Tx<T> toTx(Notification<T> n, Connection con, AtomicInteger counter) {
+        if (n.isOnComplete())
+            return new TxImpl<T>(con, null, null, true, counter);
+        else if (n.isOnNext())
+            return new TxImpl<T>(con, n.getValue(), null, false, counter);
+        else
+            return new TxImpl<T>(con, null, n.getError(), false, counter);
+
+    }
+
+    private static class TxImpl<T> implements Tx<T> {
+
+        private final Connection con;
+        private final T value;
+        private final Throwable e;
+        private final boolean completed;
+        private final AtomicInteger counter;
+        private final AtomicBoolean once = new AtomicBoolean(false);
+
+        public TxImpl(Connection con, T value, Throwable e, boolean completed,
+                AtomicInteger counter) {
+            this.con = con;
+            this.value = value;
+            this.e = e;
+            this.completed = completed;
+            this.counter = counter;
+        }
+
+        @Override
+        public boolean isValue() {
+            return !completed && e != null;
+        }
+
+        @Override
+        public boolean isComplete() {
+            return completed;
+        }
+
+        @Override
+        public boolean isError() {
+            return e != null;
+        }
+
+        @Override
+        public T value() {
+            return value;
+        }
+
+        @Override
+        public Throwable throwable() {
+            return e;
+        }
+
+        @Override
+        public Connection connection() {
+            return con;
+        }
+
+        @Override
+        public void commit() {
+            if (once.compareAndSet(false, true))
+                if (counter.decrementAndGet() <= 0) {
+                    try {
+                        con.commit();
+                    } catch (SQLException e) {
+                        throw new SQLRuntimeException(e);
+                    }
+                }
+        }
+
+        @Override
+        public void rollback() {
+            if (once.compareAndSet(false, true))
+                if (counter.decrementAndGet() <= 0) {
+                    try {
+                        con.rollback();
+                    } catch (SQLException e) {
+                        throw new SQLRuntimeException(e);
+                    }
+                }
+        }
+
     }
 
 }

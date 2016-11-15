@@ -1,7 +1,10 @@
 package org.davidmoten.rx.jdbc.pool;
 
 import org.davidmoten.rx.jdbc.Database;
+import org.davidmoten.rx.jdbc.Tx;
 import org.junit.Test;
+
+import io.reactivex.Flowable;
 
 public class DatabaseTest {
 
@@ -44,6 +47,17 @@ public class DatabaseTest {
         db() //
                 .select("select score from person") //
                 .parameters("FRED", "JOSEPH");
+    }
+
+    @Test
+    public void testSelectTransacted() {
+        Flowable<Tx<Integer>> o = db() //
+                .select("select score from person where name=?") //
+                .parameters("FRED", "JOSEPH") //
+                .getInTransaction(Integer.class);
+        o.test() //
+                .assertValueCount(3) //
+                .assertComplete();
     }
 
 }

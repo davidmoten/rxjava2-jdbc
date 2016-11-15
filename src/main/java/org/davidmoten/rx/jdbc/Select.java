@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -15,10 +16,9 @@ import io.reactivex.functions.Function;
 public enum Select {
     ;
 
-    public static <T> Flowable<T> create(Flowable<Connection> connections,
+    public static <T> Flowable<T> create(Single<Connection> connections,
             Flowable<List<Object>> parameters, String sql, Function<? super ResultSet, T> mapper) {
         return connections //
-                .firstOrError() //
                 .toFlowable() //
                 .flatMap(con -> create(con, sql, parameters, mapper));
     }
