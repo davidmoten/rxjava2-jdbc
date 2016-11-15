@@ -96,7 +96,6 @@ public class SelectBuilder {
     public <T> Flowable<Tx<T>> getInTransaction(Class<T> cls) {
         resolveParameters();
         AtomicReference<Connection> connection = new AtomicReference<Connection>();
-        AtomicInteger counter = new AtomicInteger(0);
         return Select
                 .create(connections.firstOrError() //
                         .doOnSuccess(c -> connection.set(c)), //
@@ -104,18 +103,15 @@ public class SelectBuilder {
                 sql, //
                 rs -> Util.mapObject(rs, cls, 1)) //
                 .materialize() //
-                .map(n -> toTx(n, connection.get(), counter));
+                .map(n -> toTx(n, connection.get()));
     }
 
-    private static <T> Tx<T> toTx(Notification<T> n, Connection con, AtomicInteger counter) {
+    private static <T> Tx<T> toTx(Notification<T> n, Connection con) {
         if (n.isOnComplete())
-            return new TxImpl<T>(con, null, null, true, counter);
+            return new TxImpl<T>(con, null, null, true);
         else if (n.isOnNext())
-            return new TxImpl<T>(con, n.getValue(), null, false, counter);
+            return new TxImpl<T>(con, n.getValue(), null, false);
         else
-            return new TxImpl<T>(con, null, n.getError(), false, counter);
-
+            return new TxImpl<T>(con, null, n.getError(), false);
     }
-
-
 }

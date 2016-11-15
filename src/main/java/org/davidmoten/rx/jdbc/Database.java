@@ -42,11 +42,6 @@ public class Database implements AutoCloseable {
         return new SelectBuilder(sql, connections());
     }
 
-    public TransactedBuilder<Object> transacted() {
-        // TODO
-        return new TransactedBuilder<Object>(() -> null);
-    }
-
     public static <T> Database tx(Tx<T> tx) {
         TxImpl<T> t = (TxImpl<T>) tx;
         TransactedConnection c = t.connection().fork();

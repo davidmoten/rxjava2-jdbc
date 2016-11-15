@@ -1,8 +1,6 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 final class TxImpl<T> implements Tx<T> {
 
@@ -10,15 +8,12 @@ final class TxImpl<T> implements Tx<T> {
     private final T value;
     private final Throwable e;
     private final boolean completed;
-    private final AtomicInteger counter;
-    private final AtomicBoolean once = new AtomicBoolean(false);
 
-    TxImpl(TransactedConnection con, T value, Throwable e, boolean completed, AtomicInteger counter) {
-        this.con = con;
+    TxImpl(Connection con, T value, Throwable e, boolean completed) {
+        this.con = new TransactedConnection(con);
         this.value = value;
         this.e = e;
         this.completed = completed;
-        this.counter = counter;
     }
 
     @Override

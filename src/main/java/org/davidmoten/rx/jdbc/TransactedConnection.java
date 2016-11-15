@@ -29,6 +29,10 @@ public final class TransactedConnection implements Connection {
         this.con = con;
         this.counter = counter;
     }
+    
+    public TransactedConnection(Connection con) {
+        this(con, new AtomicInteger(1));
+    }
 
     @Override
     public void abort(Executor executor) throws SQLException {
