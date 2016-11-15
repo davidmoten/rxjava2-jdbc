@@ -7,13 +7,50 @@ import java.sql.Types;
 import org.davidmoten.rx.pool.Pool;
 
 import io.reactivex.Flowable;
+import io.reactivex.Observable;
+import io.reactivex.functions.Action;
 
 public class Database implements AutoCloseable {
 
-    private final Pool<Connection> pool;
+    private final Flowable<Connection> connections;
 
-    public Database(Pool<Connection> pool) {
-        this.pool = pool;
+    private final Action onClose;
+
+    private Database(Flowable<Connection> connections, Action onClose) {
+        this.connections = connections;
+        this.onClose = onClose;
+    }
+
+    public static Database from(Flowable<Connection> connections, Action onClose) {
+        return new Database(connections, onClose);
+    }
+
+    public static Database from(Pool<Connection> pool) {
+        return new Database(pool.members().cast(Connection.class), () -> pool.close());
+    }
+
+    public Flowable<Connection> connections() {
+        return connections;
+    }
+
+    @Override
+    public void close() throws Exception {
+        onClose.run();
+    }
+
+    public SelectBuilder select(String sql) {
+        return new SelectBuilder(sql, connections());
+    }
+
+    public TransactedBuilder<Object> transacted() {
+        // TODO
+        return new TransactedBuilder<Object>(() -> null);
+    }
+
+    public static <T> Database tx(Tx<T> tx) {
+        TxImpl<T> t = (TxImpl<T>) tx;
+        TransactedConnection c = t.connection().fork();
+        return new Database(Flowable.<Connection>just(c), () ->{});
     }
 
     public static final Object NULL_CLOB = new Object();
@@ -41,32 +78,6 @@ public class Database implements AutoCloseable {
             return NULL_BLOB;
         else
             return bytes;
-    }
-
-    public static Database from(Pool<Connection> pool) {
-        return new Database(pool);
-    }
-
-    public Flowable<Connection> connections() {
-        return pool.members().cast(Connection.class);
-    }
-
-    @Override
-    public void close() throws Exception {
-        pool.close();
-    }
-
-    public SelectBuilder select(String sql) {
-        return new SelectBuilder(sql, connections());
-    }
-    
-    public TransactedBuilder<Object> transacted() {
-        //TODO
-        return new TransactedBuilder<Object>(() -> null);
-    }
-    
-    public static <T> TransactedBuilder<T> tx(Tx<T> tx) {
-        return new TransactedBuilder(() -> tx);
     }
 
 }
