@@ -6,7 +6,7 @@ import org.junit.Test;
 public class DatabaseTest {
 
     @Test
-    public void test() {
+    public void testSelect() {
         Database db = DatabaseCreator.create(1);
         db.select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //

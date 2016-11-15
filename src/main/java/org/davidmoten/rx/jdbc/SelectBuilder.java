@@ -62,6 +62,8 @@ public class SelectBuilder {
     }
 
     public SelectBuilder parameters(Object... values) {
+        Preconditions.checkArgument(values.length % sqlInfo.numParameters() == 0,
+                "number of values should be a multiple of number of parameters in sql: " + sql);
         return parameters(Flowable.fromArray(values).buffer(sqlInfo.numParameters()));
     }
 
