@@ -62,12 +62,16 @@ public class SelectBuilder {
     }
 
     public SelectBuilder parameters(Object... values) {
+        Preconditions.checkArgument(list == null);
         Preconditions.checkArgument(values.length % sqlInfo.numParameters() == 0,
                 "number of values should be a multiple of number of parameters in sql: " + sql);
         return parameters(Flowable.fromArray(values).buffer(sqlInfo.numParameters()));
     }
 
     public <T> Flowable<T> getAs(Class<T> cls) {
+        if (list != null) {
+            parameters = Flowable.fromIterable(list).buffer(sqlInfo.numParameters());
+        }
         return Select.create(connections, parameters, sql, rs -> Util.mapObject(rs, cls, 1));
     }
 

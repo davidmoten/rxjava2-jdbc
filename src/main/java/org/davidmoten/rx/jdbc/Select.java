@@ -29,7 +29,6 @@ public enum Select {
         Function<NamedPreparedStatement, Flowable<T>> observableFactory = ps -> parameterGroups
                 .flatMap(parameters -> create(con, ps.ps, parameters, mapper, ps.names), true, 1) //
                 ;
-        // TODO singleton
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(initialState, observableFactory, disposer, true);
     }
@@ -46,8 +45,7 @@ public enum Select {
                 emitter.onComplete();
             }
         };
-        // TODO singleton
-        Consumer<ResultSet> disposeState = rs -> Util.closeSilently(rs);
+        Consumer<ResultSet> disposeState = Util::closeSilently;
         return Flowable.generate(initialState, generator, disposeState);
     }
 
