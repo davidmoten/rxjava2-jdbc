@@ -68,9 +68,9 @@ public class DatabaseTest {
                 .select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .transacted() //
+                .valuesOnly() //
                 .getAs(Integer.class) //
                 .doOnNext(System.out::println)//
-                .filter(Tx.valuesOnly()) //
                 .flatMap(tx -> db //
                         .tx(tx) //
                         .select("select name from person where score = ?") //
@@ -82,7 +82,6 @@ public class DatabaseTest {
                 .assertNoErrors() //
                 .assertValues("FRED", "JOSEPH") //
                 .assertComplete();
-
     }
 
 }

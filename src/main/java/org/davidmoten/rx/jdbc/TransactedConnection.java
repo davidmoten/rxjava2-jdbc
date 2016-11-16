@@ -29,7 +29,7 @@ public final class TransactedConnection implements Connection {
         this.con = con;
         this.counter = counter;
     }
-    
+
     public TransactedConnection(Connection con) {
         this(con, new AtomicInteger(1));
     }
@@ -54,15 +54,28 @@ public final class TransactedConnection implements Connection {
 
     @Override
     public void close() throws SQLException {
+        System.out.println("TransactedConnection attempt close");
         if (counter.get() == 0) {
+            System.out.println("TransactedConnection close");
             con.close();
         }
     }
 
     @Override
     public void commit() throws SQLException {
+        System.out.println("TransactedConnection commit attempt, counter=" + counter.get());
         if (counter.decrementAndGet() == 0) {
+            System.out.println("TransactedConnection commit");
             con.commit();
+        }
+    }
+
+    @Override
+    public void rollback() throws SQLException {
+        System.out.println("TransactedConnection rollback attempt, counter=" + counter.get());
+        if (counter.decrementAndGet() == 0) {
+            System.out.println("TransactedConnection rollback");
+            con.rollback();
         }
     }
 
@@ -247,13 +260,6 @@ public final class TransactedConnection implements Connection {
     @Override
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
         con.releaseSavepoint(savepoint);
-    }
-
-    @Override
-    public void rollback() throws SQLException {
-        if (counter.decrementAndGet() == 0) {
-            con.rollback();
-        }
     }
 
     @Override
