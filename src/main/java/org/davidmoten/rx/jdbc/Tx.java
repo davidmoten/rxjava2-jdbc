@@ -24,9 +24,15 @@ public interface Tx<T> {
         return tx -> {
             if (tx.isValue()) {
                 return Flowable.just(tx.value());
-            } else {
+            } else if (tx.isComplete()) {
                 return Flowable.empty();
+            } else {
+                return Flowable.error(tx.throwable());
             }
         };
+    }
+
+    public static <T> Function<Tx<T>, T> toValue() {
+        return tx -> tx.value();
     }
 }

@@ -69,14 +69,17 @@ public class DatabaseTest {
                 .parameters("FRED", "JOSEPH") //
                 .transacted() //
                 .getAs(Integer.class) //
+                .doOnNext(System.out::println)//
                 .filter(Tx.valuesOnly()) //
                 .flatMap(tx -> db //
                         .tx(tx) //
                         .select("select name from person where score = ?") //
                         .parameters(tx.value()) //
+                        .valuesOnly() //
                         .getAs(String.class) //
-                        .flatMap(Tx.flattenToValuesOnly())) //
+                        .map(Tx.toValue())) //
                 .test() //
+                .assertNoErrors() //
                 .assertValues("FRED", "JOSEPH") //
                 .assertComplete();
 

@@ -18,7 +18,7 @@ final class TxImpl<T> implements Tx<T> {
 
     @Override
     public boolean isValue() {
-        return !completed && e != null;
+        return !completed && e == null;
     }
 
     @Override
@@ -43,6 +43,25 @@ final class TxImpl<T> implements Tx<T> {
 
     public TransactedConnection connection() {
         return con;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("TxImpl [con=");
+        builder.append(con);
+        if (isValue()) {
+            builder.append(", value=");
+            builder.append(value);
+        } else if (isError()) {
+            builder.append(", e=");
+            builder.append(e);
+        } else if (isComplete()) {
+            builder.append(", completed=");
+            builder.append(completed);
+        }
+        builder.append("]");
+        return builder.toString();
     }
 
 }
