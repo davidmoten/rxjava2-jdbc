@@ -1,13 +1,8 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.github.davidmoten.guavamini.Lists;
-import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
 import io.reactivex.Notification;
@@ -51,9 +46,9 @@ public class TransactedSelectBuilder {
         return Select
                 .create(selectBuilder.connections.firstOrError() //
                         .doOnSuccess(c -> connection.set(c)), //
-                        selectBuilder.parameters, //
-                        selectBuilder.sql, //
-                        rs -> Util.mapObject(rs, cls, 1)) //
+                selectBuilder.parameters, //
+                selectBuilder.sql, //
+                rs -> Util.mapObject(rs, cls, 1)) //
                 .materialize() //
                 .map(n -> toTx(n, connection.get()));
     }

@@ -73,8 +73,13 @@ public class DatabaseTest {
                 .flatMap(tx -> db //
                         .tx(tx) //
                         .select("select name from person where score = ?") //
-                        .parameters(tx.value())
-                        .getAs(String.class));
+                        .parameters(tx.value()) //
+                        .getAs(String.class) //
+                        .flatMap(Tx.flattenToValuesOnly())) //
+                .test() //
+                .assertValues("FRED", "JOSEPH") //
+                .assertComplete();
+
     }
 
 }
