@@ -47,8 +47,21 @@ final class TxImpl<T> implements Tx<T> {
 
     @Override
     public String toString() {
-        return "TxImpl [con=" + con + ", value=" + value + ", e=" + e + ", completed=" + completed
-                + "]";
+        StringBuilder builder = new StringBuilder();
+        builder.append("TxImpl [con=");
+        builder.append(con);
+        if (isValue()) {
+            builder.append(", value=");
+            builder.append(value);
+        } else if (isError()) {
+            builder.append(", e=");
+            builder.append(e);
+        } else if (isComplete()) {
+            builder.append(", completed=");
+            builder.append(completed);
+        }
+        builder.append("]");
+        return builder.toString();
     }
-    
+
 }

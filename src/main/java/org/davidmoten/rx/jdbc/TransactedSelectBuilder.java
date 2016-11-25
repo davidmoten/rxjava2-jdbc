@@ -1,13 +1,8 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.github.davidmoten.guavamini.Lists;
-import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
 import io.reactivex.Notification;
@@ -59,28 +54,36 @@ public class TransactedSelectBuilder {
     public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
         selectBuilder.resolveParameters();
         AtomicReference<Connection> connection = new AtomicReference<Connection>();
-        Flowable<Tx<T>> o = Select
-                .create(selectBuilder.connections.firstOrError() //
-                        .doOnSuccess(c -> connection.set(c)), //
-                        selectBuilder.parameters, //
-                        selectBuilder.sql, //
-                        rs -> Util.mapObject(rs, cls, 1)) //
+        Flowable<Tx<T>> o = Select.create(selectBuilder.connections.firstOrError() //
+                .map(c -> {
+                    c.setAutoCommit(false);
+                    TransactedConnection c2 = new TransactedConnection(c);
+                    connection.set(c2);
+                    return c2;
+                }), //
+                selectBuilder.parameters, //
+                selectBuilder.sql, //
+                rs -> Util.mapObject(rs, cls, 1)) //
                 .materialize() //
-                .map(n -> toTx(n, connection.get()));
-        if (valuesOnly){
-            return o.filter(Tx.valuesOnly());
+                .flatMap(n -> toTx(n, connection.get())).doOnNext(tx -> {
+                    if (tx.isComplete()) {
+                        ((TxImpl<T>) tx).connection().commit();
+                    }
+                });
+        if (valuesOnly) {
+            return o.filter(tx -> tx.isValue());
         } else {
             return o;
         }
     }
 
-    private static <T> Tx<T> toTx(Notification<T> n, Connection con) {
+    private static <T> Flowable<Tx<T>> toTx(Notification<T> n, Connection con) {
         if (n.isOnComplete())
-            return new TxImpl<T>(con, null, null, true);
+            return Flowable.just(new TxImpl<T>(con, null, null, true));
         else if (n.isOnNext())
-            return new TxImpl<T>(con, n.getValue(), null, false);
+            return Flowable.just(new TxImpl<T>(con, n.getValue(), null, false));
         else
-            return new TxImpl<T>(con, null, n.getError(), false);
+            return Flowable.error(n.getError());
     }
 
 }

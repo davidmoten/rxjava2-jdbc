@@ -39,9 +39,11 @@ public enum Select {
                 .setParameters(ps, parameters, names) //
                 .executeQuery();
         BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
+            System.out.println("getting row");
             if (rs.next()) {
                 emitter.onNext(mapper.apply(rs));
             } else {
+                System.out.println("completed");
                 emitter.onComplete();
             }
         };

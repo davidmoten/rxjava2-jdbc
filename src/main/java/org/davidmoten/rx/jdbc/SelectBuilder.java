@@ -4,13 +4,11 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.github.davidmoten.guavamini.Lists;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
-import io.reactivex.Notification;
 
 public class SelectBuilder {
 
@@ -21,6 +19,7 @@ public class SelectBuilder {
     // mutable
     private List<Object> list = null;
     Flowable<List<Object>> parameters = null;
+    boolean valuesOnly = false;
 
     public SelectBuilder(String sql, Flowable<Connection> connections) {
         this.sql = sql;
