@@ -51,30 +51,35 @@ public class DatabaseTest {
 
     @Test
     public void testSelectTransacted() {
-        Flowable<Tx<Integer>> o = db() //
+        System.out.println("testSelectTransacted");
+        db() //
                 .select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .transacted() //
-                .getAs(Integer.class);
-        o.test() //
+                .getAs(Integer.class) //
+                .doOnNext(System.out::println) //
+                .test() //
                 .assertValueCount(3) //
                 .assertComplete();
     }
 
     @Test
     public void testSelectTransactedChained() {
+        System.out.println("testSelectTransactedChained");
         Database db = db();
         db //
                 .select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .transacted() //
+                .valuesOnly() //
                 .getAs(Integer.class) //
-                .filter(Tx.valuesOnly()) //
+                .doOnNext(x -> System.out.println("source "+ x)) //
                 .flatMap(tx -> db //
                         .tx(tx) //
                         .select("select name from person where score = ?") //
                         .parameter(tx.value()) //
                         .getAs(String.class)) //
+                .doOnNext(System.out::println) //
                 .test() //
                 .assertValueCount(2) //
                 .assertComplete();

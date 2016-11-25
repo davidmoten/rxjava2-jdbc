@@ -18,7 +18,7 @@ final class TxImpl<T> implements Tx<T> {
 
     @Override
     public boolean isValue() {
-        return !completed && e != null;
+        return !completed && e == null;
     }
 
     @Override
@@ -45,4 +45,10 @@ final class TxImpl<T> implements Tx<T> {
         return con;
     }
 
+    @Override
+    public String toString() {
+        return "TxImpl [con=" + con + ", value=" + value + ", e=" + e + ", completed=" + completed
+                + "]";
+    }
+    
 }

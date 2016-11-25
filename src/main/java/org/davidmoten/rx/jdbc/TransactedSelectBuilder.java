@@ -15,6 +15,7 @@ import io.reactivex.Notification;
 public class TransactedSelectBuilder {
 
     private final SelectBuilder selectBuilder;
+    private boolean valuesOnly = false;
 
     public TransactedSelectBuilder(SelectBuilder selectBuilder) {
         this.selectBuilder = selectBuilder;
@@ -49,11 +50,16 @@ public class TransactedSelectBuilder {
         selectBuilder.parameters(value);
         return this;
     }
+    
+    public TransactedSelectBuilder valuesOnly() {
+        this.valuesOnly = true;
+        return this;
+    }
 
     public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
         selectBuilder.resolveParameters();
         AtomicReference<Connection> connection = new AtomicReference<Connection>();
-        return Select
+        Flowable<Tx<T>> o = Select
                 .create(selectBuilder.connections.firstOrError() //
                         .doOnSuccess(c -> connection.set(c)), //
                         selectBuilder.parameters, //
@@ -61,6 +67,11 @@ public class TransactedSelectBuilder {
                         rs -> Util.mapObject(rs, cls, 1)) //
                 .materialize() //
                 .map(n -> toTx(n, connection.get()));
+        if (valuesOnly){
+            return o.filter(Tx.valuesOnly());
+        } else {
+            return o;
+        }
     }
 
     private static <T> Tx<T> toTx(Notification<T> n, Connection con) {
