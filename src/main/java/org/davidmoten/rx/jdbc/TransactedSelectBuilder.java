@@ -44,6 +44,11 @@ public class TransactedSelectBuilder {
         selectBuilder.parameters(values);
         return this;
     }
+    
+    public TransactedSelectBuilder parameter(Object value) {
+        selectBuilder.parameters(value);
+        return this;
+    }
 
     public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
         selectBuilder.resolveParameters();
