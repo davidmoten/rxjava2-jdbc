@@ -250,9 +250,10 @@ public enum Util {
 
     public static void closeSilently(AutoCloseable c) {
         try {
+            log.debug("closing {}",c);
             c.close();
         } catch (Exception e) {
-            // ignore
+            log.debug("ignored exception {}, {}, {}", e.getMessage(), e.getClass(), e);
         }
     }
 

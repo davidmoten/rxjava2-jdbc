@@ -4,10 +4,15 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.reactivex.Flowable;
 import io.reactivex.Notification;
 
 public class TransactedSelectBuilder {
+
+    private static final Logger log = LoggerFactory.getLogger(TransactedSelectBuilder.class);
 
     private final SelectBuilder selectBuilder;
     private boolean valuesOnly = false;
@@ -40,12 +45,12 @@ public class TransactedSelectBuilder {
         selectBuilder.parameters(values);
         return this;
     }
-    
+
     public TransactedSelectBuilder parameter(Object value) {
         selectBuilder.parameters(value);
         return this;
     }
-    
+
     public TransactedSelectBuilder valuesOnly() {
         this.valuesOnly = true;
         return this;
@@ -56,10 +61,15 @@ public class TransactedSelectBuilder {
         AtomicReference<Connection> connection = new AtomicReference<Connection>();
         Flowable<Tx<T>> o = Select.create(selectBuilder.connections.firstOrError() //
                 .map(c -> {
-                    c.setAutoCommit(false);
-                    TransactedConnection c2 = new TransactedConnection(c);
-                    connection.set(c2);
-                    return c2;
+                    if (c instanceof TransactedConnection) {
+                        return c;
+                    } else {
+                        c.setAutoCommit(false);
+                        log.debug("creating new TransactedConnection");
+                        TransactedConnection c2 = new TransactedConnection(c);
+                        connection.set(c2);
+                        return c2;
+                    }
                 }), //
                 selectBuilder.parameters, //
                 selectBuilder.sql, //

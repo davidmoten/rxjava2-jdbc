@@ -10,7 +10,11 @@ final class TxImpl<T> implements Tx<T> {
     private final boolean completed;
 
     TxImpl(Connection con, T value, Throwable e, boolean completed) {
-        this.con = new TransactedConnection(con);
+        if (con instanceof TransactedConnection) {
+            this.con = (TransactedConnection) con;
+        } else {
+            this.con = new TransactedConnection(con);
+        }
         this.value = value;
         this.e = e;
         this.completed = completed;

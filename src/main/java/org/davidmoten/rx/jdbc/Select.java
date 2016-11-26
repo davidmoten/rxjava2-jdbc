@@ -6,6 +6,9 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
@@ -15,6 +18,8 @@ import io.reactivex.functions.Function;
 
 public enum Select {
     ;
+
+    private static final Logger log = LoggerFactory.getLogger(Select.class);
 
     public static <T> Flowable<T> create(Single<Connection> connections,
             Flowable<List<Object>> parameters, String sql, Function<? super ResultSet, T> mapper) {
@@ -28,7 +33,7 @@ public enum Select {
         Callable<NamedPreparedStatement> initialState = () -> Util.prepare(con, sql);
         Function<NamedPreparedStatement, Flowable<T>> observableFactory = ps -> parameterGroups
                 .flatMap(parameters -> create(con, ps.ps, parameters, mapper, ps.names), true, 1) //
-                ;
+        ;
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(initialState, observableFactory, disposer, true);
     }
@@ -39,11 +44,13 @@ public enum Select {
                 .setParameters(ps, parameters, names) //
                 .executeQuery();
         BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
-            System.out.println("getting row");
+            log.debug("getting row");
             if (rs.next()) {
-                emitter.onNext(mapper.apply(rs));
+                T v = mapper.apply(rs);
+                log.debug("emitting {}", v);
+                emitter.onNext(v);
             } else {
-                System.out.println("completed");
+                log.debug("completed");
                 emitter.onComplete();
             }
         };

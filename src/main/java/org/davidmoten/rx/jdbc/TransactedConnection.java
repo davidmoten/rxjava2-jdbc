@@ -20,12 +20,18 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class TransactedConnection implements Connection {
 
+    private static final Logger log = LoggerFactory.getLogger(TransactedConnection.class);
+    
     private final Connection con;
     private final AtomicInteger counter;
 
     public TransactedConnection(Connection con, AtomicInteger counter) {
+        log.info("constructing TransactedConnection from {}, {}", con ,counter);
         this.con = con;
         this.counter = counter;
     }
@@ -54,27 +60,27 @@ public final class TransactedConnection implements Connection {
 
     @Override
     public void close() throws SQLException {
-        System.out.println("TransactedConnection attempt close");
+        log.debug("TransactedConnection attempt close");
         if (counter.get() == 0) {
-            System.out.println("TransactedConnection close");
+            log.debug("TransactedConnection close");
             con.close();
         }
     }
 
     @Override
     public void commit() throws SQLException {
-        System.out.println("TransactedConnection commit attempt, counter=" + counter.get());
+        log.debug("TransactedConnection commit attempt, counter=" + counter.get());
         if (counter.decrementAndGet() == 0) {
-            System.out.println("TransactedConnection commit");
+            log.debug("TransactedConnection commit");
             con.commit();
         }
     }
 
     @Override
     public void rollback() throws SQLException {
-        System.out.println("TransactedConnection rollback attempt, counter=" + counter.get());
+        log.debug("TransactedConnection rollback attempt, counter=" + counter.get());
         if (counter.decrementAndGet() == 0) {
-            System.out.println("TransactedConnection rollback");
+            log.debug("TransactedConnection rollback");
             con.rollback();
         }
     }
