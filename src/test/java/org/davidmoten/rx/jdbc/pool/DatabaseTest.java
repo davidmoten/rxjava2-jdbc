@@ -1,7 +1,15 @@
 package org.davidmoten.rx.jdbc.pool;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.davidmoten.rx.jdbc.Database;
+import org.davidmoten.rx.jdbc.TransactedConnection;
 import org.davidmoten.rx.jdbc.Tx;
+import org.junit.Assert;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
@@ -47,6 +55,23 @@ public class DatabaseTest {
         db() //
                 .select("select score from person") //
                 .parameters("FRED", "JOSEPH");
+    }
+
+    @Test
+    public void testTransactedConnectionCloseCalled() throws SQLException {
+        Connection con = DatabaseCreator.connection();
+        TransactedConnection tcon = new TransactedConnection(con);
+        Assert.assertEquals(1, tcon.counter());
+        Database db = Database.from(Flowable.just(tcon), () -> {
+        });
+        db() //
+                .select("select score from person where name=?") //
+                .parameters("FRED") //
+                .getAs(Integer.class) //
+                .test() //
+                .assertComplete();
+        assertEquals(0, tcon.counter());
+        assertTrue(con.isClosed());
     }
 
     @Test

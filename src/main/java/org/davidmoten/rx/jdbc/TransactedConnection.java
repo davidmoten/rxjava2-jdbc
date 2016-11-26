@@ -40,6 +40,10 @@ public final class TransactedConnection implements Connection {
         this(con, new AtomicInteger(1));
     }
 
+    public int counter() {
+        return counter.get();
+    }
+    
     @Override
     public void abort(Executor executor) throws SQLException {
         con.abort(executor);

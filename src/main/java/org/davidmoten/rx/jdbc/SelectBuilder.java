@@ -92,4 +92,5 @@ public class SelectBuilder {
     public TransactedSelectBuilder transacted() {
         return new TransactedSelectBuilder(this);
     }
+
 }
