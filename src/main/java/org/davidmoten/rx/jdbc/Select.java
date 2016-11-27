@@ -30,6 +30,7 @@ public enum Select {
 
     private static <T> Flowable<T> create(Connection con, String sql,
             Flowable<List<Object>> parameterGroups, Function<? super ResultSet, T> mapper) {
+        log.debug("create called with con="+ con);
         Callable<NamedPreparedStatement> initialState = () -> Util.prepare(con, sql);
         Function<NamedPreparedStatement, Flowable<T>> observableFactory = ps -> parameterGroups
                 .flatMap(parameters -> create(con, ps.ps, parameters, mapper, ps.names), true, 1) //
