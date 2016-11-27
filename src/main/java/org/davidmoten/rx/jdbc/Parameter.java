@@ -47,7 +47,7 @@ public class Parameter {
     String name() {
         return name;
     }
-    
+
     boolean isForOutput() {
         return isForOutput;
     }

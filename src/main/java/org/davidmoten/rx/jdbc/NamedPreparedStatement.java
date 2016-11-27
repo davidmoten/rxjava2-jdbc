@@ -11,6 +11,5 @@ class NamedPreparedStatement {
         this.ps = ps;
         this.names = names;
     }
-    
 
 }

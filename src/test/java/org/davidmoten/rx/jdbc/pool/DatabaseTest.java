@@ -1,18 +1,8 @@
 package org.davidmoten.rx.jdbc.pool;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-
 import org.davidmoten.rx.jdbc.Database;
-import org.davidmoten.rx.jdbc.TransactedConnection;
 import org.davidmoten.rx.jdbc.Tx;
-import org.junit.Assert;
 import org.junit.Test;
-
-import io.reactivex.Flowable;
 
 public class DatabaseTest {
 

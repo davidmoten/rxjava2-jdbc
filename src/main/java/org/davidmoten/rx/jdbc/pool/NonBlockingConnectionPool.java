@@ -16,13 +16,12 @@ public class NonBlockingConnectionPool implements Pool<Connection> {
     private final AtomicReference<NonBlockingPool<Connection>> pool = new AtomicReference<NonBlockingPool<Connection>>();
 
     public NonBlockingConnectionPool(ConnectionProvider cp, int maxSize, long retryDelayMs) {
-        pool.set( NonBlockingPool.factory(() -> cp.get()) //
+        pool.set(NonBlockingPool.factory(() -> cp.get()) //
                 .healthy(c -> true) //
                 .disposer(Util::closeSilently) //
                 .maxSize(maxSize) //
                 .retryDelayMs(retryDelayMs) //
-                .memberFactory(
-                        p -> new ConnectionNonBlockingMember(pool.get())) //
+                .memberFactory(p -> new ConnectionNonBlockingMember(pool.get())) //
                 .build());
     }
 

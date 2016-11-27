@@ -276,7 +276,7 @@ public enum Util {
     static NamedPreparedStatement prepare(Connection con, String sql) throws SQLException {
         return prepare(con, 0, sql);
     }
-    
+
     static NamedPreparedStatement prepare(Connection con, int fetchSize, String sql)
             throws SQLException {
         SqlInfo s = SqlInfo.parse(sql);
