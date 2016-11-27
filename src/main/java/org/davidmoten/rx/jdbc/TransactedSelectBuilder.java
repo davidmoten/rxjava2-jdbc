@@ -74,6 +74,7 @@ public class TransactedSelectBuilder {
                 }), //
                 selectBuilder.parameters, //
                 selectBuilder.sql, //
+                selectBuilder.fetchSize, //
                 rs -> Util.mapObject(rs, cls, 1)) //
                 .materialize() //
                 .flatMap(n -> toTx(n, connection.get())).doOnNext(tx -> {

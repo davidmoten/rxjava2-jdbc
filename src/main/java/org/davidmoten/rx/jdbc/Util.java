@@ -250,7 +250,7 @@ public enum Util {
 
     public static void closeSilently(AutoCloseable c) {
         try {
-            log.debug("closing {}",c);
+            log.debug("closing {}", c);
             c.close();
         } catch (Exception e) {
             log.debug("ignored exception {}, {}, {}", e.getMessage(), e.getClass(), e);
@@ -274,13 +274,19 @@ public enum Util {
     }
 
     static NamedPreparedStatement prepare(Connection con, String sql) throws SQLException {
-        SqlInfo s = SqlInfo.parse(sql);
-        return new NamedPreparedStatement(con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY,
-                ResultSet.CONCUR_READ_ONLY), s.names());
+        return prepare(con, 0, sql);
     }
     
-    
-    
+    static NamedPreparedStatement prepare(Connection con, int fetchSize, String sql)
+            throws SQLException {
+        SqlInfo s = SqlInfo.parse(sql);
+        PreparedStatement ps = con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_READ_ONLY);
+        if (fetchSize > 0) {
+            ps.setFetchSize(fetchSize);
+        }
+        return new NamedPreparedStatement(ps, s.names());
+    }
 
     static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql)
             throws SQLException {

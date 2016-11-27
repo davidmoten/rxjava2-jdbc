@@ -20,6 +20,7 @@ public class SelectBuilder {
     private List<Object> list = null;
     Flowable<List<Object>> parameters = null;
     boolean valuesOnly = false;
+    int fetchSize = 0; //default
 
     public SelectBuilder(String sql, Flowable<Connection> connections) {
         this.sql = sql;
@@ -62,6 +63,11 @@ public class SelectBuilder {
         this.list.add(new Parameter(name, value));
         return this;
     }
+    
+    public SelectBuilder fetchSize(int size) {
+        this.fetchSize = size;
+        return this;
+    }
 
     public SelectBuilder parameters(Object... values) {
         if (values.length == 0) {
@@ -79,7 +85,7 @@ public class SelectBuilder {
 
     public <T> Flowable<T> getAs(Class<T> cls) {
         resolveParameters();
-        return Select.create(connections.firstOrError(), parameters, sql,
+        return Select.create(connections.firstOrError(), parameters, sql,fetchSize,
                 rs -> Util.mapObject(rs, cls, 1));
     }
 
