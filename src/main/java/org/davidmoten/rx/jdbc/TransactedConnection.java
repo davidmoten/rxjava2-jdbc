@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.davidmoten.guavamini.Preconditions;
+
 public final class TransactedConnection implements Connection {
 
     private static final Logger log = LoggerFactory.getLogger(TransactedConnection.class);
@@ -30,6 +32,8 @@ public final class TransactedConnection implements Connection {
     private final AtomicInteger counter;
 
     public TransactedConnection(Connection con, AtomicInteger counter) {
+        Preconditions.checkNotNull(con);
+        Preconditions.checkNotNull(counter);
         log.info("constructing TransactedConnection from {}, {}", con, counter);
         this.con = con;
         this.counter = counter;

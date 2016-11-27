@@ -62,6 +62,7 @@ public class TransactedSelectBuilder {
         Flowable<Tx<T>> o = Select.create(selectBuilder.connections.firstOrError() //
                 .map(c -> {
                     if (c instanceof TransactedConnection) {
+                        connection.set(c);
                         return c;
                     } else {
                         c.setAutoCommit(false);

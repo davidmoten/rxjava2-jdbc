@@ -2,6 +2,8 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
 
+import com.github.davidmoten.guavamini.Preconditions;
+
 final class TxImpl<T> implements Tx<T> {
 
     private final TransactedConnection con;
@@ -10,6 +12,7 @@ final class TxImpl<T> implements Tx<T> {
     private final boolean completed;
 
     TxImpl(Connection con, T value, Throwable e, boolean completed) {
+        Preconditions.checkNotNull(con);
         if (con instanceof TransactedConnection) {
             this.con = (TransactedConnection) con;
         } else {
