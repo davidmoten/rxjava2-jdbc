@@ -32,8 +32,6 @@ public final class TransactedConnection implements Connection {
     private final AtomicInteger counter;
 
     public TransactedConnection(Connection con, AtomicInteger counter) {
-        Preconditions.checkNotNull(con);
-        Preconditions.checkNotNull(counter);
         log.info("constructing TransactedConnection from {}, {}", con, counter);
         this.con = con;
         this.counter = counter;
