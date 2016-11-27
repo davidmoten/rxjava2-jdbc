@@ -278,6 +278,9 @@ public enum Util {
         return new NamedPreparedStatement(con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY,
                 ResultSet.CONCUR_READ_ONLY), s.names());
     }
+    
+    
+    
 
     static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql)
             throws SQLException {

@@ -16,784 +16,785 @@ import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
-import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
 
-public class TransactedResultSet {
+public class TransactedResultSet implements ResultSet{
 
     private final ResultSet rs;
-    private final TransactedConnection con;
+    private final TransactedPreparedStatement ps;
 
-    public TransactedResultSet(TransactedConnection con, ResultSet rs) {
-        this.con = con;
+    public TransactedResultSet(TransactedPreparedStatement ps, ResultSet rs) {
         this.rs = rs;
+        this.ps = ps;
     }
 
     public boolean absolute(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.absolute(arg0);
     }
 
     public void afterLast() throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.afterLast();
     }
 
     public void beforeFirst() throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.beforeFirst();
     }
 
     public void cancelRowUpdates() throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.cancelRowUpdates();
     }
 
     public void clearWarnings() throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.clearWarnings();
     }
 
     public void close() throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.close();
     }
 
     public void deleteRow() throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.deleteRow();
     }
 
     public int findColumn(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.findColumn(arg0);
     }
 
     public boolean first() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.first();
     }
 
     public Array getArray(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getArray(arg0);
     }
 
     public Array getArray(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getArray(arg0);
     }
 
     public InputStream getAsciiStream(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getAsciiStream(arg0);
     }
 
     public InputStream getAsciiStream(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public BigDecimal getBigDecimal(int arg0, int arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getAsciiStream(arg0);
     }
 
     public BigDecimal getBigDecimal(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public BigDecimal getBigDecimal(String arg0, int arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getBigDecimal(arg0);
     }
 
     public BigDecimal getBigDecimal(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getBigDecimal(arg0);
+    }
+
+    public BigDecimal getBigDecimal(int arg0, int arg1) throws SQLException {
+        return rs.getBigDecimal(arg0, arg1);
+    }
+
+    public BigDecimal getBigDecimal(String arg0, int arg1) throws SQLException {
+        return rs.getBigDecimal(arg0, arg1);
     }
 
     public InputStream getBinaryStream(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getBinaryStream(arg0);
     }
 
     public InputStream getBinaryStream(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getBinaryStream(arg0);
     }
 
     public Blob getBlob(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getBlob(arg0);
     }
 
     public Blob getBlob(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getBlob(arg0);
     }
 
     public boolean getBoolean(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getBoolean(arg0);
     }
 
     public boolean getBoolean(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getBoolean(arg0);
     }
 
     public byte getByte(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getByte(arg0);
     }
 
     public byte getByte(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getByte(arg0);
     }
 
     public byte[] getBytes(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getBytes(arg0);
     }
 
     public byte[] getBytes(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getBytes(arg0);
     }
 
     public Reader getCharacterStream(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getCharacterStream(arg0);
     }
 
     public Reader getCharacterStream(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getCharacterStream(arg0);
     }
 
     public Clob getClob(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getClob(arg0);
     }
 
     public Clob getClob(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getClob(arg0);
     }
 
     public int getConcurrency() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getConcurrency();
     }
 
     public String getCursorName() throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public Date getDate(int arg0, Calendar arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getCursorName();
     }
 
     public Date getDate(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public Date getDate(String arg0, Calendar arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getDate(arg0);
     }
 
     public Date getDate(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getDate(arg0);
+    }
+
+    public Date getDate(int arg0, Calendar arg1) throws SQLException {
+        return rs.getDate(arg0, arg1);
+    }
+
+    public Date getDate(String arg0, Calendar arg1) throws SQLException {
+        return rs.getDate(arg0, arg1);
     }
 
     public double getDouble(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getDouble(arg0);
     }
 
     public double getDouble(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getDouble(arg0);
     }
 
     public int getFetchDirection() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getFetchDirection();
     }
 
     public int getFetchSize() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getFetchSize();
     }
 
     public float getFloat(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getFloat(arg0);
     }
 
     public float getFloat(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getFloat(arg0);
     }
 
     public int getHoldability() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getHoldability();
     }
 
     public int getInt(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getInt(arg0);
     }
 
     public int getInt(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getInt(arg0);
     }
 
     public long getLong(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getLong(arg0);
     }
 
     public long getLong(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getLong(arg0);
     }
 
     public ResultSetMetaData getMetaData() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getMetaData();
     }
 
     public Reader getNCharacterStream(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getNCharacterStream(arg0);
     }
 
     public Reader getNCharacterStream(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getNCharacterStream(arg0);
     }
 
     public NClob getNClob(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getNClob(arg0);
     }
 
     public NClob getNClob(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getNClob(arg0);
     }
 
     public String getNString(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getNString(arg0);
     }
 
     public String getNString(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public <T> T getObject(int arg0, Class<T> arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public Object getObject(int arg0, Map<String, Class<?>> arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getNString(arg0);
     }
 
     public Object getObject(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public <T> T getObject(String arg0, Class<T> arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public Object getObject(String arg0, Map<String, Class<?>> arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getObject(arg0);
     }
 
     public Object getObject(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getObject(arg0);
+    }
+
+    public Object getObject(int arg0, Map<String, Class<?>> arg1) throws SQLException {
+        return rs.getObject(arg0, arg1);
+    }
+
+    public Object getObject(String arg0, Map<String, Class<?>> arg1) throws SQLException {
+        return rs.getObject(arg0, arg1);
+    }
+
+    public <T> T getObject(int arg0, Class<T> arg1) throws SQLException {
+        return rs.getObject(arg0, arg1);
+    }
+
+    public <T> T getObject(String arg0, Class<T> arg1) throws SQLException {
+        return rs.getObject(arg0, arg1);
     }
 
     public Ref getRef(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getRef(arg0);
     }
 
     public Ref getRef(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getRef(arg0);
     }
 
     public int getRow() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getRow();
     }
 
     public RowId getRowId(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getRowId(arg0);
     }
 
     public RowId getRowId(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getRowId(arg0);
     }
 
     public SQLXML getSQLXML(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getSQLXML(arg0);
     }
 
     public SQLXML getSQLXML(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getSQLXML(arg0);
     }
 
     public short getShort(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getShort(arg0);
     }
 
     public short getShort(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getShort(arg0);
     }
 
-    public Statement getStatement() throws SQLException {
-        throw new UnsupportedOperationException();
+    public TransactedPreparedStatement getStatement() throws SQLException {
+        return ps;
     }
 
     public String getString(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getString(arg0);
     }
 
     public String getString(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public Time getTime(int arg0, Calendar arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getString(arg0);
     }
 
     public Time getTime(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public Time getTime(String arg0, Calendar arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getTime(arg0);
     }
 
     public Time getTime(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getTime(arg0);
     }
 
-    public Timestamp getTimestamp(int arg0, Calendar arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+    public Time getTime(int arg0, Calendar arg1) throws SQLException {
+        return rs.getTime(arg0, arg1);
+    }
+
+    public Time getTime(String arg0, Calendar arg1) throws SQLException {
+        return rs.getTime(arg0, arg1);
     }
 
     public Timestamp getTimestamp(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public Timestamp getTimestamp(String arg0, Calendar arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getTimestamp(arg0);
     }
 
     public Timestamp getTimestamp(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getTimestamp(arg0);
+    }
+
+    public Timestamp getTimestamp(int arg0, Calendar arg1) throws SQLException {
+        return rs.getTimestamp(arg0, arg1);
+    }
+
+    public Timestamp getTimestamp(String arg0, Calendar arg1) throws SQLException {
+        return rs.getTimestamp(arg0, arg1);
     }
 
     public int getType() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getType();
     }
 
     public URL getURL(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getURL(arg0);
     }
 
     public URL getURL(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getURL(arg0);
     }
 
     public InputStream getUnicodeStream(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getUnicodeStream(arg0);
     }
 
     public InputStream getUnicodeStream(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getUnicodeStream(arg0);
     }
 
     public SQLWarning getWarnings() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.getWarnings();
     }
 
     public void insertRow() throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.insertRow();
     }
 
     public boolean isAfterLast() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.isAfterLast();
     }
 
     public boolean isBeforeFirst() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.isBeforeFirst();
     }
 
     public boolean isClosed() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.isClosed();
     }
 
     public boolean isFirst() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.isFirst();
     }
 
     public boolean isLast() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.isLast();
     }
 
     public boolean isWrapperFor(Class<?> arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.isWrapperFor(arg0);
     }
 
     public boolean last() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.last();
     }
 
     public void moveToCurrentRow() throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.moveToCurrentRow();
     }
 
     public void moveToInsertRow() throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.moveToInsertRow();
     }
 
     public boolean next() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.next();
     }
 
     public boolean previous() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.previous();
     }
 
     public void refreshRow() throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.refreshRow();
     }
 
     public boolean relative(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.relative(arg0);
     }
 
     public boolean rowDeleted() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.rowDeleted();
     }
 
     public boolean rowInserted() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.rowInserted();
     }
 
     public boolean rowUpdated() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.rowUpdated();
     }
 
     public void setFetchDirection(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.setFetchDirection(arg0);
     }
 
     public void setFetchSize(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.setFetchSize(arg0);
     }
 
     public <T> T unwrap(Class<T> arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.unwrap(arg0);
     }
 
     public void updateArray(int arg0, Array arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateArray(arg0, arg1);
     }
 
     public void updateArray(String arg0, Array arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateAsciiStream(int arg0, InputStream arg1, int arg2) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateAsciiStream(int arg0, InputStream arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateArray(arg0, arg1);
     }
 
     public void updateAsciiStream(int arg0, InputStream arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateAsciiStream(String arg0, InputStream arg1, int arg2) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateAsciiStream(String arg0, InputStream arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateAsciiStream(arg0, arg1);
     }
 
     public void updateAsciiStream(String arg0, InputStream arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateAsciiStream(arg0, arg1);
+    }
+
+    public void updateAsciiStream(int arg0, InputStream arg1, int arg2) throws SQLException {
+        rs.updateAsciiStream(arg0, arg1, arg2);
+    }
+
+    public void updateAsciiStream(String arg0, InputStream arg1, int arg2) throws SQLException {
+        rs.updateAsciiStream(arg0, arg1, arg2);
+    }
+
+    public void updateAsciiStream(int arg0, InputStream arg1, long arg2) throws SQLException {
+        rs.updateAsciiStream(arg0, arg1, arg2);
+    }
+
+    public void updateAsciiStream(String arg0, InputStream arg1, long arg2) throws SQLException {
+        rs.updateAsciiStream(arg0, arg1, arg2);
     }
 
     public void updateBigDecimal(int arg0, BigDecimal arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateBigDecimal(arg0, arg1);
     }
 
     public void updateBigDecimal(String arg0, BigDecimal arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateBinaryStream(int arg0, InputStream arg1, int arg2) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateBinaryStream(int arg0, InputStream arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateBigDecimal(arg0, arg1);
     }
 
     public void updateBinaryStream(int arg0, InputStream arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateBinaryStream(String arg0, InputStream arg1, int arg2) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateBinaryStream(String arg0, InputStream arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateBinaryStream(arg0, arg1);
     }
 
     public void updateBinaryStream(String arg0, InputStream arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateBinaryStream(arg0, arg1);
+    }
+
+    public void updateBinaryStream(int arg0, InputStream arg1, int arg2) throws SQLException {
+        rs.updateBinaryStream(arg0, arg1, arg2);
+    }
+
+    public void updateBinaryStream(String arg0, InputStream arg1, int arg2) throws SQLException {
+        rs.updateBinaryStream(arg0, arg1, arg2);
+    }
+
+    public void updateBinaryStream(int arg0, InputStream arg1, long arg2) throws SQLException {
+        rs.updateBinaryStream(arg0, arg1, arg2);
+    }
+
+    public void updateBinaryStream(String arg0, InputStream arg1, long arg2) throws SQLException {
+        rs.updateBinaryStream(arg0, arg1, arg2);
     }
 
     public void updateBlob(int arg0, Blob arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateBlob(int arg0, InputStream arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateBlob(int arg0, InputStream arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateBlob(arg0, arg1);
     }
 
     public void updateBlob(String arg0, Blob arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateBlob(arg0, arg1);
     }
 
-    public void updateBlob(String arg0, InputStream arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+    public void updateBlob(int arg0, InputStream arg1) throws SQLException {
+        rs.updateBlob(arg0, arg1);
     }
 
     public void updateBlob(String arg0, InputStream arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateBlob(arg0, arg1);
+    }
+
+    public void updateBlob(int arg0, InputStream arg1, long arg2) throws SQLException {
+        rs.updateBlob(arg0, arg1, arg2);
+    }
+
+    public void updateBlob(String arg0, InputStream arg1, long arg2) throws SQLException {
+        rs.updateBlob(arg0, arg1, arg2);
     }
 
     public void updateBoolean(int arg0, boolean arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateBoolean(arg0, arg1);
     }
 
     public void updateBoolean(String arg0, boolean arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateBoolean(arg0, arg1);
     }
 
     public void updateByte(int arg0, byte arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateByte(arg0, arg1);
     }
 
     public void updateByte(String arg0, byte arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateByte(arg0, arg1);
     }
 
     public void updateBytes(int arg0, byte[] arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateBytes(arg0, arg1);
     }
 
     public void updateBytes(String arg0, byte[] arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateCharacterStream(int arg0, Reader arg1, int arg2) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateCharacterStream(int arg0, Reader arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateBytes(arg0, arg1);
     }
 
     public void updateCharacterStream(int arg0, Reader arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateCharacterStream(String arg0, Reader arg1, int arg2) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateCharacterStream(String arg0, Reader arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateCharacterStream(arg0, arg1);
     }
 
     public void updateCharacterStream(String arg0, Reader arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateCharacterStream(arg0, arg1);
+    }
+
+    public void updateCharacterStream(int arg0, Reader arg1, int arg2) throws SQLException {
+        rs.updateCharacterStream(arg0, arg1, arg2);
+    }
+
+    public void updateCharacterStream(String arg0, Reader arg1, int arg2) throws SQLException {
+        rs.updateCharacterStream(arg0, arg1, arg2);
+    }
+
+    public void updateCharacterStream(int arg0, Reader arg1, long arg2) throws SQLException {
+        rs.updateCharacterStream(arg0, arg1, arg2);
+    }
+
+    public void updateCharacterStream(String arg0, Reader arg1, long arg2) throws SQLException {
+        rs.updateCharacterStream(arg0, arg1, arg2);
     }
 
     public void updateClob(int arg0, Clob arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateClob(int arg0, Reader arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateClob(int arg0, Reader arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateClob(arg0, arg1);
     }
 
     public void updateClob(String arg0, Clob arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateClob(arg0, arg1);
     }
 
-    public void updateClob(String arg0, Reader arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+    public void updateClob(int arg0, Reader arg1) throws SQLException {
+        rs.updateClob(arg0, arg1);
     }
 
     public void updateClob(String arg0, Reader arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateClob(arg0, arg1);
+    }
+
+    public void updateClob(int arg0, Reader arg1, long arg2) throws SQLException {
+        rs.updateClob(arg0, arg1, arg2);
+    }
+
+    public void updateClob(String arg0, Reader arg1, long arg2) throws SQLException {
+        rs.updateClob(arg0, arg1, arg2);
     }
 
     public void updateDate(int arg0, Date arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateDate(arg0, arg1);
     }
 
     public void updateDate(String arg0, Date arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateDate(arg0, arg1);
     }
 
     public void updateDouble(int arg0, double arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateDouble(arg0, arg1);
     }
 
     public void updateDouble(String arg0, double arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateDouble(arg0, arg1);
     }
 
     public void updateFloat(int arg0, float arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateFloat(arg0, arg1);
     }
 
     public void updateFloat(String arg0, float arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateFloat(arg0, arg1);
     }
 
     public void updateInt(int arg0, int arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateInt(arg0, arg1);
     }
 
     public void updateInt(String arg0, int arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateInt(arg0, arg1);
     }
 
     public void updateLong(int arg0, long arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateLong(arg0, arg1);
     }
 
     public void updateLong(String arg0, long arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateNCharacterStream(int arg0, Reader arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateLong(arg0, arg1);
     }
 
     public void updateNCharacterStream(int arg0, Reader arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateNCharacterStream(String arg0, Reader arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateNCharacterStream(arg0, arg1);
     }
 
     public void updateNCharacterStream(String arg0, Reader arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateNCharacterStream(arg0, arg1);
+    }
+
+    public void updateNCharacterStream(int arg0, Reader arg1, long arg2) throws SQLException {
+        rs.updateNCharacterStream(arg0, arg1, arg2);
+    }
+
+    public void updateNCharacterStream(String arg0, Reader arg1, long arg2) throws SQLException {
+        rs.updateNCharacterStream(arg0, arg1, arg2);
     }
 
     public void updateNClob(int arg0, NClob arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateNClob(int arg0, Reader arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateNClob(int arg0, Reader arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateNClob(arg0, arg1);
     }
 
     public void updateNClob(String arg0, NClob arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateNClob(arg0, arg1);
     }
 
-    public void updateNClob(String arg0, Reader arg1, long arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+    public void updateNClob(int arg0, Reader arg1) throws SQLException {
+        rs.updateNClob(arg0, arg1);
     }
 
     public void updateNClob(String arg0, Reader arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateNClob(arg0, arg1);
+    }
+
+    public void updateNClob(int arg0, Reader arg1, long arg2) throws SQLException {
+        rs.updateNClob(arg0, arg1, arg2);
+    }
+
+    public void updateNClob(String arg0, Reader arg1, long arg2) throws SQLException {
+        rs.updateNClob(arg0, arg1, arg2);
     }
 
     public void updateNString(int arg0, String arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateNString(arg0, arg1);
     }
 
     public void updateNString(String arg0, String arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateNString(arg0, arg1);
     }
 
     public void updateNull(int arg0) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateNull(arg0);
     }
 
     public void updateNull(String arg0) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateObject(int arg0, Object arg1, int arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateNull(arg0);
     }
 
     public void updateObject(int arg0, Object arg1) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateObject(String arg0, Object arg1, int arg2) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateObject(arg0, arg1);
     }
 
     public void updateObject(String arg0, Object arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateObject(arg0, arg1);
+    }
+
+    public void updateObject(int arg0, Object arg1, int arg2) throws SQLException {
+        rs.updateObject(arg0, arg1, arg2);
+    }
+
+    public void updateObject(String arg0, Object arg1, int arg2) throws SQLException {
+        rs.updateObject(arg0, arg1, arg2);
     }
 
     public void updateRef(int arg0, Ref arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateRef(arg0, arg1);
     }
 
     public void updateRef(String arg0, Ref arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateRef(arg0, arg1);
     }
 
     public void updateRow() throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateRow();
     }
 
     public void updateRowId(int arg0, RowId arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateRowId(arg0, arg1);
     }
 
     public void updateRowId(String arg0, RowId arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateRowId(arg0, arg1);
     }
 
     public void updateSQLXML(int arg0, SQLXML arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateSQLXML(arg0, arg1);
     }
 
     public void updateSQLXML(String arg0, SQLXML arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateSQLXML(arg0, arg1);
     }
 
     public void updateShort(int arg0, short arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateShort(arg0, arg1);
     }
 
     public void updateShort(String arg0, short arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateShort(arg0, arg1);
     }
 
     public void updateString(int arg0, String arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateString(arg0, arg1);
     }
 
     public void updateString(String arg0, String arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateString(arg0, arg1);
     }
 
     public void updateTime(int arg0, Time arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateTime(arg0, arg1);
     }
 
     public void updateTime(String arg0, Time arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateTime(arg0, arg1);
     }
 
     public void updateTimestamp(int arg0, Timestamp arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateTimestamp(arg0, arg1);
     }
 
     public void updateTimestamp(String arg0, Timestamp arg1) throws SQLException {
-        throw new UnsupportedOperationException();
+        rs.updateTimestamp(arg0, arg1);
     }
 
     public boolean wasNull() throws SQLException {
-        throw new UnsupportedOperationException();
+        return rs.wasNull();
     }
 
+    
+    
 }
