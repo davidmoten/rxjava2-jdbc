@@ -12,7 +12,6 @@ import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.Ref;
-import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
@@ -22,7 +21,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 
-public class TransactedPreparedStatement implements PreparedStatement{
+public class TransactedPreparedStatement implements PreparedStatement {
 
     private final TransactedConnection con;
     private final PreparedStatement ps;
@@ -88,12 +87,12 @@ public class TransactedPreparedStatement implements PreparedStatement{
         return ps.executeBatch();
     }
 
-    public ResultSet executeQuery() throws SQLException {
+    public TransactedResultSet executeQuery() throws SQLException {
         return new TransactedResultSet(this, ps.executeQuery());
     }
 
-    public ResultSet executeQuery(String arg0) throws SQLException {
-        return ps.executeQuery(arg0);
+    public TransactedResultSet executeQuery(String sql) throws SQLException {
+        return new TransactedResultSet(this, ps.executeQuery(sql));
     }
 
     public int executeUpdate() throws SQLException {
@@ -128,8 +127,8 @@ public class TransactedPreparedStatement implements PreparedStatement{
         return ps.getFetchSize();
     }
 
-    public ResultSet getGeneratedKeys() throws SQLException {
-        return ps.getGeneratedKeys();
+    public TransactedResultSet getGeneratedKeys() throws SQLException {
+        return new TransactedResultSet(this, ps.getGeneratedKeys());
     }
 
     public int getMaxFieldSize() throws SQLException {
@@ -160,8 +159,8 @@ public class TransactedPreparedStatement implements PreparedStatement{
         return ps.getQueryTimeout();
     }
 
-    public ResultSet getResultSet() throws SQLException {
-        return ps.getResultSet();
+    public TransactedResultSet getResultSet() throws SQLException {
+        return new TransactedResultSet(this, ps.getResultSet());
     }
 
     public int getResultSetConcurrency() throws SQLException {
@@ -420,6 +419,7 @@ public class TransactedPreparedStatement implements PreparedStatement{
         ps.setURL(arg0, arg1);
     }
 
+    @Deprecated
     public void setUnicodeStream(int arg0, InputStream arg1, int arg2) throws SQLException {
         ps.setUnicodeStream(arg0, arg1, arg2);
     }

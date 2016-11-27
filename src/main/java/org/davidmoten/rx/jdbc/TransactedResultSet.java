@@ -367,10 +367,12 @@ public class TransactedResultSet implements ResultSet{
         return rs.getURL(arg0);
     }
 
+    @Deprecated
     public InputStream getUnicodeStream(int arg0) throws SQLException {
         return rs.getUnicodeStream(arg0);
     }
 
+    @Deprecated
     public InputStream getUnicodeStream(String arg0) throws SQLException {
         return rs.getUnicodeStream(arg0);
     }
