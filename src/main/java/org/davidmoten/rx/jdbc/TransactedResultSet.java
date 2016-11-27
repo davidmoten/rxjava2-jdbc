@@ -91,10 +91,12 @@ public class TransactedResultSet implements ResultSet{
         return rs.getBigDecimal(arg0);
     }
 
+    @Deprecated
     public BigDecimal getBigDecimal(int arg0, int arg1) throws SQLException {
         return rs.getBigDecimal(arg0, arg1);
     }
 
+    @Deprecated
     public BigDecimal getBigDecimal(String arg0, int arg1) throws SQLException {
         return rs.getBigDecimal(arg0, arg1);
     }

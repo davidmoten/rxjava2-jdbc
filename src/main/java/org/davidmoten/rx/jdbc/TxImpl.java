@@ -2,8 +2,6 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
 
-import com.github.davidmoten.guavamini.Preconditions;
-
 final class TxImpl<T> implements Tx<T> {
 
     private final TransactedConnection con;
