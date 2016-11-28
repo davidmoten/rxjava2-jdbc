@@ -50,7 +50,8 @@ public final class NonBlockingPool<T> implements Pool<T> {
                 .cache();
 
         this.members = subject //
-                .toSerialized().toFlowable(BackpressureStrategy.BUFFER)//
+                .toSerialized() //
+                .toFlowable(BackpressureStrategy.BUFFER) //
                 .mergeWith(cachedMembers) //
                 .flatMap(member -> member.checkout().toFlowable());
     }
