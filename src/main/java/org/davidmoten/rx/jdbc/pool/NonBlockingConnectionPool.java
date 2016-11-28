@@ -31,7 +31,9 @@ public class NonBlockingConnectionPool implements Pool<Connection> {
 
     @Override
     public Flowable<Member<Connection>> members() {
-        return pool.get().members().doOnNext(c -> log.debug("supplied {}", c));
+        return pool.get().members() //
+                .doOnRequest(n -> log.debug("connections requested={}",n)) //
+                .doOnNext(c -> log.debug("supplied {}", c));
     }
 
     @Override
