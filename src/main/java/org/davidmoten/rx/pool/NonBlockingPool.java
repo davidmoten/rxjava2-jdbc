@@ -1,6 +1,7 @@
 package org.davidmoten.rx.pool;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,13 +55,13 @@ public final class NonBlockingPool<T> implements Pool<T> {
         this.scheduler = scheduler;
         this.subject = PublishSubject.create();
 
-        AtomicReference<List<Member<T>>> list = new AtomicReference<List<Member<T>>>();
+        AtomicReference<List<Member<T>>> list = new AtomicReference<>();
         Flowable<Member<T>> baseMembers = Flowable.defer(() -> {
-            if (list.get() == null) {
+            if (list.compareAndSet(null, Collections.emptyList())) {
                 List<Member<T>> m = IntStream.range(1, maxSize)
                         .mapToObj(n -> memberFactory.create(NonBlockingPool.this)) //
                         .collect(Collectors.toList());
-                list.compareAndSet(null, m);
+                list.set(m);
             }
             return Flowable.fromIterable(list.get());
         });
