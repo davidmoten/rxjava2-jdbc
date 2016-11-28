@@ -15,6 +15,7 @@ public class TransactedSelectBuilder {
     private static final Logger log = LoggerFactory.getLogger(TransactedSelectBuilder.class);
 
     private final SelectBuilder selectBuilder;
+
     private boolean valuesOnly = false;
 
     public TransactedSelectBuilder(SelectBuilder selectBuilder) {
@@ -51,11 +52,57 @@ public class TransactedSelectBuilder {
         return this;
     }
 
-    public TransactedSelectBuilder valuesOnly() {
+    private static enum ValuesOnly {
+        TRANSACTED_VALUES_ONLY, VALUES_ONLY, ALL;
+    }
+
+    public TransactedSelectBuilder transactedValuesOnly() {
         this.valuesOnly = true;
         return this;
     }
 
+    public TransactedSelectBuilderValuesOnly valuesOnly() {
+        return new TransactedSelectBuilderValuesOnly(this);
+    }
+    
+    public static final class TransactedSelectBuilderValuesOnly {
+        private final TransactedSelectBuilder b;
+
+        TransactedSelectBuilderValuesOnly(TransactedSelectBuilder b) {
+            this.b = b;
+        }
+        
+        public <T> Flowable<T> getAs(Class<T> cls) {
+            b.selectBuilder.resolveParameters();
+            AtomicReference<Connection> connection = new AtomicReference<Connection>();
+            Flowable<Tx<T>> o = Select.create(b.selectBuilder.connections.firstOrError() //
+                    .map(c -> {
+                        if (c instanceof TransactedConnection) {
+                            connection.set(c);
+                            return c;
+                        } else {
+                            c.setAutoCommit(false);
+                            log.debug("creating new TransactedConnection");
+                            TransactedConnection c2 = new TransactedConnection(c);
+                            connection.set(c2);
+                            return c2;
+                        }
+                    }), //
+                    b.selectBuilder.parameters, //
+                    b.selectBuilder.sql, //
+                    b.selectBuilder.fetchSize, //
+                    rs -> Util.mapObject(rs, cls, 1)) //
+                    .materialize() //
+                    .flatMap(n -> toTx(n, connection.get())).doOnNext(tx -> {
+                        if (tx.isComplete()) {
+                            ((TxImpl<T>) tx).connection().commit();
+                        }
+                    });
+                return o.flatMap(Tx.flattenToValuesOnly());
+        }
+
+    }
+    
     public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
         selectBuilder.resolveParameters();
         AtomicReference<Connection> connection = new AtomicReference<Connection>();

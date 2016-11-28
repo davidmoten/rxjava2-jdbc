@@ -69,7 +69,7 @@ public class DatabaseTest {
                 .select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .transacted() //
-                .valuesOnly() //
+                .transactedValuesOnly() //
                 .getAs(Integer.class) //
                 .doOnNext(System.out::println)//
                 .flatMap(tx -> db //
@@ -77,8 +77,7 @@ public class DatabaseTest {
                         .select("select name from person where score = ?") //
                         .parameters(tx.value()) //
                         .valuesOnly() //
-                        .getAs(String.class) //
-                        .map(Tx.toValue())) //
+                        .getAs(String.class)) //
                 .test() //
                 .assertNoErrors() //
                 .assertValues("FRED", "JOSEPH") //
