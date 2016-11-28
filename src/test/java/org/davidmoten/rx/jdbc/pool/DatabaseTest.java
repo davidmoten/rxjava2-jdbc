@@ -69,7 +69,7 @@ public class DatabaseTest {
                 .select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .transacted() //
-                .transactedValuesOnly() //
+                .valuesOnlyWithTx() //
                 .getAs(Integer.class) //
                 .doOnNext(System.out::println)//
                 .flatMap(tx -> db //

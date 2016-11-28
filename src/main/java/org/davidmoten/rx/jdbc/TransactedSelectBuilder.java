@@ -56,7 +56,7 @@ public class TransactedSelectBuilder {
         TRANSACTED_VALUES_ONLY, VALUES_ONLY, ALL;
     }
 
-    public TransactedSelectBuilder transactedValuesOnly() {
+    public TransactedSelectBuilder valuesOnlyWithTx() {
         this.valuesOnly = true;
         return this;
     }
