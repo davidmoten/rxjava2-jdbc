@@ -63,7 +63,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
                 list.set(m);
                 log.debug("created pool of size={}", maxSize);
             }
-            return Flowable.fromIterable(list.get()).doOnNext(x -> log.debug("x={}", x))
+            return Flowable.fromIterable(list.get()) //
                     .doOnRequest(n -> log.debug("requested={}", n));
         });
 
@@ -73,7 +73,9 @@ public final class NonBlockingPool<T> implements Pool<T> {
 
         this.members = baseMembers //
                 .mergeWith(returnedMembers) //
-                .flatMap(member -> member.checkout().toFlowable());
+                .doOnNext(x -> log.debug("member={}", x))
+                .<Member<T>> flatMap(member -> member.checkout().toFlowable()) //
+                .doOnNext(x -> log.debug("checked out member={}", x));
     }
 
     @Override
