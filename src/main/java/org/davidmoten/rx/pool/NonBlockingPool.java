@@ -2,6 +2,9 @@ package org.davidmoten.rx.pool;
 
 import java.util.concurrent.Callable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.BackpressureStrategy;
@@ -13,6 +16,8 @@ import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 
 public final class NonBlockingPool<T> implements Pool<T> {
+
+    private static final Logger log = LoggerFactory.getLogger(NonBlockingPool.class);
 
     final PublishSubject<Member<T>> subject;
     final Callable<T> factory;
@@ -47,6 +52,8 @@ public final class NonBlockingPool<T> implements Pool<T> {
         Flowable<Member<T>> cachedMembers = Flowable //
                 .range(1, maxSize) //
                 .map(n -> memberFactory.create(NonBlockingPool.this)) //
+                .doOnRequest(n -> log.debug("preCache request={}", n)) //
+                .doOnNext(c -> log.debug("preCache emission={}", c)) //
                 .cache();
 
         this.members = subject //
