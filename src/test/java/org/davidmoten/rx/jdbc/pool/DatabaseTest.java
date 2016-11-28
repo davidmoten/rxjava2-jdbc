@@ -1,13 +1,20 @@
 package org.davidmoten.rx.jdbc.pool;
 
 import org.davidmoten.rx.jdbc.Database;
-import org.davidmoten.rx.jdbc.Tx;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DatabaseTest {
 
+    private static final Logger log = LoggerFactory.getLogger(DatabaseTest.class);
+
     private static Database db() {
         return DatabaseCreator.create(1);
+    }
+
+    private static Database db(int poolSize) {
+        return DatabaseCreator.create(poolSize);
     }
 
     @Test
@@ -78,6 +85,27 @@ public class DatabaseTest {
                         .parameters(tx.value()) //
                         .valuesOnly() //
                         .getAs(String.class)) //
+                .test() //
+                .assertNoErrors() //
+                .assertValues("FRED", "JOSEPH") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSelectChained() {
+        System.out.println("testSelectChained");
+        Database db = db(2);
+        db //
+                .select("select score from person where name=?") //
+                .parameters("FRED", "JOSEPH") //
+                .getAs(Integer.class) //
+                .flatMap(score -> {
+                    log.info("score={}", score);
+                    return db //
+                            .select("select name from person where score = ?") //
+                            .parameters(score) //
+                            .getAs(String.class);
+                }) //
                 .test() //
                 .assertNoErrors() //
                 .assertValues("FRED", "JOSEPH") //

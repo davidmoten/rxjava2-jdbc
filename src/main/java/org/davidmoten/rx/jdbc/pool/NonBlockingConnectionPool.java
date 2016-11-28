@@ -8,10 +8,14 @@ import org.davidmoten.rx.jdbc.Util;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.reactivex.Flowable;
 
 public class NonBlockingConnectionPool implements Pool<Connection> {
+
+    private static final Logger log = LoggerFactory.getLogger(NonBlockingConnectionPool.class);
 
     private final AtomicReference<NonBlockingPool<Connection>> pool = new AtomicReference<NonBlockingPool<Connection>>();
 
@@ -27,7 +31,7 @@ public class NonBlockingConnectionPool implements Pool<Connection> {
 
     @Override
     public Flowable<Member<Connection>> members() {
-        return pool.get().members();
+        return pool.get().members().doOnNext(c -> log.debug("supplied {}", c));
     }
 
     @Override
