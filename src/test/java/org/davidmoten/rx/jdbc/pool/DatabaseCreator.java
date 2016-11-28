@@ -13,6 +13,7 @@ import org.davidmoten.rx.jdbc.SQLRuntimeException;
 public class DatabaseCreator {
 
     private static AtomicInteger dbNumber = new AtomicInteger();
+    
 
     public static Database create(int maxSize) {
         return Database
