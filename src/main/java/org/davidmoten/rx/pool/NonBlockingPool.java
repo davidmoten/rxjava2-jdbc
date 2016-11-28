@@ -1,6 +1,11 @@
 package org.davidmoten.rx.pool;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,18 +54,23 @@ public final class NonBlockingPool<T> implements Pool<T> {
         this.scheduler = scheduler;
         this.subject = PublishSubject.create();
 
-        Flowable<Member<T>> cachedMembers = Flowable //
-                .range(1, maxSize) //
-                .map(n -> memberFactory.create(NonBlockingPool.this)) //
-                .doOnRequest(n -> log.debug("preCache request={}", n)) //
-                .doOnNext(c -> log.debug("preCache emission={}", c)) //
-                .cache();
+        AtomicReference<List<Member<T>>> list = new AtomicReference<List<Member<T>>>();
+        Flowable<Member<T>> baseMembers = Flowable.defer(() -> {
+            if (list.get() == null) {
+                List<Member<T>> m = IntStream.range(1, maxSize)
+                        .mapToObj(n -> memberFactory.create(NonBlockingPool.this)) //
+                        .collect(Collectors.toList());
+                list.compareAndSet(null, m);
+            }
+            return Flowable.fromIterable(list.get());
+        });
 
-        this.members = subject //
+        Flowable<Member<T>> m = subject //
                 .toSerialized() //
-                .toFlowable(BackpressureStrategy.BUFFER) //
-                .mergeWith(cachedMembers) //
-                .flatMap(member -> member.checkout().toFlowable());
+                .toFlowable(BackpressureStrategy.BUFFER);
+
+        this.members = Flowable.merge(Arrays.asList(m, baseMembers), 2, 1) //
+                .flatMap(member -> member.checkout().toFlowable(), false, 2, 1);
     }
 
     @Override
