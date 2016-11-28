@@ -3,11 +3,16 @@ package org.davidmoten.rx.pool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
 import io.reactivex.Scheduler.Worker;
 
 public class NonBlockingMember<T> implements Member<T> {
+
+    private static final Logger log = LoggerFactory.getLogger(NonBlockingMember.class);
 
     private static final int NOT_INITIALIZED_NOT_IN_USE = 0;
     private static final int INITIALIZED_IN_USE = 1;
@@ -34,21 +39,27 @@ public class NonBlockingMember<T> implements Member<T> {
             // CAS loop for modifications to state of this member
             while (true) {
                 State s = state.get();
+
                 if (s.value == NOT_INITIALIZED_NOT_IN_USE) {
+                    log.debug("checking out member not initialized={}", this);
                     if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
                         try {
                             value = pool.factory.call();
                         } catch (Throwable e) {
                             return dispose();
                         }
+                        log.debug("initialized in use: member={}", this);
                         return Maybe.just(ifNull(proxy, NonBlockingMember.this));
                     }
                 } else if (s.value == INITIALIZED_NOT_IN_USE) {
+                    log.debug("checking out member not in use={}", this);
                     if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
                         try {
                             if (pool.healthy.test(value)) {
+                                log.debug("initialized in use: member={}", this);
                                 return Maybe.just(ifNull(proxy, NonBlockingMember.this));
                             } else {
+                                log.debug("initialized not healthy: member={}", this);
                                 return dispose();
                             }
                         } catch (Throwable e) {
@@ -56,7 +67,9 @@ public class NonBlockingMember<T> implements Member<T> {
                         }
                     }
                 } else if (s.value == INITIALIZED_IN_USE) {
+                    log.debug("checking out member={}", this);
                     if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
+                        log.debug("already in use, member={}", this);
                         return Maybe.empty();
                     }
                 }

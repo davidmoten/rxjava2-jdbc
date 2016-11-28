@@ -1,6 +1,5 @@
 package org.davidmoten.rx.pool;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -62,16 +61,19 @@ public final class NonBlockingPool<T> implements Pool<T> {
                         .mapToObj(n -> memberFactory.create(NonBlockingPool.this)) //
                         .collect(Collectors.toList());
                 list.set(m);
+                log.debug("created pool of size={}", maxSize);
             }
-            return Flowable.fromIterable(list.get());
+            return Flowable.fromIterable(list.get()).doOnNext(x -> log.debug("x={}", x))
+                    .doOnRequest(n -> log.debug("requested={}", n));
         });
 
-        Flowable<Member<T>> m = subject //
+        Flowable<Member<T>> returnedMembers = subject //
                 .toSerialized() //
                 .toFlowable(BackpressureStrategy.BUFFER);
 
-        this.members = Flowable.merge(Arrays.asList(m, baseMembers), 2, 1) //
-                .flatMap(member -> member.checkout().toFlowable(), false, 2, 1);
+        this.members = baseMembers //
+                .mergeWith(returnedMembers) //
+                .flatMap(member -> member.checkout().toFlowable());
     }
 
     @Override
