@@ -94,7 +94,7 @@ public class DatabaseTest {
     @Test
     public void testSelectChained() {
         System.out.println("testSelectChained");
-        Database db = db(2);
+        Database db = db(3);
         db //
                 .select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
