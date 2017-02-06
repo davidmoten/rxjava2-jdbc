@@ -100,6 +100,7 @@ public class NonBlockingMember<T> implements Member<T> {
 
     @Override
     public void checkin() {
+        log.debug("checking in member" + this);
         state.set(new State(INITIALIZED_NOT_IN_USE));
         pool.subject.onNext(this);
     }

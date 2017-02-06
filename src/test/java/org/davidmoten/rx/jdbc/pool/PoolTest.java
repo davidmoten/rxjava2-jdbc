@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,6 +16,7 @@ import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
 import org.junit.Test;
 
+import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subscribers.TestSubscriber;
 
@@ -60,12 +62,18 @@ public class PoolTest {
     }
 
     @Test
+    public void testFlowableFromIterable() {
+        Flowable.fromIterable(Arrays.asList(1, 2)).test(4).assertValues(1, 2);
+    }
+
+    @Test
     public void testConnectionPoolRecylesMany() throws SQLException {
         Database db = DatabaseCreator.create(2);
         TestSubscriber<Connection> ts = db.connections() //
                 .test(4); //
         List<Connection> list = new ArrayList<>(ts.values());
-        ts.assertValueCount(2) //
+        ts.assertNoErrors() //
+                .assertValueCount(2) //
                 .assertNotTerminated();
         list.get(1).close();
         ts.assertValueCount(3).assertNotTerminated();

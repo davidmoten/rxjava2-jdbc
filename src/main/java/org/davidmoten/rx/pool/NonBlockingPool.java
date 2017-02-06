@@ -71,11 +71,14 @@ public final class NonBlockingPool<T> implements Pool<T> {
                 .toSerialized() //
                 .toFlowable(BackpressureStrategy.BUFFER);
 
-        this.members = baseMembers //
-                .mergeWith(returnedMembers) //
-                .doOnNext(x -> log.debug("member={}", x))
-                .<Member<T>> flatMap(member -> member.checkout().toFlowable()) //
-                .doOnNext(x -> log.debug("checked out member={}", x));
+        this.members = returnedMembers //
+                .doOnNext(m -> log.debug("returned member reentering")) //
+                .mergeWith(baseMembers) //
+                .doOnNext(x -> log.debug("member={}", x)) //
+                .doOnRequest(n -> log.debug("requestedBeforeFlatMap={}", n)) //
+                .<Member<T>> flatMap(member -> member.checkout().toFlowable(), false, 1) //
+                .doOnNext(x -> log.debug("checked out member={}", x)) //
+                .doOnRequest(n -> log.debug("requestedAfterFlatMap={}", n));
     }
 
     @Override
