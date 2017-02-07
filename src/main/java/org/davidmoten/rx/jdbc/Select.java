@@ -47,7 +47,7 @@ public enum Select {
                 .setParameters(ps, parameters, names) //
                 .executeQuery();
         BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
-            log.debug("getting row");
+            log.debug("getting row from ps={}, rs={}", ps, rs);
             if (rs.next()) {
                 T v = mapper.apply(rs);
                 log.debug("emitting {}", v);

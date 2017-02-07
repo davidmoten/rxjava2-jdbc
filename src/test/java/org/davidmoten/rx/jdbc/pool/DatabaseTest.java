@@ -94,9 +94,8 @@ public class DatabaseTest {
     @Test
     public void testSelectChained() {
         System.out.println("testSelectChained");
-        Database db = db(2);
-        db //
-                .select("select score from person where name=?") //
+        Database db = db(3);
+        db.select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .getAs(Integer.class) //
                 .flatMap(score -> {
@@ -109,7 +108,7 @@ public class DatabaseTest {
                 .test() //
                 .assertNoErrors() //
                 .assertValues("FRED", "JOSEPH") //
-                .assertComplete();
+                .assertComplete(); //
     }
 
 }
