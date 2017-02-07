@@ -94,16 +94,18 @@ public class DatabaseTest {
     @Test
     public void testSelectChained() {
         System.out.println("testSelectChained");
-        Database db = db(3);
+        // TODO can we do this with 2 connections? (explain if not!)
+        Database db = db(2);
         db.select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .getAs(Integer.class) //
-                .flatMap(score -> {
+                .concatMap(score -> {
                     log.info("score={}", score);
                     return db //
                             .select("select name from person where score = ?") //
                             .parameters(score) //
-                            .getAs(String.class);
+                            .getAs(String.class)
+                            .doOnComplete(() -> log.info("completed select where score="+ score));
                 }) //
                 .test() //
                 .assertNoErrors() //

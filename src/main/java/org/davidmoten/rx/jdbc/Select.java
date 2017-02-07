@@ -35,8 +35,7 @@ public enum Select {
         log.debug("create called with con=" + con);
         Callable<NamedPreparedStatement> initialState = () -> Util.prepare(con, fetchSize, sql);
         Function<NamedPreparedStatement, Flowable<T>> observableFactory = ps -> parameterGroups
-                .flatMap(parameters -> create(con, ps.ps, parameters, mapper, ps.names), true, 1) //
-        ;
+                .flatMap(parameters -> create(con, ps.ps, parameters, mapper, ps.names), true, 1);
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(initialState, observableFactory, disposer, true);
     }
