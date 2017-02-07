@@ -71,11 +71,11 @@ public class PoolTest {
         Database db = DatabaseCreator.create(2);
         TestSubscriber<Connection> ts = db.connections() //
                 .test(4); //
-        List<Connection> list = new ArrayList<>(ts.values());
         ts.assertNoErrors() //
                 .assertValueCount(2) //
                 .assertNotTerminated();
-        list.get(1).close();
+        List<Connection> list = new ArrayList<>(ts.values());
+        list.get(1).close(); //should release a connection
         ts.assertValueCount(3).assertNotTerminated();
         ts.assertValues(list.get(0), list.get(1), list.get(1));
         list.get(0).close();

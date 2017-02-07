@@ -57,7 +57,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         AtomicReference<List<Member<T>>> list = new AtomicReference<>();
         Flowable<Member<T>> baseMembers = Flowable.defer(() -> {
             if (list.compareAndSet(null, Collections.emptyList())) {
-                List<Member<T>> m = IntStream.range(1, maxSize)
+                List<Member<T>> m = IntStream.range(1, maxSize + 1)
                         .mapToObj(n -> memberFactory.create(NonBlockingPool.this)) //
                         .collect(Collectors.toList());
                 list.set(m);
