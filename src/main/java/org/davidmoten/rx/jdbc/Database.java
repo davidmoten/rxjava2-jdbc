@@ -45,6 +45,10 @@ public class Database implements AutoCloseable {
         return new SelectBuilder(sql, connections());
     }
 
+    public UpdateBuilder update(String sql) {
+        return new UpdateBuilder(sql, connections());
+    }
+    
     public TransactedBuilder tx(Tx<?> tx) {
         TxImpl<?> t = (TxImpl<?>) tx;
         TransactedConnection c = t.connection().fork();
