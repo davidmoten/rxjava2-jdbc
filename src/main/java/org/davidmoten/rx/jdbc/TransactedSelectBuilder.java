@@ -52,10 +52,6 @@ public class TransactedSelectBuilder {
         return this;
     }
 
-    private static enum ValuesOnly {
-        TRANSACTED_VALUES_ONLY, VALUES_ONLY, ALL;
-    }
-
     public TransactedSelectBuilder transactedValuesOnly() {
         this.valuesOnly = true;
         return this;

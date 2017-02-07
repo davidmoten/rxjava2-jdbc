@@ -16,8 +16,11 @@ import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
-public enum Select {
-    ;
+public final class Select {
+    
+    private Select() {
+        //prevent instantiation
+    }
 
     private static final Logger log = LoggerFactory.getLogger(Select.class);
 

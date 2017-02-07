@@ -69,7 +69,7 @@ public class DatabaseTest {
     }
 
     @Test
-    public void testSelectTransactedChained() {
+    public void testSelectTransactedChained() throws Exception {
         System.out.println("testSelectTransactedChained");
         Database db = db();
         db //
@@ -92,9 +92,17 @@ public class DatabaseTest {
     }
 
     @Test
+    public void databaseIsAutoCloseable() {
+        try (Database db = db()) {
+            log.debug(db.toString());
+        }
+    }
+
+    @Test
     public void testSelectChained() {
         System.out.println("testSelectChained");
-        // TODO can we do this with 2 connections? (explain if not!)
+        // we should be able to do this with 2 connections only
+        // using tx() we get to resuse current connection
         Database db = db(2);
         db.select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
@@ -105,7 +113,7 @@ public class DatabaseTest {
                             .select("select name from person where score = ?") //
                             .parameters(score) //
                             .getAs(String.class)
-                            .doOnComplete(() -> log.info("completed select where score="+ score));
+                            .doOnComplete(() -> log.info("completed select where score=" + score));
                 }) //
                 .test() //
                 .assertNoErrors() //

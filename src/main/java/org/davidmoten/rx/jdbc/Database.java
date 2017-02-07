@@ -33,8 +33,12 @@ public class Database implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
-        onClose.run();
+    public void close() {
+        try {
+            onClose.run();
+        } catch (Exception e) {
+            throw new DatabaseException(e);
+        }
     }
 
     public SelectBuilder select(String sql) {
