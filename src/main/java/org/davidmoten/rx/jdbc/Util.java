@@ -7,6 +7,9 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
@@ -14,6 +17,7 @@ import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
@@ -27,6 +31,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
+import org.davidmoten.rx.jdbc.annotations.Column;
+import org.davidmoten.rx.jdbc.annotations.Index;
+import org.davidmoten.rx.jdbc.annotations.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -573,4 +580,333 @@ public enum Util {
             }
         };
     }
+
+    static <T> String getSqlFromQueryAnnotation(Class<T> cls) {
+        Query query = cls.getAnnotation(Query.class);
+        if (query != null && query.value() != null) {
+            return query.value();
+        } else
+            throw new RuntimeException("Class " + cls
+                    + " must be annotated with @Query(sql) or sql must be specified to the builder.select() call");
+    }
+
+    /**
+     * Returns a function that converts the ResultSet column values into
+     * parameters to the constructor (with number of parameters equals the
+     * number of columns) of type <code>cls</code> then returns an instance of
+     * type <code>cls</code>. See {@link SelectBuilder#autoMap(Class)}.
+     * 
+     * @param cls
+     * @return
+     */
+    static <T> ResultSetMapper<T> autoMap(Class<T> cls) {
+        return new ResultSetMapper<T>() {
+
+            boolean firstTime = true;
+            ProxyService<T> proxyService;
+
+            @Override
+            public T apply(ResultSet rs) {
+                // access to this method will be serialized
+                if (firstTime) {
+                    if (cls.isInterface()) {
+                        proxyService = new ProxyService<T>(rs, cls);
+                    }
+                    firstTime = false;
+                }
+                return autoMap(rs, cls, proxyService);
+            }
+        };
+    }
+
+    /**
+     * Converts the ResultSet column values into parameters to the constructor
+     * (with number of parameters equals the number of columns) of type
+     * <code>T</code> then returns an instance of type <code>T</code>. See See
+     * {@link SelectBuilder#autoMap(Class)}.
+     * 
+     * @param rs
+     * @param cls
+     *            the class of the resultant instance
+     * @param proxyService
+     * @return an automapped instance
+     */
+    @SuppressWarnings("unchecked")
+    static <T> T autoMap(ResultSet rs, Class<T> cls, ProxyService<T> proxyService) {
+        try {
+            if (proxyService != null) {
+                return proxyService.newInstance();
+            } else {
+                int n = rs.getMetaData().getColumnCount();
+                for (Constructor<?> c : cls.getDeclaredConstructors()) {
+                    if (n == c.getParameterTypes().length) {
+                        return autoMap(rs, (Constructor<T>) c);
+                    }
+                }
+                throw new RuntimeException(
+                        "constructor with number of parameters=" + n + "  not found in " + cls);
+            }
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
+
+    /**
+     * Converts the ResultSet column values into parameters to the given
+     * constructor (with number of parameters equals the number of columns) of
+     * type <code>T</code> then returns an instance of type <code>T</code>. See
+     * See {@link SelectBuilder#autoMap(Class)}.
+     * 
+     * @param rs
+     *            the result set row
+     * @param c
+     *            constructor to use for instantiation
+     * @return automapped instance
+     */
+    private static <T> T autoMap(ResultSet rs, Constructor<T> c) {
+        Class<?>[] types = c.getParameterTypes();
+        List<Object> list = new ArrayList<Object>();
+        for (int i = 0; i < types.length; i++) {
+            list.add(autoMap(getObject(rs, types[i], i + 1), types[i]));
+        }
+        try {
+            return newInstance(c, list);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "problem with parameters=" + getTypeInfo(list) + ", rs types=" + getRowInfo(rs)
+                            + ". Be sure not to use primitives in a constructor when calling autoMap().",
+                    e);
+        }
+    }
+
+    /**
+     * 
+     * @param c
+     *            constructor to use
+     * @param parameters
+     *            constructor parameters
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T newInstance(Constructor<?> c, List<Object> parameters) {
+        try {
+            return (T) c.newInstance(parameters.toArray());
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Returns debugging info about the types of a list of objects.
+     * 
+     * @param list
+     * @return
+     */
+    private static String getTypeInfo(List<Object> list) {
+
+        StringBuilder s = new StringBuilder();
+        for (Object o : list) {
+            if (s.length() > 0)
+                s.append(", ");
+            if (o == null)
+                s.append("null");
+            else {
+                s.append(o.getClass().getName());
+                s.append("=");
+                s.append(o);
+            }
+        }
+        return s.toString();
+    }
+
+    private static String getRowInfo(ResultSet rs) {
+        StringBuilder s = new StringBuilder();
+        try {
+            ResultSetMetaData md = rs.getMetaData();
+            for (int i = 1; i <= md.getColumnCount(); i++) {
+                String name = md.getColumnName(i);
+                String type = md.getColumnClassName(i);
+                if (s.length() > 0)
+                    s.append(", ");
+                s.append(name);
+                s.append("=");
+                s.append(type);
+            }
+        } catch (SQLException e1) {
+            throw new SQLRuntimeException(e1);
+        }
+        return s.toString();
+    }
+
+    static interface Col {
+        Class<?> returnType();
+    }
+
+    static class NamedCol implements Col {
+        final String name;
+        private final Class<?> returnType;
+
+        public NamedCol(String name, Class<?> returnType) {
+            this.name = name;
+            this.returnType = returnType;
+        }
+
+        @Override
+        public Class<?> returnType() {
+            return returnType;
+        }
+
+        @Override
+        public String toString() {
+            return "NamedCol [name=" + name + ", returnType=" + returnType + "]";
+        }
+
+    }
+
+    static class IndexedCol implements Col {
+        final int index;
+        private final Class<?> returnType;
+
+        public IndexedCol(int index, Class<?> returnType) {
+            this.index = index;
+            this.returnType = returnType;
+        }
+
+        @Override
+        public Class<?> returnType() {
+            return returnType;
+        }
+
+        @Override
+        public String toString() {
+            return "IndexedCol [index=" + index + ", returnType=" + returnType + "]";
+        }
+
+    }
+
+    private static class ProxyService<T> {
+
+        private final Map<String, Integer> colIndexes;
+        private final Map<String, Col> methodCols;
+        private final Class<T> cls;
+        private ResultSet rs;
+
+        public ProxyService(ResultSet rs, Class<T> cls) {
+            this(rs, collectColIndexes(rs), getMethodCols(cls), cls);
+        }
+
+        public ProxyService(ResultSet rs, Map<String, Integer> colIndexes,
+                Map<String, Col> methodCols, Class<T> cls) {
+            this.rs = rs;
+            this.colIndexes = colIndexes;
+            this.methodCols = methodCols;
+            this.cls = cls;
+        }
+
+        private Map<String, Object> values() {
+            Map<String, Object> values = new HashMap<String, Object>();
+            // calculate values for all the interface methods and put them in a
+            // map
+            for (Method m : cls.getMethods()) {
+                String methodName = m.getName();
+                Col column = methodCols.get(methodName);
+                Integer index;
+                if (column instanceof NamedCol) {
+                    String name = ((NamedCol) column).name;
+                    index = colIndexes.get(name.toUpperCase());
+                    if (index == null) {
+                        throw new SQLRuntimeException(
+                                "query column names do not include '" + name + "'");
+                    }
+                } else {
+                    IndexedCol col = ((IndexedCol) column);
+                    index = col.index;
+                }
+                Object value = autoMap(getObject(rs, column.returnType(), index),
+                        column.returnType());
+                values.put(methodName, value);
+            }
+            return values;
+        }
+
+        @SuppressWarnings("unchecked")
+        public T newInstance() {
+            return (T) java.lang.reflect.Proxy.newProxyInstance(cls.getClassLoader(),
+                    new Class[] { cls }, new ProxyInstance<T>(values()));
+        }
+
+    }
+
+    private static class ProxyInstance<T> implements java.lang.reflect.InvocationHandler {
+
+        private final Map<String, Object> values;
+
+        ProxyInstance(Map<String, Object> values) {
+            this.values = values;
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            return values.get(method.getName());
+        }
+
+    }
+
+    private static Map<String, Col> getMethodCols(Class<?> cls) {
+        Map<String, Col> methodCols = new HashMap<String, Col>();
+        for (Method method : cls.getMethods()) {
+            String name = method.getName();
+            Column column = method.getAnnotation(Column.class);
+            if (column != null) {
+                checkHasNoParameters(method);
+                // TODO check method has a mappable return type
+                String col = column.value();
+                if (col.equals(Column.NOT_SPECIFIED))
+                    col = Util.camelCaseToUnderscore(name);
+                methodCols.put(name, new NamedCol(col, method.getReturnType()));
+            } else {
+                Index index = method.getAnnotation(Index.class);
+                if (index != null) {
+                    // TODO check method has a mappable return type
+                    checkHasNoParameters(method);
+                    methodCols.put(name, new IndexedCol(index.value(), method.getReturnType()));
+                }
+            }
+        }
+        return methodCols;
+    }
+
+    private static void checkHasNoParameters(Method method) {
+        if (method.getParameterTypes().length > 0) {
+            throw new RuntimeException("mapped interface method cannot have parameters");
+        }
+    }
+
+    private static Map<String, Integer> collectColIndexes(ResultSet rs) {
+        HashMap<String, Integer> map = new HashMap<String, Integer>();
+        try {
+            ResultSetMetaData metadata = rs.getMetaData();
+            for (int i = 1; i <= metadata.getColumnCount(); i++) {
+                map.put(metadata.getColumnName(i).toUpperCase(), i);
+            }
+            return map;
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
+
+    static String camelCaseToUnderscore(String camelCased) {
+        // guava has best solution for this with CaseFormat class
+        // but don't want to add dependency just for this method
+        final String regex = "([a-z])([A-Z]+)";
+        final String replacement = "$1_$2";
+        return camelCased.replaceAll(regex, replacement);
+    }
+
 }

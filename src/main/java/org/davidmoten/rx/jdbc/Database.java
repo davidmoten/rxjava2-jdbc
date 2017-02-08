@@ -40,6 +40,10 @@ public class Database implements AutoCloseable {
             throw new DatabaseException(e);
         }
     }
+    
+    public SelectBuilder select() {
+        return new SelectBuilder(null, connections());
+    }
 
     public SelectBuilder select(String sql) {
         return new SelectBuilder(sql, connections());

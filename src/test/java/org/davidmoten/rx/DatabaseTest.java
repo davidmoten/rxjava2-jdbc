@@ -1,6 +1,8 @@
-package org.davidmoten.rx.jdbc.pool;
+package org.davidmoten.rx;
 
 import org.davidmoten.rx.jdbc.Database;
+import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,6 +121,26 @@ public class DatabaseTest {
                 .assertNoErrors() //
                 .assertValues("FRED", "JOSEPH") //
                 .assertComplete(); //
+    }
+
+    @Test
+    public void testAutoMapToInterface() {
+        db() //
+                .select("select name from person") //
+                .autoMap(Person.class) //
+                .map(p -> p.name()) //
+                .test().assertValueCount(3) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSelectWithoutWhereClause() {
+        Assert.assertEquals(3, (long) db().select("select name from person") //
+                .count().blockingGet());
+    }
+
+    static interface Person {
+        String name();
     }
 
 }

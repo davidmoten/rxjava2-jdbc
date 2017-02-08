@@ -26,7 +26,7 @@ public final class Select {
 
     public static <T> Flowable<T> create(Single<Connection> connections,
             Flowable<List<Object>> parameterGroups, String sql, int fetchSize,
-            Function<? super ResultSet, T> mapper) {
+            Function<? super ResultSet,? extends T> mapper) {
         return connections //
                 .toFlowable() //
                 .flatMap(con -> create(con, sql, parameterGroups, fetchSize, mapper));
