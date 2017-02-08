@@ -2,9 +2,9 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
@@ -16,7 +16,6 @@ import org.davidmoten.rx.jdbc.tuple.Tuple7;
 import org.davidmoten.rx.jdbc.tuple.TupleN;
 import org.davidmoten.rx.jdbc.tuple.Tuples;
 
-import com.github.davidmoten.guavamini.Lists;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
@@ -29,50 +28,51 @@ public class SelectBuilder {
     final Flowable<Connection> connections;
 
     // mutable
-    private List<Object> list = null;
-    Flowable<List<Object>> parameters = null;
+    final List<Flowable<List<Object>>> parameterGroups = new ArrayList<>();
+    final List<Object> parameters = new ArrayList<>();
     boolean valuesOnly = false;
     int fetchSize = 0; // default
 
     public SelectBuilder(String sql, Flowable<Connection> connections) {
+        Preconditions.checkNotNull(sql);
+        Preconditions.checkNotNull(connections);
         this.sql = sql;
         this.connections = connections;
         this.sqlInfo = SqlInfo.parse(sql);
     }
 
     public SelectBuilder parameters(Flowable<List<Object>> parameters) {
-        Preconditions.checkArgument(list == null);
-        if (this.parameters == null)
-            this.parameters = parameters;
-        else
-            this.parameters = this.parameters.concatWith(parameters);
+        closeCurrentParameterList();
+        Preconditions.checkNotNull(parameters);
+        this.parameterGroups.add(parameters);
         return this;
     }
 
+    @SuppressWarnings("unchecked")
+    private void closeCurrentParameterList() {
+        if (!parameters.isEmpty()) {
+            parameterGroups.add(Flowable.just((List<Object>) (List<?>) parameters));
+            parameters.clear();
+        }
+    }
+
     public SelectBuilder parameterList(List<Object> values) {
-        Preconditions.checkArgument(list == null);
-        if (this.parameters == null)
-            this.parameters = Flowable.just(values);
-        else
-            this.parameters = this.parameters.concatWith(Flowable.just(values));
+        closeCurrentParameterList();
+        Preconditions.checkNotNull(values);
+        this.parameterGroups.add(Flowable.just(values));
         return this;
     }
 
     public SelectBuilder parameterList(Object... values) {
-        Preconditions.checkArgument(list == null);
-        if (this.parameters == null)
-            this.parameters = Flowable.just(Lists.newArrayList(values));
-        else
-            this.parameters = this.parameters.concatWith(Flowable.just(Lists.newArrayList(values)));
+        Preconditions.checkNotNull(values);
+        closeCurrentParameterList();
+        parameterGroups.add(Flowable.fromArray(values).buffer(sqlInfo.numParameters()));
         return this;
     }
 
     public SelectBuilder parameter(String name, Object value) {
-        Preconditions.checkArgument(parameters == null);
-        if (list == null) {
-            list = new ArrayList<>();
-        }
-        this.list.add(new Parameter(name, value));
+        Preconditions.checkNotNull(name);
+        parameters.add(new Parameter(name, value));
         return this;
     }
 
@@ -82,16 +82,19 @@ public class SelectBuilder {
     }
 
     public SelectBuilder parameters(Object... values) {
+        Preconditions.checkNotNull(values);
         if (values.length == 0) {
             // no effect
             return this;
         }
-        Preconditions.checkArgument(list == null);
         Preconditions.checkArgument(sqlInfo.numParameters() > 0, "no parameters present in sql!");
         Preconditions.checkArgument(values.length % sqlInfo.numParameters() == 0,
                 "number of values should be a multiple of number of parameters in sql: " + sql);
         Preconditions.checkArgument(Arrays.stream(values).allMatch(o -> sqlInfo.names().isEmpty()
                 || (o instanceof Parameter && ((Parameter) o).hasName())));
+        for (Object val : values) {
+            parameters.add(val);
+        }
         return parameters(Flowable.fromArray(values).buffer(sqlInfo.numParameters()));
     }
 
@@ -110,10 +113,11 @@ public class SelectBuilder {
     }
 
     void resolveParameters() {
-        if (list != null) {
-            parameters = Flowable.fromIterable(list).buffer(sqlInfo.numParameters());
-        }
+        closeCurrentParameterList();
     }
+
+    private static final Flowable<List<Object>> SINGLE_EMPTY_LIST = Flowable
+            .just(Collections.emptyList());
 
     public TransactedSelectBuilder transacted() {
         return new TransactedSelectBuilder(this);
@@ -126,8 +130,19 @@ public class SelectBuilder {
      * @return the results of the query as an Observable
      */
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
+        Flowable<List<Object>> pg = programGroupsToFlowable();
+        return Select.<T> create(connections.firstOrError(), pg, sql, fetchSize, function);
+    }
+
+    Flowable<List<Object>> programGroupsToFlowable() {
         resolveParameters();
-        return Select.<T> create(connections.firstOrError(), parameters, sql, fetchSize, function);
+        Flowable<List<Object>> pg;
+        if (parameterGroups.isEmpty()) {
+            pg = SINGLE_EMPTY_LIST;
+        } else {
+            pg = Flowable.concat(parameterGroups);
+        }
+        return pg;
     }
 
     //
@@ -173,10 +188,7 @@ public class SelectBuilder {
         if (sql == null) {
             sql = Util.getSqlFromQueryAnnotation(cls);
         }
-        resolveParameters();
-        return Select.<T> create( //
-                connections.firstOrError(), parameters, sql, //
-                fetchSize, Util.autoMap(cls));
+        return get(Util.autoMap(cls));
     }
 
     /**

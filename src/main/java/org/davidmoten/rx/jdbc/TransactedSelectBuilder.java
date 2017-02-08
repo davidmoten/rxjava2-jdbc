@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import io.reactivex.Flowable;
 import io.reactivex.Notification;
+import io.reactivex.functions.Function;
 
 public class TransactedSelectBuilder {
 
@@ -60,14 +62,14 @@ public class TransactedSelectBuilder {
     public TransactedSelectBuilderValuesOnly valuesOnly() {
         return new TransactedSelectBuilderValuesOnly(this);
     }
-    
+
     public static final class TransactedSelectBuilderValuesOnly {
         private final TransactedSelectBuilder b;
 
         TransactedSelectBuilderValuesOnly(TransactedSelectBuilder b) {
             this.b = b;
         }
-        
+
         public <T> Flowable<T> getAs(Class<T> cls) {
             b.selectBuilder.resolveParameters();
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
@@ -84,7 +86,7 @@ public class TransactedSelectBuilder {
                             return c2;
                         }
                     }), //
-                    b.selectBuilder.parameters, //
+                    b.selectBuilder.programGroupsToFlowable(), //
                     b.selectBuilder.sql, //
                     b.selectBuilder.fetchSize, //
                     rs -> Util.mapObject(rs, cls, 1)) //
@@ -94,11 +96,11 @@ public class TransactedSelectBuilder {
                             ((TxImpl<T>) tx).connection().commit();
                         }
                     });
-                return o.flatMap(Tx.flattenToValuesOnly());
+            return o.flatMap(Tx.flattenToValuesOnly());
         }
 
     }
-    
+
     public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
         selectBuilder.resolveParameters();
         AtomicReference<Connection> connection = new AtomicReference<Connection>();
@@ -115,7 +117,7 @@ public class TransactedSelectBuilder {
                         return c2;
                     }
                 }), //
-                selectBuilder.parameters, //
+                selectBuilder.programGroupsToFlowable(), //
                 selectBuilder.sql, //
                 selectBuilder.fetchSize, //
                 rs -> Util.mapObject(rs, cls, 1)) //
