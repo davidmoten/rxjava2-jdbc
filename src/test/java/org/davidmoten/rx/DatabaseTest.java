@@ -1,11 +1,18 @@
 package org.davidmoten.rx;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.davidmoten.guavamini.Lists;
+
+import io.reactivex.Flowable;
 
 public class DatabaseTest {
 
@@ -21,11 +28,15 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingQuestionMark() {
+        List<String> list = Lists.newArrayList("hello", "there");
+        List<Flowable<List<String>>> list2 = Lists.newArrayList(Flowable.fromIterable(list).buffer(1));
+        Flowable.concat(list2).doOnNext(System.out::println).subscribe();
         db() //
                 .select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .getAs(Integer.class) //
                 .test() //
+                .assertNoErrors() //
                 .assertValues(21, 34) //
                 .assertComplete();
     }
@@ -141,6 +152,10 @@ public class DatabaseTest {
 
     static interface Person {
         String name();
+    }
+
+    public static void main(String[] args) {
+        Flowable.just(1, 2, 3, 4, 5, 6).doOnRequest(System.out::println).subscribe();
     }
 
 }

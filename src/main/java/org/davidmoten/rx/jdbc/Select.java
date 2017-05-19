@@ -17,16 +17,16 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
 public final class Select {
-    
+
     private Select() {
-        //prevent instantiation
+        // prevent instantiation
     }
 
     private static final Logger log = LoggerFactory.getLogger(Select.class);
 
     public static <T> Flowable<T> create(Single<Connection> connections,
             Flowable<List<Object>> parameterGroups, String sql, int fetchSize,
-            Function<? super ResultSet,? extends T> mapper) {
+            Function<? super ResultSet, ? extends T> mapper) {
         return connections //
                 .toFlowable() //
                 .flatMap(con -> create(con, sql, parameterGroups, fetchSize, mapper));
@@ -38,6 +38,11 @@ public final class Select {
         log.debug("create called with con=" + con);
         Callable<NamedPreparedStatement> initialState = () -> Util.prepare(con, fetchSize, sql);
         Function<NamedPreparedStatement, Flowable<T>> observableFactory = ps -> parameterGroups
+                .doOnSubscribe(s -> {
+                    log.debug("subscribed!");
+                }) //
+                .doOnNext(list -> log.debug("list=" + list)) //
+                .doOnComplete(() -> log.debug("completed")) //
                 .flatMap(parameters -> create(con, ps.ps, parameters, mapper, ps.names), true, 1);
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(initialState, observableFactory, disposer, true);
@@ -45,6 +50,8 @@ public final class Select {
 
     private static <T> Flowable<? extends T> create(Connection con, PreparedStatement ps,
             List<Object> parameters, Function<? super ResultSet, T> mapper, List<String> names) {
+        log.debug("parameters=" + parameters);
+        log.debug("names=" + names);
         Callable<ResultSet> initialState = () -> Util //
                 .setParameters(ps, parameters, names) //
                 .executeQuery();

@@ -71,7 +71,7 @@ public class TransactedSelectBuilder {
         }
 
         public <T> Flowable<T> getAs(Class<T> cls) {
-            b.selectBuilder.resolveParameters();
+            b.selectBuilder.useAndCloseParameterBuffer();
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
             Flowable<Tx<T>> o = Select.create(b.selectBuilder.connections.firstOrError() //
                     .map(c -> {
@@ -86,7 +86,7 @@ public class TransactedSelectBuilder {
                             return c2;
                         }
                     }), //
-                    b.selectBuilder.programGroupsToFlowable(), //
+                    b.selectBuilder.parameterGroupsToFlowable(), //
                     b.selectBuilder.sql, //
                     b.selectBuilder.fetchSize, //
                     rs -> Util.mapObject(rs, cls, 1)) //
@@ -102,7 +102,7 @@ public class TransactedSelectBuilder {
     }
 
     public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
-        selectBuilder.resolveParameters();
+        selectBuilder.useAndCloseParameterBuffer();
         AtomicReference<Connection> connection = new AtomicReference<Connection>();
         Flowable<Tx<T>> o = Select.create(selectBuilder.connections.firstOrError() //
                 .map(c -> {
@@ -117,7 +117,7 @@ public class TransactedSelectBuilder {
                         return c2;
                     }
                 }), //
-                selectBuilder.programGroupsToFlowable(), //
+                selectBuilder.parameterGroupsToFlowable(), //
                 selectBuilder.sql, //
                 selectBuilder.fetchSize, //
                 rs -> Util.mapObject(rs, cls, 1)) //

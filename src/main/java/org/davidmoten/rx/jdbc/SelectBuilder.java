@@ -29,7 +29,8 @@ public class SelectBuilder {
 
     // mutable
     final List<Flowable<List<Object>>> parameterGroups = new ArrayList<>();
-    final List<Object> parameters = new ArrayList<>();
+    // for building up a number of parameters
+    final List<Object> parameterBuffer = new ArrayList<>();
     boolean valuesOnly = false;
     int fetchSize = 0; // default
 
@@ -42,22 +43,22 @@ public class SelectBuilder {
     }
 
     public SelectBuilder parameters(Flowable<List<Object>> parameters) {
-        closeCurrentParameterList();
         Preconditions.checkNotNull(parameters);
+        useAndCloseParameterBuffer();
         this.parameterGroups.add(parameters);
         return this;
     }
 
-    @SuppressWarnings("unchecked")
-    private void closeCurrentParameterList() {
-        if (!parameters.isEmpty()) {
-            parameterGroups.add(Flowable.just((List<Object>) (List<?>) parameters));
-            parameters.clear();
+    void useAndCloseParameterBuffer() {
+        //called when about to add stream of parameters or about to call get
+        if (!parameterBuffer.isEmpty()) {
+            parameterGroups.add(Flowable.fromIterable(parameterBuffer).buffer(sqlInfo.numParameters()));
+            parameterBuffer.clear();
         }
     }
 
     public SelectBuilder parameterList(List<Object> values) {
-        closeCurrentParameterList();
+        useAndCloseParameterBuffer();
         Preconditions.checkNotNull(values);
         this.parameterGroups.add(Flowable.just(values));
         return this;
@@ -65,14 +66,14 @@ public class SelectBuilder {
 
     public SelectBuilder parameterList(Object... values) {
         Preconditions.checkNotNull(values);
-        closeCurrentParameterList();
+        useAndCloseParameterBuffer();
         parameterGroups.add(Flowable.fromArray(values).buffer(sqlInfo.numParameters()));
         return this;
     }
 
     public SelectBuilder parameter(String name, Object value) {
         Preconditions.checkNotNull(name);
-        parameters.add(new Parameter(name, value));
+        parameterBuffer.add(new Parameter(name, value));
         return this;
     }
 
@@ -93,9 +94,9 @@ public class SelectBuilder {
         Preconditions.checkArgument(Arrays.stream(values).allMatch(o -> sqlInfo.names().isEmpty()
                 || (o instanceof Parameter && ((Parameter) o).hasName())));
         for (Object val : values) {
-            parameters.add(val);
+            parameterBuffer.add(val);
         }
-        return parameters(Flowable.fromArray(values).buffer(sqlInfo.numParameters()));
+        return this;
     }
 
     /**
@@ -106,15 +107,11 @@ public class SelectBuilder {
      * @return
      */
     public <T> Flowable<T> getAs(Class<T> cls) {
-        resolveParameters();
         // TODO make static class so lambda doesn't enclose more state than
         // should
         return get(rs -> Util.mapObject(rs, cls, 1));
     }
 
-    void resolveParameters() {
-        closeCurrentParameterList();
-    }
 
     private static final Flowable<List<Object>> SINGLE_EMPTY_LIST = Flowable
             .just(Collections.emptyList());
@@ -130,12 +127,12 @@ public class SelectBuilder {
      * @return the results of the query as an Observable
      */
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
-        Flowable<List<Object>> pg = programGroupsToFlowable();
+        useAndCloseParameterBuffer();
+        Flowable<List<Object>> pg = parameterGroupsToFlowable();
         return Select.<T> create(connections.firstOrError(), pg, sql, fetchSize, function);
     }
 
-    Flowable<List<Object>> programGroupsToFlowable() {
-        resolveParameters();
+    Flowable<List<Object>> parameterGroupsToFlowable() {
         Flowable<List<Object>> pg;
         if (parameterGroups.isEmpty()) {
             pg = SINGLE_EMPTY_LIST;
