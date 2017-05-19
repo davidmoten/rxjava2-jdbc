@@ -29,6 +29,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
     final Predicate<T> healthy;
     final Consumer<T> disposer;
     final int maxSize;
+    //TODO use
     final long retryDelayMs;
     final MemberFactory<T, NonBlockingPool<T>> memberFactory;
     final Scheduler scheduler;

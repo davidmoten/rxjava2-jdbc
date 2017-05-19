@@ -1,7 +1,5 @@
 package org.davidmoten.rx;
 
-import java.util.List;
-
 import org.davidmoten.rx.jdbc.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.jdbc.annotations.Column;
@@ -10,8 +8,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.github.davidmoten.guavamini.Lists;
 
 import io.reactivex.Flowable;
 
@@ -123,7 +119,7 @@ public class DatabaseTest {
                     return db //
                             .select("select name from person where score = ?") //
                             .parameters(score) //
-                            .getAs(String.class)
+                            .getAs(String.class) //
                             .doOnComplete(() -> log.info("completed select where score=" + score));
                 }) //
                 .test() //

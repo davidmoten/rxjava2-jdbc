@@ -28,7 +28,7 @@ public class NonBlockingConnectionPool implements Pool<Connection> {
                 .memberFactory(p -> new ConnectionNonBlockingMember(pool.get())) //
                 .build());
     }
-
+    
     @Override
     public Flowable<Member<Connection>> members() {
         return pool.get().members() //
