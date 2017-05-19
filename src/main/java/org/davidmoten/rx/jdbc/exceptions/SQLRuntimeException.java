@@ -1,4 +1,4 @@
-package org.davidmoten.rx.jdbc;
+package org.davidmoten.rx.jdbc.exceptions;
 
 import java.sql.SQLException;
 
@@ -16,5 +16,9 @@ public class SQLRuntimeException extends RuntimeException {
 
     public SQLRuntimeException(String message) {
         super(message);
+    }
+
+    public SQLRuntimeException(Exception e) {
+        super(e);
     }
 }

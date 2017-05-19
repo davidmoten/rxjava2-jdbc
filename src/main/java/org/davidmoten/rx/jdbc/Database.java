@@ -1,9 +1,15 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Types;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
+import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.davidmoten.rx.pool.Pool;
 
 import io.reactivex.Flowable;
@@ -28,6 +34,63 @@ public class Database implements AutoCloseable {
         return new Database(pool.members().cast(Connection.class), () -> pool.close());
     }
 
+    public static Database test(int maxPoolSize) {
+        return Database.from(new NonBlockingConnectionPool(connectionProvider(nextUrl()), maxPoolSize, 1000));
+    }
+
+    public static Database test() {
+        return test(3);
+    }
+
+    private static void createDatabase(Connection c) {
+        try {
+            Sql.statements(Database.class.getResourceAsStream("/database-test.sql")).stream().forEach(x -> {
+                try {
+                    System.out.println(x);
+                    c.prepareStatement(x).execute();
+                } catch (SQLException e) {
+                    throw new SQLRuntimeException(e);
+                }
+            });
+            c.commit();
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
+
+    private static ConnectionProvider connectionProvider(String url) {
+        return new ConnectionProvider() {
+
+            private final AtomicBoolean once = new AtomicBoolean(false);
+
+            @Override
+            public Connection get() {
+                try {
+                    Connection c = DriverManager.getConnection(url);
+                    synchronized (this) {
+                        if (once.compareAndSet(false, true)) {
+                            createDatabase(c);
+                        }
+                    }
+                    return c;
+                } catch (SQLException e) {
+                    throw new SQLRuntimeException(e);
+                }
+            }
+
+            @Override
+            public void close() {
+                //
+            }
+        };
+    }
+
+    private static final AtomicInteger testDbNumber = new AtomicInteger();
+
+    private static String nextUrl() {
+        return "jdbc:derby:memory:derby" + testDbNumber.incrementAndGet() + ";create=true";
+    }
+
     public Flowable<Connection> connections() {
         return connections;
     }
@@ -37,10 +100,10 @@ public class Database implements AutoCloseable {
         try {
             onClose.run();
         } catch (Exception e) {
-            throw new DatabaseException(e);
+            throw new SQLRuntimeException(e);
         }
     }
-    
+
     public SelectBuilder select() {
         return new SelectBuilder(null, connections());
     }
@@ -52,7 +115,7 @@ public class Database implements AutoCloseable {
     public UpdateBuilder update(String sql) {
         return new UpdateBuilder(sql, connections());
     }
-    
+
     public TransactedBuilder tx(Tx<?> tx) {
         TxImpl<?> t = (TxImpl<?>) tx;
         TransactedConnection c = t.connection().fork();

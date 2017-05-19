@@ -1,8 +1,8 @@
 package org.davidmoten.rx;
 
-import org.davidmoten.rx.jdbc.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.jdbc.annotations.Column;
+import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,6 +35,19 @@ public class DatabaseTest {
                 .assertComplete();
     }
 
+    @Test
+    public void testSelectUsingQuestionMarkWithPublicTestingDatabase() {
+        Database.test() //
+                .select("select score from person where name=?") //
+                .parameters("FRED", "JOSEPH") //
+                .getAs(Integer.class) //
+                .test() //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
+    }
+    
+    
     @Test
     public void testSelectUsingName() {
         db() //

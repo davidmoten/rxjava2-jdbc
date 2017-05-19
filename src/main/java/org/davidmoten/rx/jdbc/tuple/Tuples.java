@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.davidmoten.rx.jdbc.ResultSetMapper;
-import org.davidmoten.rx.jdbc.SQLRuntimeException;
+import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 
 /**
  * Utility methods for tuples.

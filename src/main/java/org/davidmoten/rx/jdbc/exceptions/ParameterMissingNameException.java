@@ -1,4 +1,4 @@
-package org.davidmoten.rx.jdbc;
+package org.davidmoten.rx.jdbc.exceptions;
 
 public final class ParameterMissingNameException extends SQLRuntimeException {
 

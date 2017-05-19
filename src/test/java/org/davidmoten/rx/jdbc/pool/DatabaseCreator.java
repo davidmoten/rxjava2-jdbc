@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Database;
-import org.davidmoten.rx.jdbc.SQLRuntimeException;
+import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 
 public class DatabaseCreator {
 

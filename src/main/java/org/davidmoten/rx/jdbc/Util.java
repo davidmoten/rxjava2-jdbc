@@ -34,6 +34,9 @@ import org.apache.commons.io.IOUtils;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.annotations.Query;
+import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.ParameterMissingNameException;
+import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
