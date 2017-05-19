@@ -816,21 +816,28 @@ public enum Util {
             for (Method m : cls.getMethods()) {
                 String methodName = m.getName();
                 Col column = methodCols.get(methodName);
-                Integer index;
-                if (column instanceof NamedCol) {
-                    String name = ((NamedCol) column).name;
-                    index = colIndexes.get(name.toUpperCase());
-                    if (index == null) {
-                        throw new SQLRuntimeException(
-                                "query column names do not include '" + name + "'");
+                if (column != null) {
+                    Integer index;
+                    if (column instanceof NamedCol) {
+                        String name = ((NamedCol) column).name;
+                        index = colIndexes.get(name.toUpperCase());
+                        if (index == null) {
+                            throw new SQLRuntimeException(
+                                    "query column names do not include '" + name + "'");
+                        }
+                    } else {
+                        IndexedCol col = ((IndexedCol) column);
+                        index = col.index;
                     }
-                } else {
-                    IndexedCol col = ((IndexedCol) column);
-                    index = col.index;
+                    Object value = autoMap(getObject(rs, column.returnType(), index),
+                            column.returnType());
+                    values.put(methodName, value);
                 }
-                Object value = autoMap(getObject(rs, column.returnType(), index),
-                        column.returnType());
-                values.put(methodName, value);
+            }
+            if (values.isEmpty()) {
+                throw new AnnotationsNotFoundException(
+                        "Did you forget to add @Column or @Index annotations to " + cls.getName()
+                                + "?");
             }
             return values;
         }

@@ -2,6 +2,7 @@ package org.davidmoten.rx;
 
 import java.util.List;
 
+import org.davidmoten.rx.jdbc.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
@@ -147,6 +148,17 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testAutoMapToInterfaceWithoutAnnotationsEmitsError() {
+        db() //
+                .select("select name from person") //
+                .autoMap(PersonNoAnnotation.class) //
+                .map(p -> p.name()) //
+                .test() //
+                .assertNoValues() //
+                .assertError(AnnotationsNotFoundException.class);
+    }
+
+    @Test
     public void testSelectWithoutWhereClause() {
         Assert.assertEquals(3, (long) db().select("select name from person") //
                 .count().blockingGet());
@@ -154,6 +166,10 @@ public class DatabaseTest {
 
     static interface Person {
         @Column
+        String name();
+    }
+
+    static interface PersonNoAnnotation {
         String name();
     }
 
