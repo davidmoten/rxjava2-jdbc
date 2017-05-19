@@ -1,9 +1,9 @@
 package org.davidmoten.rx;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.davidmoten.rx.jdbc.Database;
+import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,7 +29,8 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMark() {
         List<String> list = Lists.newArrayList("hello", "there");
-        List<Flowable<List<String>>> list2 = Lists.newArrayList(Flowable.fromIterable(list).buffer(1));
+        List<Flowable<List<String>>> list2 = Lists
+                .newArrayList(Flowable.fromIterable(list).buffer(1));
         Flowable.concat(list2).doOnNext(System.out::println).subscribe();
         db() //
                 .select("select score from person where name=?") //
@@ -140,7 +141,8 @@ public class DatabaseTest {
                 .select("select name from person") //
                 .autoMap(Person.class) //
                 .map(p -> p.name()) //
-                .test().assertValueCount(3) //
+                .test() //
+                .assertValueCount(3) //
                 .assertComplete();
     }
 
@@ -151,6 +153,7 @@ public class DatabaseTest {
     }
 
     static interface Person {
+        @Column
         String name();
     }
 
