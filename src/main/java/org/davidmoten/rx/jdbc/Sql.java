@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public final class Sql {
 
@@ -31,8 +32,10 @@ public final class Sql {
             }
         }
         try {
-            String s =  bytes.toString(UTF8);
-            String[] statements = s.split(";");
+            String s = bytes.toString(UTF8);
+            //trim comment lines starting with --
+            s = Arrays.stream(s.split("\n")).filter(line -> !line.startsWith("--")).collect(Collectors.joining("\n"));
+            String[] statements = s.split(delimiter);
             return Arrays.asList(statements);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);

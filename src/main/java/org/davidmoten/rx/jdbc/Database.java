@@ -46,7 +46,6 @@ public class Database implements AutoCloseable {
         try {
             Sql.statements(Database.class.getResourceAsStream("/database-test.sql")).stream().forEach(x -> {
                 try {
-                    System.out.println(x);
                     c.prepareStatement(x).execute();
                 } catch (SQLException e) {
                     throw new SQLRuntimeException(e);
