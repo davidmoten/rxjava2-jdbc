@@ -29,10 +29,6 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingQuestionMark() {
-        List<String> list = Lists.newArrayList("hello", "there");
-        List<Flowable<List<String>>> list2 = Lists
-                .newArrayList(Flowable.fromIterable(list).buffer(1));
-        Flowable.concat(list2).doOnNext(System.out::println).subscribe();
         db() //
                 .select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
