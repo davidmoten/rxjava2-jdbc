@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
@@ -50,9 +51,12 @@ public class SelectBuilder {
     }
 
     void useAndCloseParameterBuffer() {
-        //called when about to add stream of parameters or about to call get
+        // called when about to add stream of parameters or about to call get
         if (!parameterBuffer.isEmpty()) {
-            parameterGroups.add(Flowable.fromIterable(parameterBuffer).buffer(sqlInfo.numParameters()));
+            Flowable<List<Object>> p = Flowable //
+                    .fromIterable(new ArrayList<>(parameterBuffer)) //
+                    .buffer(sqlInfo.numParameters());
+            parameterGroups.add(p);
             parameterBuffer.clear();
         }
     }
@@ -111,7 +115,6 @@ public class SelectBuilder {
         // should
         return get(rs -> Util.mapObject(rs, cls, 1));
     }
-
 
     private static final Flowable<List<Object>> SINGLE_EMPTY_LIST = Flowable
             .just(Collections.emptyList());
