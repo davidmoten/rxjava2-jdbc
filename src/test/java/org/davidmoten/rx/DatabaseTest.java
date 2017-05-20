@@ -168,29 +168,22 @@ public class DatabaseTest {
                 .assertValues("FRED", "JOSEPH") //
                 .assertComplete(); //
     }
-    
+
     @Test
     public void testReadMeFragment1() {
         Database db = Database.test();
-        db.select("select name from person")
-          .getAs(String.class)
-          .forEach(System.out::println);
+        db.select("select name from person").getAs(String.class).forEach(System.out::println);
     }
-    
-    @Test(expected=RuntimeException.class)
+
+    @Test(expected = RuntimeException.class)
     public void testReadMeFragmentColumnDoesNotExist() {
         Database db = Database.test();
-        db.select("select nam from person")
-          .getAs(String.class)
-          .doOnNext(System.out::println)
-          .blockingSubscribe();
+        db.select("select nam from person").getAs(String.class).doOnNext(System.out::println).blockingSubscribe();
     }
-    
+
     @Test
     public void testTupleSupport() {
-        db().select("select name, score from person")
-          .getAs(String.class, Integer.class)
-          .forEach(System.out::println);
+        db().select("select name, score from person").getAs(String.class, Integer.class).forEach(System.out::println);
     }
 
     @Test
@@ -238,7 +231,7 @@ public class DatabaseTest {
                 .assertNoValues() //
                 .assertError(AnnotationsNotFoundException.class);
     }
-    
+
     @Test
     public void testAutoMapToInterfaceWithTwoMethods() {
         db() //
@@ -251,7 +244,19 @@ public class DatabaseTest {
                 .assertValue(21) //
                 .assertComplete();
     }
-    
+
+    @Test
+    public void testAutoMapToInterfaceWithExplicitColumnName() {
+        db() //
+                .select("select name, score from person order by name") //
+                .autoMap(Person3.class) //
+                .doOnNext(System.out::println) //
+                .firstOrError() //
+                .map(Person3::examScore) //
+                .test() //
+                .assertValue(21) //
+                .assertComplete();
+    }
 
     @Test
     public void testSelectWithoutWhereClause() {
@@ -263,13 +268,21 @@ public class DatabaseTest {
         @Column
         String name();
     }
-    
+
     static interface Person2 {
         @Column
         String name();
-        
+
         @Column
         int score();
+    }
+
+    static interface Person3 {
+        @Column("name")
+        String fullName();
+
+        @Column("score")
+        int examScore();
     }
 
     static interface PersonNoAnnotation {
