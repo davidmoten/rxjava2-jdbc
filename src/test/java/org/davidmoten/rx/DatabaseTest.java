@@ -181,7 +181,9 @@ public class DatabaseTest {
     @Test(expected = RuntimeException.class)
     public void testReadMeFragmentColumnDoesNotExist() {
         Database db = Database.test();
-        db.select("select nam from person").getAs(String.class).doOnNext(System.out::println).blockingSubscribe();
+        db.select("select nam from person") //
+                .getAs(String.class) //
+                .blockingForEach(System.out::println);
     }
 
     @Test
@@ -319,6 +321,18 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testAutoMapWithMixIndexAndName() {
+        db() //
+                .select("select name, score from person order by name") //
+                .autoMap(Person9.class) //
+                .firstOrError() //
+                .map(Person9::score) //
+                .test() //
+                .assertValue(21) //
+                .assertComplete();
+    }
+
+    @Test
     public void testSelectWithoutWhereClause() {
         Assert.assertEquals(3, (long) db().select("select name from person") //
                 .count().blockingGet());
@@ -380,6 +394,14 @@ public class DatabaseTest {
     interface Person8 {
         @Column
         int name();
+    }
+
+    interface Person9 {
+        @Column
+        String name();
+
+        @Index(2)
+        int score();
     }
 
     interface PersonNoAnnotation {

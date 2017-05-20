@@ -71,8 +71,7 @@ That example is very brief but for these simple tests it's preferable to use a d
 Database db = Database.test();
 db.select("select nam from person")
   .getAs(String.class)
-  .doOnNext(System.out::println)
-  .blockingSubscribe();
+  .blockingForEach(System.out::println);
 ```
 
 Tuple support
@@ -83,8 +82,7 @@ When you specify more types in the `getAs` method they are matched to the column
 Database db = Database.test();
 db.select("select name, score from person")
   .getAs(String.class, Integer.class)
-  .doOnNext(System.out::println)
-  .blockingSubscribe();
+  .blockingForEach(System.out::println);
 ```
 Output
 ```
