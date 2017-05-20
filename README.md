@@ -10,7 +10,7 @@ Non-blocking connection pools
 -------------------------------
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
 
-In normal non-reactive database programming a couple of different threads (started by servlet calls for instance) will *race* for the next available connection from a pool of database connections. If no unused connection remains in the pool then the standard non-reactive approach is to **block the thread** until a connection becomes available. This is a resource issue as each blocked threads hold onto ~0.5MB of stack and may incur a context switch (adds latency to thread processing).
+In normal non-reactive database programming a couple of different threads (started by servlet calls for instance) will *race* for the next available connection from a pool of database connections. If no unused connection remains in the pool then the standard non-reactive approach is to **block the thread** until a connection becomes available. This is a resource issue as each blocked thread holds onto ~0.5MB of stack and may incur context switch and memory-access delays (adds latency to thread processing). At least the previous version *rxjava-jdbc* allowed you to use thread pools via RxJava schedulers but for everything to behave efficiently the size of the thread pools needed to neatly match the max size of the connection pool.
 
 `rxjava-jdbc2` uses non-blocking JDBC connection pools by default (but is configurable to use whatever you want). 
 
