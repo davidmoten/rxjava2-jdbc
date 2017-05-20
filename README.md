@@ -134,7 +134,7 @@ interface Person {
 }
 ```
 
-You can also refer to the position of the column in the result set instead of its name:
+You can also refer to the 1-based position of the column in the result set instead of its name:
 ```java
 interface Person {
   @Index(1)
