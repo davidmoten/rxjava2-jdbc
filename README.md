@@ -43,4 +43,55 @@ Note that the health check sql varies from database to database. Here are some e
 * H2 - `select 1`
 * Derby - `select 1 from sysibm.sysdummy1`
 
+## Demonstration
+
+Lets create a database with a non-blocking connection pool of size 1 only and demonstrate what happens when two queries run concurrently. We use the in-built test database for this one 
+so you can copy and paste this code to your ide and it will run (in a main method or unit test say):
+
+```java
+// create database with non-blocking connection pool 
+// of size 1
+Database db = Database.test(1); 
+
+//start a slow query
+db.select("select score from person where name=?") 
+  .parameters("FRED") 
+  .getAs(Integer.class) 
+  // slow things down by sleeping
+  .doOnNext(x -> Thread.sleep(1000)) 
+  // run in background thread
+  .subscribeOn(Schedulers.io()) 
+  .subscribe();
+
+//ensure that query starts
+Thread.sleep(100);
+
+//query again while first query running
+db.select("select score from person where name=?") 
+  .parameters("FRED") 
+  .getAs(Integer.class) //
+  .doOnNext(x -> System.out.println("emitted on " + Thread.currentThread().getName())) //
+  .subscribe();
+
+System.out.println("second query submitted");
+
+//wait for stuff to happen asynchronously
+Thread.sleep(5000);
+```
+
+The output of this is 
+
+```
+second query submitted
+emitted on RxCachedThreadScheduler-1
+```
+
+What has happened is that 
+* the second query registers itself as something that will run as soon as a connection is released (by the first query). 
+* no blocking occurs and we immediately see the first line of output
+* the second query runs after the first
+* in fact we see that the second query runs on the same Thread as the first query as a direct consequence of non-blocking design  
+
+
+
 
