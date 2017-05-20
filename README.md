@@ -145,6 +145,13 @@ interface Person {
 
 In fact, you can mix use of named columns and indexed columns in automapped interfaces.
 
+If you don't configure things correctly these exceptions may be emitted:
+
+* `AnnotationsNotFoundException`
+* `ColumnIndexOutOfRangeException`
+* `ColumnNotFoundException`
+* `ClassCastException`
+
 Non-blocking connection pools
 -------------------------------
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
