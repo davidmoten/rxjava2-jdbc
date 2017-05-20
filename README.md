@@ -145,6 +145,8 @@ interface Person {
 }
 ```
 
+In fact, you can mix use of named columns and indexed columns in automapped interfaces.
+
 Non-blocking connection pools
 -------------------------------
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
