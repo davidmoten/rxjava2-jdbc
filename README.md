@@ -33,6 +33,10 @@ If you want to have a play with the built-in test database then do this:
 Database db = Database.test(maxPoolSize);
 ```
 
+The test database has a couple of tables `Person` and `Address` with three rows in `Person` and two rows in `Address`:
+
+<img src="src/docs/tables.png?raw=true"/>
+
 A query example
 ---------------
 Let's use the `Database` instance to perform a select query on the `Person` table and write the names to the console:
