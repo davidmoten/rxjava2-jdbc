@@ -168,6 +168,14 @@ public class DatabaseTest {
                 .assertValues("FRED", "JOSEPH") //
                 .assertComplete(); //
     }
+    
+    @Test
+    public void testReadMeFragment1() {
+        Database db = Database.test();
+        db.select("select name from person")
+          .getAs(String.class)
+          .forEach(System.out::println);
+    }
 
     @Test
     public void testDelayedCallsAreNonBlocking() throws InterruptedException {
