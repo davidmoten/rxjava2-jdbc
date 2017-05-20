@@ -4,6 +4,8 @@ With the release of RxJava 2 now is a good time for a rewrite of [rxjava-jdbc](h
 
 See [wiki](https://github.com/davidmoten/rxjava2-jdbc/wiki)
 
+Status: *in development*
+
 Non-blocking connection pools
 -------------------------------
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
@@ -43,7 +45,7 @@ Note that the health check sql varies from database to database. Here are some e
 * H2 - `select 1`
 * Derby - `select 1 from sysibm.sysdummy1`
 
-## Demonstration
+### Demonstration
 
 Lets create a database with a non-blocking connection pool of size 1 only and demonstrate what happens when two queries run concurrently. We use the in-built test database for this one 
 so you can copy and paste this code to your ide and it will run (in a main method or unit test say):
