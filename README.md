@@ -77,7 +77,7 @@ db.select("select nam from person")
 
 Tuple support
 -----------------
-When you specify more types in the `getAs` method they are matched to the columns in the returned result set from the query and combined into a `TupleN` instance. Here's an example that returns `Tuple2`:
+When you specify more types in the `getAs` method they are matched to the columns in the returned result set from the query and combined into a `Tuple*` instance. Here's an example that returns `Tuple2`:
 
 ```java
 Database db = Database.test();
@@ -92,7 +92,7 @@ Tuple2 [value1=FRED, value2=21]
 Tuple2 [value1=JOSEPH, value2=34]
 Tuple2 [value1=MARMADUKE, value2=25]
 ```
-
+Tuples are defined from `Tuple2` to `Tuple7` and for above that to `TupleN`.
 
 Non-blocking connection pools
 -------------------------------
