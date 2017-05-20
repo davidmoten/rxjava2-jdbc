@@ -12,6 +12,7 @@ import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.jdbc.Pools;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.junit.Assert;
@@ -237,7 +238,6 @@ public class DatabaseTest {
         db() //
                 .select("select name, score from person order by name") //
                 .autoMap(Person2.class) //
-                .doOnNext(System.out::println) //
                 .firstOrError() //
                 .map(Person2::score) //
                 .test() //
@@ -250,12 +250,23 @@ public class DatabaseTest {
         db() //
                 .select("select name, score from person order by name") //
                 .autoMap(Person3.class) //
-                .doOnNext(System.out::println) //
                 .firstOrError() //
                 .map(Person3::examScore) //
                 .test() //
                 .assertValue(21) //
                 .assertComplete();
+    }
+    
+    @Test
+    public void testAutoMapToInterfaceWithExplicitColumnNameThatDoesNotExist() {
+        db() //
+                .select("select name, score from person order by name") //
+                .autoMap(Person4.class) //
+                .firstOrError() //
+                .map(Person4::examScore) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ColumnNotFoundException.class);
     }
 
     @Test
@@ -279,6 +290,14 @@ public class DatabaseTest {
 
     static interface Person3 {
         @Column("name")
+        String fullName();
+
+        @Column("score")
+        int examScore();
+    }
+    
+    static interface Person4 {
+        @Column("namez")
         String fullName();
 
         @Column("score")

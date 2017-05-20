@@ -37,6 +37,7 @@ import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ParameterMissingNameException;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.slf4j.Logger;
@@ -815,7 +816,7 @@ public enum Util {
                         String name = ((NamedCol) column).name;
                         index = colIndexes.get(name.toUpperCase());
                         if (index == null) {
-                            throw new SQLRuntimeException("query column names do not include '" + name + "'");
+                            throw new ColumnNotFoundException("query column names do not include '" + name + "'");
                         }
                     } else {
                         IndexedCol col = ((IndexedCol) column);
