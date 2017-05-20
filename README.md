@@ -77,7 +77,7 @@ db.select("select nam from person")
 
 Tuple support
 -----------------
-When you specify more types in the `getAs` method they are matched to the columns in the returned result set from the query and combined into a `Tuple*` instance. Here's an example that returns `Tuple2`:
+When you specify more types in the `getAs` method they are matched to the columns in the returned result set from the query and combined into a `Tuple` instance. Here's an example that returns `Tuple2`:
 
 ```java
 Database db = Database.test();
@@ -93,6 +93,46 @@ Tuple2 [value1=JOSEPH, value2=34]
 Tuple2 [value1=MARMADUKE, value2=25]
 ```
 Tuples are defined from `Tuple2` to `Tuple7` and for above that to `TupleN`.
+
+Automap
+--------------
+To map the result set values to an interface, first declare an interface:
+
+```java
+interface Person {
+  @Column
+  String name();
+
+  @Column
+  int score();
+}
+```
+
+In the query use the `autoMap` method and let's use some of the built-in testing methods of RxJava2 to confirm we got what we expected:
+
+```java
+Database db = Database.test();
+db.select("select name, score from person order by name")
+  .autoMap(Person2.class)
+  .doOnNext(System.out::println)
+  .firstOrError()
+  .map(Person::score) 
+  .test()
+  .assertValue(21) 
+  .assertComplete();
+```
+
+If your interface method name does not exactly match the column name (underscores and case are ignored) then you can add more detail to the `Column` annotation:
+
+```java
+interface Person {
+  @Column("name")
+  String fullName();
+
+  @Column("score")
+  int examScore();
+}
+```
 
 Non-blocking connection pools
 -------------------------------

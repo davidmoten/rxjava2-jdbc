@@ -238,6 +238,20 @@ public class DatabaseTest {
                 .assertNoValues() //
                 .assertError(AnnotationsNotFoundException.class);
     }
+    
+    @Test
+    public void testAutoMapToInterfaceWithTwoMethods() {
+        db() //
+                .select("select name, score from person order by name") //
+                .autoMap(Person2.class) //
+                .doOnNext(System.out::println) //
+                .firstOrError() //
+                .map(Person2::score) //
+                .test() //
+                .assertValue(21) //
+                .assertComplete();
+    }
+    
 
     @Test
     public void testSelectWithoutWhereClause() {
@@ -248,6 +262,14 @@ public class DatabaseTest {
     static interface Person {
         @Column
         String name();
+    }
+    
+    static interface Person2 {
+        @Column
+        String name();
+        
+        @Column
+        int score();
     }
 
     static interface PersonNoAnnotation {
