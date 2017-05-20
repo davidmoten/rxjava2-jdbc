@@ -6,6 +6,51 @@ See [wiki](https://github.com/davidmoten/rxjava2-jdbc/wiki)
 
 Status: *in development*
 
+JDBC is so much simpler with *rxjava2-jdbc*:
+
+Getting started
+------------------
+Use this maven dependency:
+
+```xml
+```
+If you want to use the built-in test database then add the Apache Derby dependency (otherwise you'll need the jdbc dependency for the database you want to connect to):
+
+```xml
+```
+
+Database
+-------------
+To start things off you need a `Database` instance. Given the jdbc url of your database you can create a `Database` object like this:
+
+```java
+Database db = Database.from(url, maxPoolSize);
+```
+
+If you want to have a play with the built-in test database then do this:
+
+```java
+Database db = Database.test(maxPoolSize);
+```
+
+A query example
+---------------
+Let's use the `Database` instance to perform a select query on the `Person` table and write the names to the console:
+
+```java
+Database db = Database.test();
+db.select("select name from person")
+  .getAs(String.class)
+  .forEach(System.out::println);
+```
+
+Output is
+```
+FRED
+JOSEPH
+MARMADUKE
+```
+
 Non-blocking connection pools
 -------------------------------
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
