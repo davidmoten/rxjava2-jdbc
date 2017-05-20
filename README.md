@@ -134,6 +134,17 @@ interface Person {
 }
 ```
 
+You can also refer to the position of the column in the result set instead of its name:
+```java
+interface Person {
+  @Index(1)
+  String fullName();
+
+  @Index(2)
+  int examScore();
+}
+```
+
 Non-blocking connection pools
 -------------------------------
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 

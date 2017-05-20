@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.jdbc.Pools;
 import org.davidmoten.rx.jdbc.annotations.Column;
+import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
@@ -268,6 +269,19 @@ public class DatabaseTest {
                 .assertNoValues() //
                 .assertError(ColumnNotFoundException.class);
     }
+    
+    @Test
+    public void testAutoMapToInterfaceWithIndex() {
+        db() //
+                .select("select name, score from person order by name") //
+                .autoMap(Person5.class) //
+                .firstOrError() //
+                .map(Person5::examScore) //
+                .test() //
+                .assertValue(21) //
+                .assertComplete();
+    }
+
 
     @Test
     public void testSelectWithoutWhereClause() {
@@ -301,6 +315,14 @@ public class DatabaseTest {
         String fullName();
 
         @Column("score")
+        int examScore();
+    }
+    
+    static interface Person5 {
+        @Index(1)
+        String fullName();
+
+        @Index(2)
         int examScore();
     }
 
