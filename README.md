@@ -113,7 +113,7 @@ In the query use the `autoMap` method and let's use some of the built-in testing
 ```java
 Database db = Database.test();
 db.select("select name, score from person order by name")
-  .autoMap(Person2.class)
+  .autoMap(Person.class)
   .doOnNext(System.out::println)
   .firstOrError()
   .map(Person::score) 
