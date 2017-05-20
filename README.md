@@ -145,7 +145,7 @@ interface Person {
 
 In fact, you can mix use of named columns and indexed columns in automapped interfaces.
 
-If you don't configure things correctly these exceptions may be emitted:
+If you don't configure things correctly these exceptions may be emitted and include extra information in the error message about the affected automap interface:
 
 * `AnnotationsNotFoundException`
 * `ColumnIndexOutOfRangeException`
