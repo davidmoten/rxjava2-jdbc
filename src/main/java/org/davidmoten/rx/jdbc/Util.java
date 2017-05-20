@@ -817,20 +817,23 @@ public enum Util {
                         String name = ((NamedCol) column).name;
                         index = colIndexes.get(name.toUpperCase());
                         if (index == null) {
-                            throw new ColumnNotFoundException("query column names do not include '" + name + "'");
+                            throw new ColumnNotFoundException("query column names do not include '" + name
+                                    + "' which is a named column in the automapped interface " + cls.getName());
                         }
                     } else {
                         IndexedCol col = ((IndexedCol) column);
                         index = col.index;
                         if (index < 1) {
                             throw new ColumnIndexOutOfRangeException(
-                                    "value for Index annotation (on autoMapped interface) must be > 0");
+                                    "value for Index annotation (on autoMapped interface " + cls.getName()
+                                            + ") must be > 0");
                         } else {
                             int count = getColumnCount(rs);
                             if (index > count) {
                                 throw new ColumnIndexOutOfRangeException("value " + index
-                                        + " for Index annotation (on autoMapped interface) must be between 1 and the number of columns in the result set ("
-                                        + count + ")");
+                                        + " for Index annotation (on autoMapped interface " + cls.getName()
+                                        + ") must be between 1 and the number of columns in the result set (" + count
+                                        + ")");
                             }
                         }
                     }
