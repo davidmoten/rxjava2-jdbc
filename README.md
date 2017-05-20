@@ -65,6 +65,35 @@ JOSEPH
 MARMADUKE
 ```
 
+That example is very brief but for these simple tests it's preferable to use a different subscribe method to `forEach` because if we had for instance asked for a column that did not exist then an exception stack trace would be written to stderr but no exception would be thrown. This example will throw a `SQLRuntimeException` because the column `nam` does not exist:
+
+```java
+Database db = Database.test();
+db.select("select nam from person")
+  .getAs(String.class)
+  .doOnNext(System.out::println)
+  .blockingSubscribe();
+```
+
+Tuple support
+-----------------
+When you specify more types in the `getAs` method they are matched to the columns in the returned result set from the query and combined into a `TupleN` instance. Here's an example that returns `Tuple2`:
+
+```java
+Database db = Database.test();
+db.select("select name, score from person")
+  .getAs(String.class, Integer.class)
+  .doOnNext(System.out::println)
+  .blockingSubscribe();
+```
+Output
+```
+Tuple2 [value1=FRED, value2=21]
+Tuple2 [value1=JOSEPH, value2=34]
+Tuple2 [value1=MARMADUKE, value2=25]
+```
+
+
 Non-blocking connection pools
 -------------------------------
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
@@ -79,7 +108,7 @@ The simplest way of creating a `Database` instance with a non-blocking connectio
 Database db = Database.from(url, maxPoolSize);
 ```
 
-If you want to play with the in-built test database (requires Apache Derby dependency) then:
+If you want to play with the in-memory built-in test database (requires Apache Derby dependency) then:
 
 ```java
 Database db = Database.test(maxPoolSize);

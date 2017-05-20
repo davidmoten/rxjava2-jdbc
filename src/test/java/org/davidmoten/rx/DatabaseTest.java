@@ -176,6 +176,22 @@ public class DatabaseTest {
           .getAs(String.class)
           .forEach(System.out::println);
     }
+    
+    @Test(expected=RuntimeException.class)
+    public void testReadMeFragmentColumnDoesNotExist() {
+        Database db = Database.test();
+        db.select("select nam from person")
+          .getAs(String.class)
+          .doOnNext(System.out::println)
+          .blockingSubscribe();
+    }
+    
+    @Test
+    public void testTupleSupport() {
+        db().select("select name, score from person")
+          .getAs(String.class, Integer.class)
+          .forEach(System.out::println);
+    }
 
     @Test
     public void testDelayedCallsAreNonBlocking() throws InterruptedException {
