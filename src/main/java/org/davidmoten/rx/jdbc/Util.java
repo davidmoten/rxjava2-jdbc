@@ -37,6 +37,7 @@ import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ParameterMissingNameException;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
@@ -821,6 +822,17 @@ public enum Util {
                     } else {
                         IndexedCol col = ((IndexedCol) column);
                         index = col.index;
+                        if (index < 1) {
+                            throw new ColumnIndexOutOfRangeException(
+                                    "value for Index annotation (on autoMapped interface) must be > 0");
+                        } else {
+                            int count = getColumnCount(rs);
+                            if (index > count) {
+                                throw new ColumnIndexOutOfRangeException("value " + index
+                                        + " for Index annotation (on autoMapped interface) must be between 1 and the number of columns in the result set ("
+                                        + count + ")");
+                            }
+                        }
                     }
                     Object value = autoMap(getObject(rs, column.returnType(), index), column.returnType());
                     values.put(methodName, value);
@@ -839,6 +851,14 @@ public enum Util {
                     new ProxyInstance<T>(values()));
         }
 
+    }
+
+    private static int getColumnCount(ResultSet rs) {
+        try {
+            return rs.getMetaData().getColumnCount();
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
     }
 
     private static class ProxyInstance<T> implements java.lang.reflect.InvocationHandler {
@@ -907,7 +927,6 @@ public enum Util {
         return camelCased.replaceAll(regex, replacement);
     }
 
-    
     public static ConnectionProvider connectionProvider(String url) {
         return new ConnectionProvider() {
 

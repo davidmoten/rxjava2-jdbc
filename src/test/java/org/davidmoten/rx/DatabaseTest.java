@@ -13,6 +13,7 @@ import org.davidmoten.rx.jdbc.Pools;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
@@ -257,7 +258,7 @@ public class DatabaseTest {
                 .assertValue(21) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testAutoMapToInterfaceWithExplicitColumnNameThatDoesNotExist() {
         db() //
@@ -269,7 +270,7 @@ public class DatabaseTest {
                 .assertNoValues() //
                 .assertError(ColumnNotFoundException.class);
     }
-    
+
     @Test
     public void testAutoMapToInterfaceWithIndex() {
         db() //
@@ -282,6 +283,40 @@ public class DatabaseTest {
                 .assertComplete();
     }
 
+    @Test
+    public void testAutoMapToInterfaceWithIndexTooLarge() {
+        db() //
+                .select("select name, score from person order by name") //
+                .autoMap(Person6.class) //
+                .firstOrError() //
+                .map(Person6::examScore) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ColumnIndexOutOfRangeException.class);
+    }
+
+    @Test
+    public void testAutoMapToInterfaceWithIndexTooSmall() {
+        db() //
+                .select("select name, score from person order by name") //
+                .autoMap(Person7.class) //
+                .firstOrError() //
+                .map(Person7::examScore) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ColumnIndexOutOfRangeException.class);
+    }
+
+    @Test
+    public void testAutoMapWithUnmappableColumnType() {
+        db() //
+                .select("select name from person order by name") //
+                .autoMap(Person8.class) //
+                .map(p -> p.name()) //
+                .test() //
+                .assertNoValues() //
+                .assertError(ClassCastException.class);
+    }
 
     @Test
     public void testSelectWithoutWhereClause() {
@@ -289,12 +324,12 @@ public class DatabaseTest {
                 .count().blockingGet());
     }
 
-    static interface Person {
+    interface Person {
         @Column
         String name();
     }
 
-    static interface Person2 {
+    interface Person2 {
         @Column
         String name();
 
@@ -302,23 +337,23 @@ public class DatabaseTest {
         int score();
     }
 
-    static interface Person3 {
+    interface Person3 {
         @Column("name")
         String fullName();
 
         @Column("score")
         int examScore();
     }
-    
-    static interface Person4 {
+
+    interface Person4 {
         @Column("namez")
         String fullName();
 
         @Column("score")
         int examScore();
     }
-    
-    static interface Person5 {
+
+    interface Person5 {
         @Index(1)
         String fullName();
 
@@ -326,7 +361,28 @@ public class DatabaseTest {
         int examScore();
     }
 
-    static interface PersonNoAnnotation {
+    interface Person6 {
+        @Index(1)
+        String fullName();
+
+        @Index(3)
+        int examScore();
+    }
+
+    interface Person7 {
+        @Index(1)
+        String fullName();
+
+        @Index(0)
+        int examScore();
+    }
+
+    interface Person8 {
+        @Column
+        int name();
+    }
+
+    interface PersonNoAnnotation {
         String name();
     }
 
