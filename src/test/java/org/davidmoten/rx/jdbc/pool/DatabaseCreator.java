@@ -20,6 +20,10 @@ public class DatabaseCreator {
                 .from(new NonBlockingConnectionPool(connectionProvider(nextUrl()), maxSize, 1000));
     }
 
+    public static ConnectionProvider connectionProvider() {
+        return connectionProvider(nextUrl());
+    }
+    
     private static ConnectionProvider connectionProvider(String url) {
         return new ConnectionProvider() {
 

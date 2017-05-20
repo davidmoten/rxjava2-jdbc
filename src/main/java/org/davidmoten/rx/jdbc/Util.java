@@ -15,6 +15,7 @@ import java.math.BigInteger;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -28,6 +29,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
@@ -904,4 +906,25 @@ public enum Util {
         return camelCased.replaceAll(regex, replacement);
     }
 
+    
+    public static ConnectionProvider connectionProvider(String url) {
+        return new ConnectionProvider() {
+
+            private final AtomicBoolean once = new AtomicBoolean(false);
+
+            @Override
+            public Connection get() {
+                try {
+                    return DriverManager.getConnection(url);
+                } catch (SQLException e) {
+                    throw new SQLRuntimeException(e);
+                }
+            }
+
+            @Override
+            public void close() {
+                //
+            }
+        };
+    }
 }

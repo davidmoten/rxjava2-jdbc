@@ -29,13 +29,21 @@ public class Database implements AutoCloseable {
     public static Database from(Flowable<Connection> connections, Action onClose) {
         return new Database(connections, onClose);
     }
+    
+    public static Database from(String url, int maxPoolSize) {
+        return Database.from(new NonBlockingConnectionPool(Util.connectionProvider(url), maxPoolSize, 1000));
+    }
 
     public static Database from(Pool<Connection> pool) {
         return new Database(pool.members().cast(Connection.class), () -> pool.close());
     }
 
     public static Database test(int maxPoolSize) {
-        return Database.from(new NonBlockingConnectionPool(connectionProvider(nextUrl()), maxPoolSize, 1000));
+        return Database.from(new NonBlockingConnectionPool(testConnectionProvider(), maxPoolSize, 0));
+    }
+
+    static ConnectionProvider testConnectionProvider() {
+        return connectionProvider(nextUrl());
     }
 
     public static Database test() {

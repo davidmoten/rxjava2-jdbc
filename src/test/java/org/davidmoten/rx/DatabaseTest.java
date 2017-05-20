@@ -1,15 +1,26 @@
 package org.davidmoten.rx;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.davidmoten.rx.jdbc.Database;
+import org.davidmoten.rx.jdbc.Pools;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
+import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 
 public class DatabaseTest {
 
@@ -46,8 +57,25 @@ public class DatabaseTest {
                 .assertValues(21, 34) //
                 .assertComplete();
     }
-    
-    
+
+    @Test
+    public void testSelectUsingNonBlockingBuilder() {
+        NonBlockingConnectionPool pool = Pools //
+                .nonBlocking() //
+                .connectionProvider(DatabaseCreator.connectionProvider()) //
+                .healthy(c -> c.prepareStatement("select 1").execute()) //
+                .maxPoolSize(3) //
+                .build();
+        Database.from(pool) //
+                .select("select score from person where name=?") //
+                .parameters("FRED", "JOSEPH") //
+                .getAs(Integer.class) //
+                .test() //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
+    }
+
     @Test
     public void testSelectUsingName() {
         db() //
@@ -139,6 +167,30 @@ public class DatabaseTest {
                 .assertNoErrors() //
                 .assertValues("FRED", "JOSEPH") //
                 .assertComplete(); //
+    }
+
+    @Test
+    public void testDelayedCallsAreNonBlocking() throws InterruptedException {
+        List<String> list = new CopyOnWriteArrayList<String>();
+        Database db = db(1); //
+        db.select("select score from person where name=?") //
+                .parameters("FRED") //
+                .getAs(Integer.class) //
+                .doOnNext(x -> Thread.sleep(1000)) //
+                .subscribeOn(Schedulers.io()) //
+                .subscribe();
+        Thread.sleep(100);
+        CountDownLatch latch = new CountDownLatch(1);
+        db.select("select score from person where name=?") //
+                .parameters("FRED") //
+                .getAs(Integer.class) //
+                .doOnNext(x -> list.add("emitted")) //
+                .doOnNext(x -> System.out.println("emitted on " + Thread.currentThread().getName())) //
+                .doOnNext(x -> latch.countDown()) //
+                .subscribe();
+        list.add("subscribed");
+        latch.await(5, TimeUnit.SECONDS);
+        assertEquals(Arrays.asList("subscribed", "emitted"), list);
     }
 
     @Test
