@@ -185,6 +185,14 @@ public class DatabaseTest {
                 .getAs(String.class) //
                 .blockingForEach(System.out::println);
     }
+    
+    @Test(expected = RuntimeException.class)
+    public void testReadMeFragmentDerbyHealthCheck() {
+        Database db = Database.test();
+        db.select("select 1 from sysibm.sysdummy1") //
+                .getAs(String.class) //
+                .blockingForEach(System.out::println);
+    }
 
     @Test
     public void testTupleSupport() {
