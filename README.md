@@ -281,7 +281,7 @@ A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking con
 
 In normal non-reactive database programming a couple of different threads (started by servlet calls for instance) will *race* for the next available connection from a pool of database connections. If no unused connection remains in the pool then the standard non-reactive approach is to **block the thread** until a connection becomes available. This is a resource issue as each blocked thread holds onto ~0.5MB of stack and may incur context switch and memory-access delays (adds latency to thread processing). 
 
-*rxjava-jdbc2* uses non-blocking JDBC connection pools by default (but is configurable to use whatever you want). 
+*rxjava-jdbc2* uses non-blocking JDBC connection pools by default (but is configurable to use whatever you want). What happens in practice is that for each query a subscription is made to a `PublishSubject` controlled by the `NonBlockingConnectionPool` object that emits connections when available to its subscribers (first in best dressed). So the definition of the processing of that query is stored on a queue to be started when a connection is available. TODO estimate the size on the heap of a sample *rxjava2-jdbc*-based Flowable stream.
 
 The simplest way of creating a `Database` instance with a non-blocking connection pool is:
 
