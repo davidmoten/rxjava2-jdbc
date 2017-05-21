@@ -166,7 +166,21 @@ Parameters
 ----------------
 Parameters are passed to indiviual queries but can also be used as a streaming source to prompt the query to be run many times.
 
-### Explicit parameters
+Parameters can be named or anonymous (standard JDBC style).
+
+This is sql with a named parameter:
+
+```sql
+select name from person where name=:name
+```
+
+This is sql with an anonymous parameter:
+
+```sql
+select name from person where name=?
+```
+
+### Explicit anonymous parameters
 
 In the example below the query is first run with `name='FRED'` and then `name=JOSEPH`. Each query returns one result which is printed to the console.
 
@@ -183,7 +197,7 @@ Output is:
 34
 ```
 
-### Flowable parameters
+### Flowable anonymous parameters
 
 You can specify a stream as the source of parameters:
 
