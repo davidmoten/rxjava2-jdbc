@@ -11,6 +11,13 @@ Status: *in development*
 
 JDBC is so much simpler with *rxjava2-jdbc*:
 
+How to build
+-------------
+Use maven:
+```bash
+mvn clean install
+```
+
 Getting started
 ------------------
 Use this maven dependency:
@@ -19,7 +26,7 @@ Use this maven dependency:
 <dependency>
   <groupId>com.github.davidmoten.rxjava2-jdbc</groupId>
   <artifactId>rxjava2-jdbc</artifactId>
-  <version>VERSION_HERE</version>
+  <version>0.1-SNAPSHOT</version>
 </dependency>
 ```
 If you want to use the built-in test database then add the Apache Derby dependency (otherwise you'll need the jdbc dependency for the database you want to connect to):
