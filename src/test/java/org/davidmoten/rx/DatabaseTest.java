@@ -48,7 +48,7 @@ public class DatabaseTest {
                 .assertValues(21, 34) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testSelectUsingQuestionMarkFlowableParameters() {
         db().select("select score from person where name=?") //
@@ -59,11 +59,33 @@ public class DatabaseTest {
                 .assertValues(21, 34) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testSelectUsingQuestionMarkFlowableParametersInLists() {
         db().select("select score from person where name=?") //
                 .parameterListStream(Flowable.just(Arrays.asList("FRED"), Arrays.asList("JOSEPH"))) //
+                .getAs(Integer.class) //
+                .test() //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSelectUsingQuestionMarkFlowableParametersTwoParametersPerQuery() {
+        db().select("select score from person where name=? and score = ?") //
+                .parameterStream(Flowable.just("FRED", 21, "JOSEPH", 34)) //
+                .getAs(Integer.class) //
+                .test() //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
+        db().select("select score from person where name=? and score = ?") //
+                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //

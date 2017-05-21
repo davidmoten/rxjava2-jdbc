@@ -216,6 +216,28 @@ Output is:
 34
 21
 ```
+
+If there is more than one parameter per query:
+
+```java
+Database.test()
+  .select("select score from person where name=? and score=?") 
+  .parameterStream(Flowable.just("FRED", 21, "JOSEPH", 34).repeat())
+  .getAs(Integer.class)
+  .take(3)
+  .blockingForEach(System.out::println);
+```
+or you can group the parameters into lists (each list corresponds to one query) yourself:
+
+```java
+Database.test()
+  .select("select score from person where name=? and score=?") 
+  .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34)).repeat())
+  .getAs(Integer.class)
+  .take(3)
+  .blockingForEach(System.out::println);
+```
+
 ## Mixing explicit and Flowable parameters
 
 ```java
