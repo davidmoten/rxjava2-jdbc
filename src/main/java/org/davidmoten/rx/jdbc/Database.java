@@ -39,7 +39,7 @@ public class Database implements AutoCloseable {
     }
 
     public static Database test(int maxPoolSize) {
-        return Database.from(new NonBlockingConnectionPool(testConnectionProvider(), maxPoolSize, 0));
+        return Database.from(new NonBlockingConnectionPool(testConnectionProvider(), maxPoolSize, 1000));
     }
 
     static ConnectionProvider testConnectionProvider() {

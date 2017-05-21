@@ -11,6 +11,8 @@ import org.davidmoten.rx.pool.Pool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.davidmoten.guavamini.Preconditions;
+
 import io.reactivex.Flowable;
 import io.reactivex.functions.Predicate;
 
@@ -21,6 +23,9 @@ public class NonBlockingConnectionPool implements Pool<Connection> {
     private final AtomicReference<NonBlockingPool<Connection>> pool = new AtomicReference<NonBlockingPool<Connection>>();
 
     public NonBlockingConnectionPool(ConnectionProvider cp, int maxSize, long retryDelayMs) {
+        Preconditions.checkNotNull(cp);
+        Preconditions.checkArgument(maxSize >= 1);
+        Preconditions.checkArgument(retryDelayMs >= 0);
         pool.set(NonBlockingPool.factory(() -> cp.get()) //
                 .healthy(c -> true) //
                 .disposer(Util::closeSilently) //
@@ -41,19 +46,19 @@ public class NonBlockingConnectionPool implements Pool<Connection> {
     public static Builder builder() {
         return new Builder();
     }
-    
+
     public static final class Builder {
 
         private ConnectionProvider cp;
         private Predicate<Connection> healthy = c -> true;
         private int maxPoolSize = 5;
-        private long retryDelayMs = 0;
+        private long retryDelayMs = 1000;
 
         public Builder connectionProvider(ConnectionProvider cp) {
             this.cp = cp;
             return this;
         }
-        
+
         public Builder url(String url) {
             return connectionProvider(Util.connectionProvider(url));
         }
