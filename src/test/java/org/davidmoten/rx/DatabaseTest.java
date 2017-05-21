@@ -2,6 +2,7 @@ package org.davidmoten.rx;
 
 import static org.junit.Assert.assertEquals;
 
+import java.sql.SQLSyntaxErrorException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -39,8 +40,7 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingQuestionMark() {
-        db() //
-                .select("select score from person where name=?") //
+        db().select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .getAs(Integer.class) //
                 .test() //
@@ -51,10 +51,10 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingQuestionMarkWithPublicTestingDatabase() {
-            Database.test() //
-                    .select("select score from person where name=?") //
-                    .parameters("FRED", "JOSEPH") //
-                    .getAs(Integer.class) //
+        Database.test() //
+                .select("select score from person where name=?") //
+                .parameters("FRED", "JOSEPH") //
+                .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
                 .assertValues(21, 34) //
@@ -152,12 +152,12 @@ public class DatabaseTest {
     @Test
     public void testSelectChained() {
         System.out.println("testSelectChained");
-        // we should be able to do this with 2 connections only
-        // using tx() we get to resuse current connection
-        Database db = db(2);
+        // we can do this with 1 connection only!
+        Database db = db(1);
         db.select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .getAs(Integer.class) //
+                .doOnNext(System.out::println) //
                 .concatMap(score -> {
                     log.info("score={}", score);
                     return db //
@@ -178,20 +178,24 @@ public class DatabaseTest {
         db.select("select name from person").getAs(String.class).forEach(System.out::println);
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testReadMeFragmentColumnDoesNotExist() {
+    @Test
+    public void testReadMeFragmentColumnDoesNotExistEmitsSqlSyntaxErrorException() {
         Database db = Database.test();
         db.select("select nam from person") //
                 .getAs(String.class) //
-                .blockingForEach(System.out::println);
+                .test() //
+                .assertNoValues() //
+                .assertError(SQLSyntaxErrorException.class);
     }
-    
-    @Test(expected = RuntimeException.class)
+
+    @Test
     public void testReadMeFragmentDerbyHealthCheck() {
         Database db = Database.test();
-        db.select("select 1 from sysibm.sysdummy1") //
+        db.select("select 'a' from sysibm.sysdummy1") //
                 .getAs(String.class) //
-                .blockingForEach(System.out::println);
+                .test() //
+                .assertValue("a") //
+                .assertComplete();
     }
 
     @Test
