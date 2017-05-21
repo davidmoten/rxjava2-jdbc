@@ -106,8 +106,7 @@ public class SelectBuilder {
             // no effect
             return this;
         }
-        Preconditions.checkArgument(sqlInfo.numParameters() > 0, "no parameters present in sql!");
-        Preconditions.checkArgument(values.length % sqlInfo.numParameters() == 0,
+        Preconditions.checkArgument(sqlInfo.numParameters() == 0 || values.length % sqlInfo.numParameters() == 0,
                 "number of values should be a multiple of number of parameters in sql: " + sql);
         Preconditions.checkArgument(Arrays.stream(values)
                 .allMatch(o -> sqlInfo.names().isEmpty() || (o instanceof Parameter && ((Parameter) o).hasName())));

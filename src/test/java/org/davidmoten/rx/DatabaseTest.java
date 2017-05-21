@@ -74,7 +74,7 @@ public class DatabaseTest {
     @Test
     public void testDrivingSelectWithoutParametersUsingParameterStream() {
         db().select("select count(*) from person") //
-                .parameterStream(Flowable.range(1, 3)) //
+                .parameters(1, 2, 3) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertValues(3, 3, 3) //
@@ -149,13 +149,6 @@ public class DatabaseTest {
     public void testSelectUsingNameWithoutSpecifyingNameThrowsImmediately() {
         db() //
                 .select("select score from person where name=:name") //
-                .parameters("FRED", "JOSEPH");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testSelectParametersSpecifiedWhenNoneExpectedThrowsImmediately() {
-        db() //
-                .select("select score from person") //
                 .parameters("FRED", "JOSEPH");
     }
 
