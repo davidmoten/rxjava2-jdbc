@@ -72,6 +72,16 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testDrivingSelectWithoutParametersUsingParameterStream() {
+        db().select("select count(*) from person") //
+                .parameterStream(Flowable.range(1, 3)) //
+                .getAs(Integer.class) //
+                .test() //
+                .assertValues(3, 3, 3) //
+                .assertComplete();
+    }
+
+    @Test
     public void testSelectUsingQuestionMarkFlowableParametersTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
                 .parameterStream(Flowable.just("FRED", 21, "JOSEPH", 34)) //

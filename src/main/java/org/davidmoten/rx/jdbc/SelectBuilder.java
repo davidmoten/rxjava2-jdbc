@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
@@ -43,39 +42,50 @@ public class SelectBuilder {
         this.sqlInfo = SqlInfo.parse(sql);
     }
 
-    public SelectBuilder parameterStream(Flowable<Object> values) {
-        return parameterListStream(values.buffer(sqlInfo.numParameters()));
+    @SuppressWarnings("unchecked")
+    public SelectBuilder parameterStream(Flowable<?> values) {
+        Preconditions.checkNotNull(values);
+        if (sqlInfo.numParameters() == 0) {
+            return parameterListStream(values.map(x -> Collections.emptyList()));
+        } else {
+            return parameterListStream((Flowable<List<?>>) (Flowable<?>) values.buffer(sqlInfo.numParameters()));
+        }
     }
-    
-    public SelectBuilder parameterListStream(Flowable<List<Object>> valueLists) {
-        useAndCloseParameterBuffer();
-        parameterGroups.add(valueLists);
-        return this;}
 
+    @SuppressWarnings("unchecked")
+    public SelectBuilder parameterListStream(Flowable<List<?>> valueLists) {
+        Preconditions.checkNotNull(valueLists);
+        useAndCloseParameterBuffer();
+        parameterGroups.add((Flowable<List<Object>>) (Flowable<?>) valueLists);
+        return this;
+    }
 
     void useAndCloseParameterBuffer() {
         // called when about to add stream of parameters or about to call get
         if (!parameterBuffer.isEmpty()) {
-            Flowable<List<Object>> p = Flowable //
-                    .fromIterable(new ArrayList<>(parameterBuffer)) //
-                    .buffer(sqlInfo.numParameters());
+            Flowable<List<Object>> p;
+            if (sqlInfo.numParameters() > 0) {
+                p = Flowable //
+                        .fromIterable(new ArrayList<>(parameterBuffer)) //
+                        .buffer(sqlInfo.numParameters());
+            } else {
+                p = Flowable //
+                        .fromIterable(new ArrayList<>(parameterBuffer)) //
+                        .map(x -> Collections.emptyList());
+            }
             parameterGroups.add(p);
             parameterBuffer.clear();
         }
     }
 
     public SelectBuilder parameterList(List<Object> values) {
-        useAndCloseParameterBuffer();
         Preconditions.checkNotNull(values);
-        this.parameterGroups.add(Flowable.just(values));
-        return this;
+        return parameterListStream(Flowable.just(values));
     }
-    
+
     public SelectBuilder parameterList(Object... values) {
         Preconditions.checkNotNull(values);
-        useAndCloseParameterBuffer();
-        parameterGroups.add(Flowable.fromArray(values).buffer(sqlInfo.numParameters()));
-        return this;
+        return parameterStream(Flowable.fromArray(values).buffer(sqlInfo.numParameters()));
     }
 
     public SelectBuilder parameter(String name, Object value) {
@@ -85,6 +95,7 @@ public class SelectBuilder {
     }
 
     public SelectBuilder fetchSize(int size) {
+        Preconditions.checkArgument(size >= 0);
         this.fetchSize = size;
         return this;
     }
@@ -98,8 +109,8 @@ public class SelectBuilder {
         Preconditions.checkArgument(sqlInfo.numParameters() > 0, "no parameters present in sql!");
         Preconditions.checkArgument(values.length % sqlInfo.numParameters() == 0,
                 "number of values should be a multiple of number of parameters in sql: " + sql);
-        Preconditions.checkArgument(Arrays.stream(values).allMatch(o -> sqlInfo.names().isEmpty()
-                || (o instanceof Parameter && ((Parameter) o).hasName())));
+        Preconditions.checkArgument(Arrays.stream(values)
+                .allMatch(o -> sqlInfo.names().isEmpty() || (o instanceof Parameter && ((Parameter) o).hasName())));
         for (Object val : values) {
             parameterBuffer.add(val);
         }
@@ -119,8 +130,7 @@ public class SelectBuilder {
         return get(rs -> Util.mapObject(rs, cls, 1));
     }
 
-    private static final Flowable<List<Object>> SINGLE_EMPTY_LIST = Flowable
-            .just(Collections.emptyList());
+    private static final Flowable<List<Object>> SINGLE_EMPTY_LIST = Flowable.just(Collections.emptyList());
 
     public TransactedSelectBuilder transacted() {
         return new TransactedSelectBuilder(this);
@@ -135,7 +145,7 @@ public class SelectBuilder {
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
         useAndCloseParameterBuffer();
         Flowable<List<Object>> pg = parameterGroupsToFlowable();
-        return Select.<T> create(connections.firstOrError(), pg, sql, fetchSize, function);
+        return Select.<T>create(connections.firstOrError(), pg, sql, fetchSize, function);
     }
 
     Flowable<List<Object>> parameterGroupsToFlowable() {
@@ -237,8 +247,7 @@ public class SelectBuilder {
      * @param cls3
      * @return
      */
-    public <T1, T2, T3> Flowable<Tuple3<T1, T2, T3>> getAs(Class<T1> cls1, Class<T2> cls2,
-            Class<T3> cls3) {
+    public <T1, T2, T3> Flowable<Tuple3<T1, T2, T3>> getAs(Class<T1> cls1, Class<T2> cls2, Class<T3> cls3) {
         return get(Tuples.tuple(cls1, cls2, cls3));
     }
 
@@ -252,8 +261,8 @@ public class SelectBuilder {
      * @param cls4
      * @return
      */
-    public <T1, T2, T3, T4> Flowable<Tuple4<T1, T2, T3, T4>> getAs(Class<T1> cls1, Class<T2> cls2,
-            Class<T3> cls3, Class<T4> cls4) {
+    public <T1, T2, T3, T4> Flowable<Tuple4<T1, T2, T3, T4>> getAs(Class<T1> cls1, Class<T2> cls2, Class<T3> cls3,
+            Class<T4> cls4) {
         return get(Tuples.tuple(cls1, cls2, cls3, cls4));
     }
 
@@ -268,8 +277,8 @@ public class SelectBuilder {
      * @param cls5
      * @return
      */
-    public <T1, T2, T3, T4, T5> Flowable<Tuple5<T1, T2, T3, T4, T5>> getAs(Class<T1> cls1,
-            Class<T2> cls2, Class<T3> cls3, Class<T4> cls4, Class<T5> cls5) {
+    public <T1, T2, T3, T4, T5> Flowable<Tuple5<T1, T2, T3, T4, T5>> getAs(Class<T1> cls1, Class<T2> cls2,
+            Class<T3> cls3, Class<T4> cls4, Class<T5> cls5) {
         return get(Tuples.tuple(cls1, cls2, cls3, cls4, cls5));
     }
 
@@ -285,8 +294,8 @@ public class SelectBuilder {
      * @param cls6
      * @return
      */
-    public <T1, T2, T3, T4, T5, T6> Flowable<Tuple6<T1, T2, T3, T4, T5, T6>> getAs(Class<T1> cls1,
-            Class<T2> cls2, Class<T3> cls3, Class<T4> cls4, Class<T5> cls5, Class<T6> cls6) {
+    public <T1, T2, T3, T4, T5, T6> Flowable<Tuple6<T1, T2, T3, T4, T5, T6>> getAs(Class<T1> cls1, Class<T2> cls2,
+            Class<T3> cls3, Class<T4> cls4, Class<T5> cls5, Class<T6> cls6) {
         return get(Tuples.tuple(cls1, cls2, cls3, cls4, cls5, cls6));
     }
 
@@ -303,9 +312,8 @@ public class SelectBuilder {
      * @param cls7
      * @return
      */
-    public <T1, T2, T3, T4, T5, T6, T7> Flowable<Tuple7<T1, T2, T3, T4, T5, T6, T7>> getAs(
-            Class<T1> cls1, Class<T2> cls2, Class<T3> cls3, Class<T4> cls4, Class<T5> cls5,
-            Class<T6> cls6, Class<T7> cls7) {
+    public <T1, T2, T3, T4, T5, T6, T7> Flowable<Tuple7<T1, T2, T3, T4, T5, T6, T7>> getAs(Class<T1> cls1,
+            Class<T2> cls2, Class<T3> cls3, Class<T4> cls4, Class<T5> cls5, Class<T6> cls6, Class<T7> cls7) {
         return get(Tuples.tuple(cls1, cls2, cls3, cls4, cls5, cls6, cls7));
     }
 

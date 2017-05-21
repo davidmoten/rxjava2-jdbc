@@ -217,6 +217,25 @@ Output is:
 21
 ```
 
+## Mixing explicit and Flowable parameters
+
+```java
+Database.test()
+  .select("select score from person where name=?") 
+  .parameterStream(Flowable.just("FRED","JOSEPH"))
+  .parameters("FRED", "JOSEPH")
+  .getAs(Integer.class)
+  .blockingForEach(System.out::println);
+```
+Output is:
+```
+21
+34
+21
+34
+```
+## Multiple parameters per query
+
 If there is more than one parameter per query:
 
 ```java
@@ -238,22 +257,22 @@ Database.test()
   .blockingForEach(System.out::println);
 ```
 
-## Mixing explicit and Flowable parameters
+## Running a query many times that has no parameters
+If the query has no parameters you can use the parameters to drive the number of query calls (the parameter values themselves are ignored):
 
 ```java
 Database.test()
-  .select("select score from person where name=?") 
-  .parameterStream(Flowable.just("FRED","JOSEPH"))
-  .parameters("FRED", "JOSEPH")
+  .select("select count(*) from person") 
+  .parameters("a", "b", "c")
   .getAs(Integer.class)
   .blockingForEach(System.out::println);
 ```
-Output is:
+
+Output:
 ```
-21
-34
-21
-34
+3
+3
+3
 ```
 
 Non-blocking connection pools
