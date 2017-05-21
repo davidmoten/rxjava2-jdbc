@@ -155,6 +155,65 @@ If you don't configure things correctly these exceptions may be emitted and incl
 * `ColumnNotFoundException`
 * `ClassCastException`
 
+Parameters
+----------------
+Parameters are passed to indiviual queries but can also be used as a streaming source to prompt the query to be run many times.
+
+## Explicit parmameters
+
+In the example below the query is first run with `name='FRED'` and then `name=JOSEPH`. Each query returns one result which is printed to the console.
+
+```java
+Database.test()
+  .select("select score from person where name=?") 
+  .parameters("FRED", "JOSEPH")
+  .getAs(Integer.class)
+  .blockingForEach(System.out::println);
+```
+Output is:
+```
+21
+34
+```
+
+## Flowable parameters
+
+You can specify a stream as the source of parameters:
+
+```java
+Database.test()
+  .select("select score from person where name=?") 
+  .parameters(Flowable.just("FRED","JOSEPH").repeat())
+  .getAs(Integer.class)
+  .take(4)
+  .blockingForEach(System.out::println);
+```
+
+Output is:
+```
+21
+34
+21
+34
+```
+## Mixing explicit and Flowable parameters
+
+```java
+Database.test()
+  .select("select score from person where name=?") 
+  .parameters(Flowable.just("FRED","JOSEPH"))
+  .parameters("FRED", "JOSEPH")
+  .getAs(Integer.class)
+  .blockingForEach(System.out::println);
+```
+Output is:
+```
+21
+34
+21
+34
+```
+
 Non-blocking connection pools
 -------------------------------
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
