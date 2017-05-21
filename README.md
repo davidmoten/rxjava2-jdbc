@@ -204,7 +204,7 @@ You can specify a stream as the source of parameters:
 ```java
 Database.test()
   .select("select score from person where name=?") 
-  .parameters(Flowable.just("FRED","JOSEPH").repeat())
+  .parameterStream(Flowable.just("FRED","JOSEPH").repeat())
   .getAs(Integer.class)
   .take(3)
   .blockingForEach(System.out::println);
@@ -221,7 +221,7 @@ Output is:
 ```java
 Database.test()
   .select("select score from person where name=?") 
-  .parameters(Flowable.just("FRED","JOSEPH"))
+  .parameterStream(Flowable.just("FRED","JOSEPH"))
   .parameters("FRED", "JOSEPH")
   .getAs(Integer.class)
   .blockingForEach(System.out::println);

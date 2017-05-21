@@ -43,12 +43,15 @@ public class SelectBuilder {
         this.sqlInfo = SqlInfo.parse(sql);
     }
 
-    public SelectBuilder parameters(Flowable<List<Object>> parameters) {
-        Preconditions.checkNotNull(parameters);
-        useAndCloseParameterBuffer();
-        this.parameterGroups.add(parameters);
-        return this;
+    public SelectBuilder parameterStream(Flowable<Object> values) {
+        return parameterListStream(values.buffer(sqlInfo.numParameters()));
     }
+    
+    public SelectBuilder parameterListStream(Flowable<List<Object>> valueLists) {
+        useAndCloseParameterBuffer();
+        parameterGroups.add(valueLists);
+        return this;}
+
 
     void useAndCloseParameterBuffer() {
         // called when about to add stream of parameters or about to call get
@@ -67,7 +70,7 @@ public class SelectBuilder {
         this.parameterGroups.add(Flowable.just(values));
         return this;
     }
-
+    
     public SelectBuilder parameterList(Object... values) {
         Preconditions.checkNotNull(values);
         useAndCloseParameterBuffer();

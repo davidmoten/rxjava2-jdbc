@@ -48,6 +48,28 @@ public class DatabaseTest {
                 .assertValues(21, 34) //
                 .assertComplete();
     }
+    
+    @Test
+    public void testSelectUsingQuestionMarkFlowableParameters() {
+        db().select("select score from person where name=?") //
+                .parameterStream(Flowable.just("FRED", "JOSEPH")) //
+                .getAs(Integer.class) //
+                .test() //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testSelectUsingQuestionMarkFlowableParametersInLists() {
+        db().select("select score from person where name=?") //
+                .parameterListStream(Flowable.just(Arrays.asList("FRED"), Arrays.asList("JOSEPH"))) //
+                .getAs(Integer.class) //
+                .test() //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
+    }
 
     @Test
     public void testSelectUsingQuestionMarkWithPublicTestingDatabase() {
