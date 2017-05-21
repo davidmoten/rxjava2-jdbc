@@ -1,7 +1,6 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -10,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import io.reactivex.Flowable;
 import io.reactivex.Notification;
-import io.reactivex.functions.Function;
 
 public class TransactedSelectBuilder {
 

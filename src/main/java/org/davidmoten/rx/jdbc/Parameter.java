@@ -7,7 +7,7 @@ import com.github.davidmoten.guavamini.Lists;
 /**
  * Encapsulates a query parameter.
  */
-public class Parameter {
+public final class Parameter {
 
     private final String name;
     /**

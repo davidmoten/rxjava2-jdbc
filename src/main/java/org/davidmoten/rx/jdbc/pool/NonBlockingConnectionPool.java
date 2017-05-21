@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Util;
-import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool.Builder;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
