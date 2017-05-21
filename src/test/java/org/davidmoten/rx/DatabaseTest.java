@@ -51,10 +51,10 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingQuestionMarkWithPublicTestingDatabase() {
-        Database.test() //
-                .select("select score from person where name=?") //
-                .parameters("FRED", "JOSEPH") //
-                .getAs(Integer.class) //
+            Database.test() //
+                    .select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
                 .assertValues(21, 34) //
