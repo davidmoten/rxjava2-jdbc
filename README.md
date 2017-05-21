@@ -166,7 +166,7 @@ Parameters
 ----------------
 Parameters are passed to indiviual queries but can also be used as a streaming source to prompt the query to be run many times.
 
-## Explicit parmameters
+### Explicit parameters
 
 In the example below the query is first run with `name='FRED'` and then `name=JOSEPH`. Each query returns one result which is printed to the console.
 
@@ -183,7 +183,7 @@ Output is:
 34
 ```
 
-## Flowable parameters
+### Flowable parameters
 
 You can specify a stream as the source of parameters:
 
