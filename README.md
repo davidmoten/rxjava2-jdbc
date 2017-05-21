@@ -206,7 +206,7 @@ Database.test()
   .select("select score from person where name=?") 
   .parameters(Flowable.just("FRED","JOSEPH").repeat())
   .getAs(Integer.class)
-  .take(4)
+  .take(3)
   .blockingForEach(System.out::println);
 ```
 
@@ -215,7 +215,6 @@ Output is:
 21
 34
 21
-34
 ```
 ## Mixing explicit and Flowable parameters
 
