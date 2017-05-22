@@ -79,7 +79,8 @@ public class NonBlockingConnectionPool implements Pool<Connection> {
         }
 
         public NonBlockingConnectionPool build() {
-            return new NonBlockingConnectionPool(NonBlockingPool.factory(() -> cp.get()) //
+            return new NonBlockingConnectionPool(NonBlockingPool //
+                    .factory(() -> cp.get()) //
                     .healthy(healthy) //
                     .disposer(Util::closeSilently) //
                     .maxSize(maxPoolSize) //
