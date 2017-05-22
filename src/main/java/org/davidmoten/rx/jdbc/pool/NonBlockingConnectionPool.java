@@ -9,7 +9,6 @@ import org.davidmoten.rx.jdbc.Util;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
-import org.davidmoten.rx.pool.NonBlockingPool.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

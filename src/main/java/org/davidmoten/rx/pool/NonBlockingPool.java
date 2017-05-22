@@ -31,16 +31,17 @@ public final class NonBlockingPool<T> implements Pool<T> {
     final long idleTimeBeforeHealthCheckMs;
     final Consumer<T> disposer;
     final int maxSize;
-    // TODO use
+    final long maxIdleTimeMs;
     final long retryDelayMs;
     final MemberFactory<T, NonBlockingPool<T>> memberFactory;
     final Scheduler scheduler;
 
     private final Flowable<Member<T>> members;
 
+
     private NonBlockingPool(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer, int maxSize,
-            long retryDelayMs, long idleTimeBeforeHealthCheckMs, MemberFactory<T, NonBlockingPool<T>> memberFactory,
-            Scheduler scheduler) {
+            long retryDelayMs, long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs,
+            MemberFactory<T, NonBlockingPool<T>> memberFactory, Scheduler scheduler) {
         Preconditions.checkNotNull(factory);
         Preconditions.checkNotNull(healthy);
         Preconditions.checkNotNull(disposer);
@@ -55,6 +56,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         this.maxSize = maxSize;
         this.retryDelayMs = retryDelayMs;
         this.idleTimeBeforeHealthCheckMs = idleTimeBeforeHealthCheckMs;
+        this.maxIdleTimeMs = maxIdleTimeMs;
         this.memberFactory = memberFactory;
         this.scheduler = scheduler;
         this.subject = PublishSubject.create();
@@ -112,7 +114,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         private long retryDelayMs = 30000;
         private MemberFactory<T, NonBlockingPool<T>> memberFactory;
         private Scheduler scheduler = Schedulers.computation();
-        private long maxIdleTimesMs;
+        private long maxIdleTimeMs;
 
         private Builder() {
         }
@@ -123,15 +125,6 @@ public final class NonBlockingPool<T> implements Pool<T> {
             return this;
         }
 
-        public Builder<T> maxIdleTimeMs(long value) {
-            this.maxIdleTimesMs = value;
-            return this;
-        }
-        
-        public Builder<T> maxIdleTime(long value, TimeUnit unit) {
-            return maxIdleTimeMs(unit.toMillis(value));
-        }
-        
         public Builder<T> healthy(Predicate<T> healthy) {
             Preconditions.checkNotNull(healthy);
             this.healthy = healthy;
@@ -143,9 +136,18 @@ public final class NonBlockingPool<T> implements Pool<T> {
             this.idleTimeBeforeHealthCheckMs = value;
             return this;
         }
-        
+
         public Builder<T> idleTimeBeforeHealthCheck(long value, TimeUnit unit) {
             return idleTimeBeforeHealthCheckMs(unit.toMillis(value));
+        }
+        
+        public Builder<T> maxIdleTimeMs(long value) {
+            this.maxIdleTimeMs = value;
+            return this;
+        }
+        
+        public Builder<T> maxIdleTime(long value, TimeUnit unit) {
+            return maxIdleTimeMs(unit.toMillis(value));
         }
 
         public Builder<T> disposer(Consumer<T> disposer) {
@@ -180,7 +182,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
 
         public NonBlockingPool<T> build() {
             return new NonBlockingPool<T>(factory, healthy, disposer, maxSize, retryDelayMs,
-                    idleTimeBeforeHealthCheckMs, memberFactory, scheduler);
+                    idleTimeBeforeHealthCheckMs, maxIdleTimeMs, memberFactory, scheduler);
         }
     }
 
