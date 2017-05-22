@@ -11,7 +11,7 @@ import io.reactivex.MaybeSource;
 import io.reactivex.Scheduler.Worker;
 import io.reactivex.disposables.Disposable;
 
-public class NonBlockingMember<T> implements Member<T> {
+public final class NonBlockingMember<T> implements Member<T> {
 
     private static final Logger log = LoggerFactory.getLogger(NonBlockingMember.class);
 
@@ -85,20 +85,30 @@ public class NonBlockingMember<T> implements Member<T> {
     }
 
     private MaybeSource<? extends Member<T>> dispose() {
-        try {
-            pool.disposer.accept(value);
-        } catch (Throwable t) {
-            // ignore
+
+        while (true) {
+            State s = state.get();
+            if (s.value == INITIALIZED_IN_USE && state.compareAndSet(s, new State(NOT_INITIALIZED_NOT_IN_USE, null))) {
+                T v = value;
+                value = null;
+                if (v != null) {
+                    try {
+                        pool.disposer.accept(v);
+                    } catch (Throwable t) {
+                        // ignore
+                    }
+                }
+                if (s.idleTimeoutClose != null) {
+                    s.idleTimeoutClose.dispose();
+                }
+                // schedule reconsideration of this member in retryDelayMs
+                worker.schedule(() -> pool.subject.onNext(NonBlockingMember.this), //
+                        pool.retryDelayMs, TimeUnit.MILLISECONDS);
+                break;
+            } else if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose))) {
+                break;
+            }
         }
-        value = null;
-        // TODO put in CAS loop
-        state.set(new State(NOT_INITIALIZED_NOT_IN_USE, null));
-        Disposable sub = state.get().idleTimeoutClose;
-        if (sub != null) {
-            sub.dispose();
-        }
-        // schedule reconsideration of this member in retryDelayMs
-        worker.schedule(() -> pool.subject.onNext(NonBlockingMember.this), pool.retryDelayMs, TimeUnit.MILLISECONDS);
         return Maybe.empty();
     }
 
@@ -108,28 +118,43 @@ public class NonBlockingMember<T> implements Member<T> {
         while (true) {
             State s = state.get();
             if (s.value == INITIALIZED_IN_USE) {
-                Disposable sub = worker.schedule(() -> reset(), //
+                Resetter<T> resetter = new Resetter<>(this);
+                Disposable sub = worker.schedule(resetter, //
                         pool.maxIdleTimeMs, TimeUnit.MILLISECONDS);
                 if (state.compareAndSet(s, new State(INITIALIZED_NOT_IN_USE, sub))) {
+                    resetter.enable();
                     pool.subject.onNext(this);
                     break;
                 } else {
                     sub.dispose();
                 }
-                
+
             } else if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose))) {
                 break;
             }
         }
     }
-    
-    private static final class Resetter implements Runnable{
+
+    private static final class Resetter<T> implements Runnable {
+
+        private final NonBlockingMember<T> m;
+        private volatile boolean enabled = false;
+
+        Resetter(NonBlockingMember<T> m) {
+            this.m = m;
+        }
 
         @Override
         public void run() {
-            
-        } 
-        
+            if (enabled) {
+                m.reset();
+            }
+        }
+
+        void enable() {
+            enabled = true;
+        }
+
     }
 
     private void reset() {
