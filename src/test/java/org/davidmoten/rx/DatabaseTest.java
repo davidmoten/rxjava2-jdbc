@@ -120,6 +120,8 @@ public class DatabaseTest {
         NonBlockingConnectionPool pool = Pools //
                 .nonBlocking() //
                 .connectionProvider(DatabaseCreator.connectionProvider()) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
                 .healthy(c -> c.prepareStatement("select 1").execute()) //
                 .maxPoolSize(3) //
                 .build();

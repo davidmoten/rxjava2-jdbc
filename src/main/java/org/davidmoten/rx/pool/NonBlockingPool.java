@@ -112,6 +112,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         private long retryDelayMs = 30000;
         private MemberFactory<T, NonBlockingPool<T>> memberFactory;
         private Scheduler scheduler = Schedulers.computation();
+        private long maxIdleTimesMs;
 
         private Builder() {
         }
@@ -122,6 +123,15 @@ public final class NonBlockingPool<T> implements Pool<T> {
             return this;
         }
 
+        public Builder<T> maxIdleTimeMs(long value) {
+            this.maxIdleTimesMs = value;
+            return this;
+        }
+        
+        public Builder<T> maxIdleTime(long value, TimeUnit unit) {
+            return maxIdleTimeMs(unit.toMillis(value));
+        }
+        
         public Builder<T> healthy(Predicate<T> healthy) {
             Preconditions.checkNotNull(healthy);
             this.healthy = healthy;

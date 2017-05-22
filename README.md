@@ -301,6 +301,7 @@ If you want more control over the behaviour of the non-blocking connection pool:
 NonBlockingConnectionPool pool = Pools
     .nonBlocking()
     .url(url)
+    .maxIdleTime(30, TimeUnit.MINUTES)
     .healthy(c -> c.prepareStatement("select 1").execute())
     .idleTimeBeforeHealthCheckMs(1, TimeUnit.MINUTES)
     .maxPoolSize(3)
