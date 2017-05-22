@@ -53,7 +53,7 @@ public class NonBlockingMember<T> implements Member<T> {
                     }
                 } else if (s.value == INITIALIZED_NOT_IN_USE) {
                     log.debug("checking out member not in use={}", this);
-                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, s.idleTimeoutClose))) {
+                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, null))) {
                         try {
                             if (s.idleTimeoutClose != null) {
                                 // cancel the idle timeout
@@ -108,16 +108,28 @@ public class NonBlockingMember<T> implements Member<T> {
         while (true) {
             State s = state.get();
             if (s.value == INITIALIZED_IN_USE) {
-                if (state.compareAndSet(s, new State(INITIALIZED_NOT_IN_USE, s.idleTimeoutClose))) {
-                    Disposable sub = worker.schedule(() -> reset(), //
-                            pool.maxIdleTimeMs, TimeUnit.MILLISECONDS);
+                Disposable sub = worker.schedule(() -> reset(), //
+                        pool.maxIdleTimeMs, TimeUnit.MILLISECONDS);
+                if (state.compareAndSet(s, new State(INITIALIZED_NOT_IN_USE, sub))) {
                     pool.subject.onNext(this);
                     break;
+                } else {
+                    sub.dispose();
                 }
+                
             } else if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose))) {
                 break;
             }
         }
+    }
+    
+    private static final class Resetter implements Runnable{
+
+        @Override
+        public void run() {
+            
+        } 
+        
     }
 
     private void reset() {
