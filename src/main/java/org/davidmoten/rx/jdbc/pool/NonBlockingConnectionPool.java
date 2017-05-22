@@ -17,7 +17,7 @@ import com.github.davidmoten.guavamini.Preconditions;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Predicate;
 
-public class NonBlockingConnectionPool implements Pool<Connection> {
+public final class NonBlockingConnectionPool implements Pool<Connection> {
 
     private static final Logger log = LoggerFactory.getLogger(NonBlockingConnectionPool.class);
 

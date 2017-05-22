@@ -25,7 +25,7 @@ import org.davidmoten.rx.pool.NonBlockingPool;
 
 import io.reactivex.Maybe;
 
-public class ConnectionNonBlockingMember implements Connection, Member<Connection> {
+public final class ConnectionNonBlockingMember implements Connection, Member<Connection> {
 
     private final Member<Connection> member;
 
