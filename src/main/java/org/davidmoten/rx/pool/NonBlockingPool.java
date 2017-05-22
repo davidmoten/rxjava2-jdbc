@@ -3,6 +3,7 @@ package org.davidmoten.rx.pool;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -27,17 +28,18 @@ public final class NonBlockingPool<T> implements Pool<T> {
     final PublishSubject<Member<T>> subject;
     final Callable<T> factory;
     final Predicate<T> healthy;
+    final long idleTimeBeforeHealthCheckMs;
     final Consumer<T> disposer;
     final int maxSize;
-    //TODO use
+    // TODO use
     final long retryDelayMs;
     final MemberFactory<T, NonBlockingPool<T>> memberFactory;
     final Scheduler scheduler;
 
     private final Flowable<Member<T>> members;
 
-    public NonBlockingPool(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer,
-            int maxSize, long retryDelayMs, MemberFactory<T, NonBlockingPool<T>> memberFactory,
+    private NonBlockingPool(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer, int maxSize,
+            long retryDelayMs, long idleTimeBeforeHealthCheckMs, MemberFactory<T, NonBlockingPool<T>> memberFactory,
             Scheduler scheduler) {
         Preconditions.checkNotNull(factory);
         Preconditions.checkNotNull(healthy);
@@ -47,11 +49,12 @@ public final class NonBlockingPool<T> implements Pool<T> {
         Preconditions.checkNotNull(memberFactory);
         Preconditions.checkNotNull(scheduler);
         this.factory = factory;
-        //TODO use healthy
+        // TODO use healthy
         this.healthy = healthy;
         this.disposer = disposer;
         this.maxSize = maxSize;
         this.retryDelayMs = retryDelayMs;
+        this.idleTimeBeforeHealthCheckMs = idleTimeBeforeHealthCheckMs;
         this.memberFactory = memberFactory;
         this.scheduler = scheduler;
         this.subject = PublishSubject.create();
@@ -77,7 +80,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
                 .doOnNext(m -> log.debug("returned member reentering")) //
                 .mergeWith(baseMembers) //
                 .doOnNext(x -> log.debug("member={}", x)) //
-                .<Member<T>> flatMap(member -> member.checkout().toFlowable(), false, 1) //
+                .<Member<T>>flatMap(member -> member.checkout().toFlowable(), false, 1) //
                 .doOnNext(x -> log.debug("checked out member={}", x));
     }
 
@@ -103,6 +106,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
 
         private Callable<T> factory;
         private Predicate<T> healthy = x -> true;
+        private long idleTimeBeforeHealthCheckMs = 30;
         private Consumer<T> disposer;
         private int maxSize = 10;
         private long retryDelayMs = 30000;
@@ -113,43 +117,60 @@ public final class NonBlockingPool<T> implements Pool<T> {
         }
 
         public Builder<T> factory(Callable<T> factory) {
+            Preconditions.checkNotNull(factory);
             this.factory = factory;
             return this;
         }
 
         public Builder<T> healthy(Predicate<T> healthy) {
+            Preconditions.checkNotNull(healthy);
             this.healthy = healthy;
             return this;
         }
 
+        public Builder<T> idleTimeBeforeHealthCheckMs(long value) {
+            Preconditions.checkArgument(value >= 0);
+            this.idleTimeBeforeHealthCheckMs = value;
+            return this;
+        }
+        
+        public Builder<T> idleTimeBeforeHealthCheck(long value, TimeUnit unit) {
+            return idleTimeBeforeHealthCheckMs(unit.toMillis(value));
+        }
+
         public Builder<T> disposer(Consumer<T> disposer) {
+            Preconditions.checkNotNull(disposer);
             this.disposer = disposer;
             return this;
         }
 
         public Builder<T> maxSize(int maxSize) {
+            Preconditions.checkArgument(maxSize > 0);
             this.maxSize = maxSize;
             return this;
         }
 
         public Builder<T> retryDelayMs(long retryDelayMs) {
+            Preconditions.checkArgument(retryDelayMs >= 0);
             this.retryDelayMs = retryDelayMs;
             return this;
         }
 
         public Builder<T> memberFactory(MemberFactory<T, NonBlockingPool<T>> memberFactory) {
+            Preconditions.checkNotNull(memberFactory);
             this.memberFactory = memberFactory;
             return this;
         }
 
         public Builder<T> scheduler(Scheduler scheduler) {
+            Preconditions.checkNotNull(scheduler);
             this.scheduler = scheduler;
             return this;
         }
 
         public NonBlockingPool<T> build() {
             return new NonBlockingPool<T>(factory, healthy, disposer, maxSize, retryDelayMs,
-                    memberFactory, scheduler);
+                    idleTimeBeforeHealthCheckMs, memberFactory, scheduler);
         }
     }
 

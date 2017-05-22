@@ -302,6 +302,7 @@ NonBlockingConnectionPool pool = Pools
     .nonBlocking()
     .url(url)
     .healthy(c -> c.prepareStatement("select 1").execute())
+    .idleTimeBeforeHealthCheckMs(1, TimeUnit.MINUTES)
     .maxPoolSize(3)
     .build();
 Database db = Database.from(pool);

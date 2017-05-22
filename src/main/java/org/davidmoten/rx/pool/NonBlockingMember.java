@@ -18,14 +18,14 @@ public class NonBlockingMember<T> implements Member<T> {
     private static final int INITIALIZED_IN_USE = 1;
     private static final int INITIALIZED_NOT_IN_USE = 2;
 
-    private final AtomicReference<State> state = new AtomicReference<>(
-            new State(NOT_INITIALIZED_NOT_IN_USE));
-
-    private volatile T value;
-
+    private final AtomicReference<State> state = new AtomicReference<>(new State(NOT_INITIALIZED_NOT_IN_USE));
     private final Worker worker;
     private final NonBlockingPool<T> pool;
     private final Member<T> proxy;
+
+    // mutable
+    private volatile T value;
+    private volatile long lastCheckoutTime;
 
     public NonBlockingMember(NonBlockingPool<T> pool, Member<T> proxy) {
         this.pool = pool;
@@ -55,8 +55,11 @@ public class NonBlockingMember<T> implements Member<T> {
                     log.debug("checking out member not in use={}", this);
                     if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
                         try {
-                            if (pool.healthy.test(value)) {
+                            long now = pool.scheduler.now(TimeUnit.MILLISECONDS);
+                            long last = lastCheckoutTime;
+                            if (now < last + pool.idleTimeBeforeHealthCheckMs || pool.healthy.test(value)) {
                                 log.debug("initialized in use: member={}", this);
+                                lastCheckoutTime = now;
                                 return Maybe.just(ifNull(proxy, NonBlockingMember.this));
                             } else {
                                 log.debug("initialized not healthy: member={}", this);
@@ -77,11 +80,12 @@ public class NonBlockingMember<T> implements Member<T> {
         });
     }
 
-    private Member<T> ifNull(Member<T> proxy, Member<T> other) {
-        if (proxy == null)
+    private static <T> Member<T> ifNull(Member<T> proxy, Member<T> other) {
+        if (proxy == null) {
             return other;
-        else
+        } else {
             return proxy;
+        }
     }
 
     private MaybeSource<? extends Member<T>> dispose() {
@@ -93,8 +97,7 @@ public class NonBlockingMember<T> implements Member<T> {
         value = null;
         state.set(new State(NOT_INITIALIZED_NOT_IN_USE));
         // schedule reconsideration of this member in retryDelayMs
-        worker.schedule(() -> pool.subject.onNext(NonBlockingMember.this), pool.retryDelayMs,
-                TimeUnit.MILLISECONDS);
+        worker.schedule(() -> pool.subject.onNext(NonBlockingMember.this), pool.retryDelayMs, TimeUnit.MILLISECONDS);
         return Maybe.empty();
     }
 
