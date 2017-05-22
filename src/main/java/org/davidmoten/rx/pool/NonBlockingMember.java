@@ -10,6 +10,7 @@ import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
 import io.reactivex.Scheduler.Worker;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.internal.disposables.DisposableHelper;
 
 public final class NonBlockingMember<T> implements Member<T> {
 
@@ -19,7 +20,8 @@ public final class NonBlockingMember<T> implements Member<T> {
     private static final int INITIALIZED_IN_USE = 1;
     private static final int INITIALIZED_NOT_IN_USE = 2;
 
-    private final AtomicReference<State> state = new AtomicReference<>(new State(NOT_INITIALIZED_NOT_IN_USE, null));
+    private final AtomicReference<State> state = new AtomicReference<>(
+            new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED));
     private final Worker worker;
     private final NonBlockingPool<T> pool;
     private final Member<T> proxy;
@@ -53,12 +55,10 @@ public final class NonBlockingMember<T> implements Member<T> {
                     }
                 } else if (s.value == INITIALIZED_NOT_IN_USE) {
                     log.debug("checking out member not in use={}", this);
-                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, null))) {
+                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, DisposableHelper.DISPOSED))) {
                         try {
-                            if (s.idleTimeoutClose != null) {
-                                // cancel the idle timeout
-                                s.idleTimeoutClose.dispose();
-                            }
+                            // cancel the idle timeout
+                            s.idleTimeoutClose.dispose();
                             long now = pool.scheduler.now(TimeUnit.MILLISECONDS);
                             long last = lastCheckoutTime;
                             if (now < last + pool.idleTimeBeforeHealthCheckMs || pool.healthy.test(value)) {
@@ -88,7 +88,8 @@ public final class NonBlockingMember<T> implements Member<T> {
 
         while (true) {
             State s = state.get();
-            if (s.value == INITIALIZED_IN_USE && state.compareAndSet(s, new State(NOT_INITIALIZED_NOT_IN_USE, null))) {
+            if (s.value == INITIALIZED_IN_USE
+                    && state.compareAndSet(s, new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED))) {
                 T v = value;
                 value = null;
                 if (v != null) {
@@ -98,9 +99,7 @@ public final class NonBlockingMember<T> implements Member<T> {
                         // ignore
                     }
                 }
-                if (s.idleTimeoutClose != null) {
-                    s.idleTimeoutClose.dispose();
-                }
+                s.idleTimeoutClose.dispose();
                 // schedule reconsideration of this member in retryDelayMs
                 worker.schedule(() -> pool.subject.onNext(NonBlockingMember.this), //
                         pool.retryDelayMs, TimeUnit.MILLISECONDS);
@@ -128,7 +127,6 @@ public final class NonBlockingMember<T> implements Member<T> {
                 } else {
                     sub.dispose();
                 }
-
             } else if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose))) {
                 break;
             }
