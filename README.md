@@ -164,7 +164,7 @@ If you don't configure things correctly these exceptions may be emitted and incl
 
 Parameters
 ----------------
-Parameters are passed to indiviual queries but can also be used as a streaming source to prompt the query to be run many times.
+Parameters are passed to individual queries but can also be used as a streaming source to prompt the query to be run many times.
 
 Parameters can be named or anonymous. Named parameters are not supported natively by the JDBC specification but *rxjava2-jdbc* does support them.
 
