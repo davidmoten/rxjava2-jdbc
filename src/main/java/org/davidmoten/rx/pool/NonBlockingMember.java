@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
 import io.reactivex.Scheduler.Worker;
+import io.reactivex.disposables.Disposable;
 
 public class NonBlockingMember<T> implements Member<T> {
 
@@ -18,7 +19,7 @@ public class NonBlockingMember<T> implements Member<T> {
     private static final int INITIALIZED_IN_USE = 1;
     private static final int INITIALIZED_NOT_IN_USE = 2;
 
-    private final AtomicReference<State> state = new AtomicReference<>(new State(NOT_INITIALIZED_NOT_IN_USE));
+    private final AtomicReference<State> state = new AtomicReference<>(new State(NOT_INITIALIZED_NOT_IN_USE, null));
     private final Worker worker;
     private final NonBlockingPool<T> pool;
     private final Member<T> proxy;
@@ -39,10 +40,9 @@ public class NonBlockingMember<T> implements Member<T> {
             // CAS loop for modifications to state of this member
             while (true) {
                 State s = state.get();
-
                 if (s.value == NOT_INITIALIZED_NOT_IN_USE) {
                     log.debug("checking out member not initialized={}", this);
-                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
+                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, s.idleTimeoutClose))) {
                         try {
                             value = pool.factory.call();
                         } catch (Throwable e) {
@@ -53,8 +53,12 @@ public class NonBlockingMember<T> implements Member<T> {
                     }
                 } else if (s.value == INITIALIZED_NOT_IN_USE) {
                     log.debug("checking out member not in use={}", this);
-                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
+                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, s.idleTimeoutClose))) {
                         try {
+                            if (s.idleTimeoutClose != null) {
+                                // cancel the idle timeout
+                                s.idleTimeoutClose.dispose();
+                            }
                             long now = pool.scheduler.now(TimeUnit.MILLISECONDS);
                             long last = lastCheckoutTime;
                             if (now < last + pool.idleTimeBeforeHealthCheckMs || pool.healthy.test(value)) {
@@ -71,21 +75,13 @@ public class NonBlockingMember<T> implements Member<T> {
                     }
                 } else if (s.value == INITIALIZED_IN_USE) {
                     log.debug("checking out member={}", this);
-                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE))) {
+                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, s.idleTimeoutClose))) {
                         log.debug("already in use, member={}", this);
                         return Maybe.empty();
                     }
                 }
             }
         });
-    }
-
-    private static <T> Member<T> ifNull(Member<T> proxy, Member<T> other) {
-        if (proxy == null) {
-            return other;
-        } else {
-            return proxy;
-        }
     }
 
     private MaybeSource<? extends Member<T>> dispose() {
@@ -95,7 +91,12 @@ public class NonBlockingMember<T> implements Member<T> {
             // ignore
         }
         value = null;
-        state.set(new State(NOT_INITIALIZED_NOT_IN_USE));
+        // TODO put in CAS loop
+        state.set(new State(NOT_INITIALIZED_NOT_IN_USE, null));
+        Disposable sub = state.get().idleTimeoutClose;
+        if (sub != null) {
+            sub.dispose();
+        }
         // schedule reconsideration of this member in retryDelayMs
         worker.schedule(() -> pool.subject.onNext(NonBlockingMember.this), pool.retryDelayMs, TimeUnit.MILLISECONDS);
         return Maybe.empty();
@@ -103,9 +104,36 @@ public class NonBlockingMember<T> implements Member<T> {
 
     @Override
     public void checkin() {
-        log.debug("checking in member" + this);
-        state.set(new State(INITIALIZED_NOT_IN_USE));
-        pool.subject.onNext(this);
+        log.debug("checking in member {}", this);
+        while (true) {
+            State s = state.get();
+            if (s.value == INITIALIZED_IN_USE) {
+                if (state.compareAndSet(s, new State(INITIALIZED_NOT_IN_USE, s.idleTimeoutClose))) {
+                    Disposable sub = worker.schedule(() -> reset(), //
+                            pool.maxIdleTimeMs, TimeUnit.MILLISECONDS);
+                    pool.subject.onNext(this);
+                    break;
+                }
+            } else if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose))) {
+                break;
+            }
+        }
+    }
+
+    private void reset() {
+        // called after idle timeout expires
+        log.debug("resetting member {}", this);
+        while (true) {
+            State s = state.get();
+            if (s.value == INITIALIZED_NOT_IN_USE) {
+                if (state.compareAndSet(s, new State(NOT_INITIALIZED_NOT_IN_USE, s.idleTimeoutClose))) {
+                    pool.subject.onNext(this);
+                    break;
+                }
+            } else if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose))) {
+                break;
+            }
+        }
     }
 
     @Override
@@ -115,9 +143,11 @@ public class NonBlockingMember<T> implements Member<T> {
 
     private static final class State {
         final int value;
+        final Disposable idleTimeoutClose;
 
-        State(int value) {
+        State(int value, Disposable idleTimeoutClose) {
             this.value = value;
+            this.idleTimeoutClose = idleTimeoutClose;
         }
     }
 
@@ -125,6 +155,14 @@ public class NonBlockingMember<T> implements Member<T> {
     public void close() throws Exception {
         worker.dispose();
         // TODO
+    }
+
+    private static <T> Member<T> ifNull(Member<T> proxy, Member<T> other) {
+        if (proxy == null) {
+            return other;
+        } else {
+            return proxy;
+        }
     }
 
     @Override
