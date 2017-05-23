@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.jdbc.annotations.Column;
@@ -27,6 +28,7 @@ import org.davidmoten.rx.jdbc.tuple.Tuple6;
 import org.davidmoten.rx.jdbc.tuple.Tuple7;
 import org.davidmoten.rx.jdbc.tuple.TupleN;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,8 @@ import org.slf4j.LoggerFactory;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.schedulers.TestScheduler;
+import io.reactivex.subscribers.TestSubscriber;
 
 public class DatabaseTest {
 
@@ -104,8 +108,7 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(
-                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
@@ -455,71 +458,94 @@ public class DatabaseTest {
         Assert.assertEquals(3, (long) db().select("select name from person") //
                 .count().blockingGet());
     }
-    
+
     @Test
     public void testTuple3() {
         db() //
-        .select("select name, score, name from person order by name") //
-        .getAs(String.class, Integer.class, String.class) //
-        .firstOrError()
-        .test() //
-        .assertComplete()
-        .assertValue(Tuple3.create("FRED", 21, "FRED")); //
+                .select("select name, score, name from person order by name") //
+                .getAs(String.class, Integer.class, String.class) //
+                .firstOrError().test() //
+                .assertComplete().assertValue(Tuple3.create("FRED", 21, "FRED")); //
     }
-    
+
     @Test
     public void testTuple4() {
         db() //
-        .select("select name, score, name, score from person order by name") //
-        .getAs(String.class, Integer.class, String.class, Integer.class) //
-        .firstOrError()
-        .test() //
-        .assertComplete()
-        .assertValue(Tuple4.create("FRED", 21, "FRED", 21)); //
+                .select("select name, score, name, score from person order by name") //
+                .getAs(String.class, Integer.class, String.class, Integer.class) //
+                .firstOrError().test() //
+                .assertComplete().assertValue(Tuple4.create("FRED", 21, "FRED", 21)); //
     }
-    
+
     @Test
     public void testTuple5() {
         db() //
-        .select("select name, score, name, score, name from person order by name") //
-        .getAs(String.class, Integer.class, String.class, Integer.class, String.class) //
-        .firstOrError()
-        .test() //
-        .assertComplete()
-        .assertValue(Tuple5.create("FRED", 21, "FRED", 21, "FRED")); //
+                .select("select name, score, name, score, name from person order by name") //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class) //
+                .firstOrError().test() //
+                .assertComplete().assertValue(Tuple5.create("FRED", 21, "FRED", 21, "FRED")); //
     }
-    
+
     @Test
     public void testTuple6() {
         db() //
-        .select("select name, score, name, score, name, score from person order by name") //
-        .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
-        .firstOrError()
-        .test() //
-        .assertComplete()
-        .assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
+                .select("select name, score, name, score, name, score from person order by name") //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
+                .firstOrError().test() //
+                .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
     }
-    
+
     @Test
     public void testTuple7() {
         db() //
-        .select("select name, score, name, score, name, score, name from person order by name") //
-        .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class, String.class) //
-        .firstOrError()
-        .test() //
-        .assertComplete()
-        .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+                .select("select name, score, name, score, name, score, name from person order by name") //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
+                        String.class) //
+                .firstOrError().test() //
+                .assertComplete().assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
-    
+
     @Test
     public void testTupleN() {
         db() //
-        .select("select name, score, name from person order by name") //
-        .getTupleN() //
-        .firstOrError()
-        .test() //
-        .assertComplete()
-        .assertValue(TupleN.create("FRED", 21, "FRED")); //
+                .select("select name, score, name from person order by name") //
+                .getTupleN() //
+                .firstOrError().test() //
+                .assertComplete().assertValue(TupleN.create("FRED", 21, "FRED")); //
+    }
+
+    @Test
+    @Ignore
+    public void testHealthCheck() throws InterruptedException {
+        TestScheduler scheduler = new TestScheduler();
+        AtomicBoolean once = new AtomicBoolean(true);
+        NonBlockingConnectionPool pool = Pools //
+                .nonBlocking() //
+                .connectionProvider(DatabaseCreator.connectionProvider()) //
+                .maxIdleTime(10, TimeUnit.MINUTES) //
+                .idleTimeBeforeHealthCheck(0, TimeUnit.MINUTES) //
+                .healthy(c -> {
+                    log.debug("doing health check");
+                    return !once.compareAndSet(true, false);
+                }) //
+                .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.MINUTES) //
+                .scheduler(scheduler) //
+                .maxPoolSize(1) //
+                .build();
+
+        try (Database db = Database.from(pool)) {
+            TestSubscriber<Integer> ts = db.select("select score from person where name=?") //
+                    .parameters("FRED") //
+                    .getAs(Integer.class) //
+                    .test();
+            Thread.sleep(200);
+            ts.assertNoValues();
+            scheduler.advanceTimeBy(1, TimeUnit.MINUTES);
+            Thread.sleep(200);
+            ts.assertValue(21) //
+                    .assertComplete();
+        }
+
     }
 
     interface Person {

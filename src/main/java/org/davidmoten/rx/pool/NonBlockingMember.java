@@ -72,7 +72,7 @@ public final class NonBlockingMember<T> implements Member<T> {
                             s.idleTimeoutClose.dispose();
                             long now = pool.scheduler.now(TimeUnit.MILLISECONDS);
                             long last = lastCheckoutTime;
-                            if (now < last + pool.idleTimeBeforeHealthCheckMs
+                            if (now <= last + pool.idleTimeBeforeHealthCheckMs
                                     || pool.healthy.test(value)) {
                                 log.debug("initialized in use: member={}", this);
                                 lastCheckoutTime = now;
