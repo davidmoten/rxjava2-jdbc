@@ -99,10 +99,6 @@ public final class NonBlockingPool<T> implements Pool<T> {
         }
     }
 
-    public static <T> Builder<T> builder() {
-        return new Builder<T>();
-    }
-
     public static <T> Builder<T> factory(Callable<T> factory) {
         return new Builder<T>().factory(factory);
     }

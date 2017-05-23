@@ -34,8 +34,8 @@ public final class UpdateBuilder {
      * @return this
      */
     public <T> UpdateBuilder parameters(Flowable<T> parameters) {
-        parameters(parameters);
-        return this;
+        //TODO
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -79,8 +79,8 @@ public final class UpdateBuilder {
      *            the parameter value
      */
     public UpdateBuilder parameter(String name, Object value) {
-        parameter(name, value);
-        return this;
+        //TODO
+        throw new UnsupportedOperationException();
     }
 
     /**

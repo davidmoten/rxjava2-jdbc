@@ -124,7 +124,7 @@ public class DatabaseTest {
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
                 .healthy(c -> c.prepareStatement("select 1").execute()) //
-                .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS ) //
+                .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) //
                 .maxPoolSize(3) //
                 .build();
 
@@ -138,7 +138,7 @@ public class DatabaseTest {
                     .assertComplete();
         }
     }
-    
+
     @Test
     public void testDatabaseClose() {
         try (Database db = db()) {
@@ -241,7 +241,9 @@ public class DatabaseTest {
     @Test
     public void testReadMeFragment1() {
         Database db = Database.test();
-        db.select("select name from person").getAs(String.class).forEach(System.out::println);
+        db.select("select name from person") //
+                .getAs(String.class) //
+                .forEach(System.out::println);
     }
 
     @Test
@@ -266,7 +268,8 @@ public class DatabaseTest {
 
     @Test
     public void testTupleSupport() {
-        db().select("select name, score from person").getAs(String.class, Integer.class)
+        db().select("select name, score from person") //
+                .getAs(String.class, Integer.class) //
                 .forEach(System.out::println);
     }
 
@@ -485,10 +488,6 @@ public class DatabaseTest {
 
     interface PersonNoAnnotation {
         String name();
-    }
-
-    public static void main(String[] args) {
-        Flowable.just(1, 2, 3, 4, 5, 6).doOnRequest(System.out::println).subscribe();
     }
 
 }
