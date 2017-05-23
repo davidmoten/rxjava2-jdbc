@@ -11,14 +11,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.davidmoten.rx.jdbc.Database;
-import org.davidmoten.rx.jdbc.Pools;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
+import org.davidmoten.rx.jdbc.pool.Pools;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -166,18 +167,29 @@ public class DatabaseTest {
                 .assertComplete();
     }
 
+    @Test
+    public void testSelectUsingNameNotGiven() {
+        db() //
+                .select("select score from person where name=:name and name<>:name2") //
+                .parameter("name", "FRED") //
+                .parameter("name", "JOSEPH") //
+                .getAs(Integer.class) //
+                .test() //
+                .assertError(NamedParameterMissingException.class).assertNoValues();
+    }
+
     @Test(expected = NullPointerException.class)
     public void testSelectUsingNullNameInParameter() {
         db() //
                 .select("select score from person where name=:name") //
                 .parameter(null, "FRED"); //
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void testSelectUsingNameDoesNotExist() {
         db() //
                 .select("select score from person where name=:name") //
-                .parameters("nam","FRED");
+                .parameters("nam", "FRED");
     }
 
     @Test(expected = IllegalArgumentException.class)

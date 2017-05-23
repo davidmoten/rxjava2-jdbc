@@ -1,6 +1,4 @@
-package org.davidmoten.rx.jdbc;
-
-import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
+package org.davidmoten.rx.jdbc.pool;
 
 public final class Pools {
     

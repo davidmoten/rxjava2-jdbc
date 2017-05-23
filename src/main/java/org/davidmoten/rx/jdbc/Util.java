@@ -29,7 +29,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
@@ -39,6 +38,7 @@ import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.exceptions.ParameterMissingNameException;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.slf4j.Logger;
@@ -232,7 +232,7 @@ public enum Util {
         List<Parameter> list = new ArrayList<Parameter>();
         for (String name : names) {
             if (!map.containsKey(name))
-                throw new SQLException("named parameter is missing for '" + name + "'");
+                throw new NamedParameterMissingException("named parameter is missing for '" + name + "'");
             Parameter p = map.get(name);
             list.add(p);
         }
@@ -932,8 +932,6 @@ public enum Util {
 
     public static ConnectionProvider connectionProvider(String url) {
         return new ConnectionProvider() {
-
-            private final AtomicBoolean once = new AtomicBoolean(false);
 
             @Override
             public Connection get() {
