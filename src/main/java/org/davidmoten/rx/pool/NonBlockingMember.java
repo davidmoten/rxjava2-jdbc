@@ -101,7 +101,7 @@ public final class NonBlockingMember<T> implements Member<T> {
         while (true) {
             State s = state.get();
             if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose, false))) {
-                break;
+                return;
             }
         }
     }

@@ -335,4 +335,9 @@ public final class ConnectionNonBlockingMember implements Connection, Member<Con
         return this;
     }
 
+    @Override
+    public void shutdown() {
+        member.shutdown();
+    }
+
 }

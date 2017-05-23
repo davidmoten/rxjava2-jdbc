@@ -37,10 +37,10 @@ public final class NonBlockingPool<T> implements Pool<T> {
     final Scheduler scheduler;
 
     private final Flowable<Member<T>> members;
+    private final AtomicReference<List<Member<T>>> list = new AtomicReference<>();
 
-
-    private NonBlockingPool(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer, int maxSize,
-            long retryDelayMs, long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs,
+    private NonBlockingPool(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer,
+            int maxSize, long retryDelayMs, long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs,
             MemberFactory<T, NonBlockingPool<T>> memberFactory, Scheduler scheduler) {
         Preconditions.checkNotNull(factory);
         Preconditions.checkNotNull(healthy);
@@ -50,7 +50,6 @@ public final class NonBlockingPool<T> implements Pool<T> {
         Preconditions.checkNotNull(memberFactory);
         Preconditions.checkNotNull(scheduler);
         this.factory = factory;
-        // TODO use healthy
         this.healthy = healthy;
         this.disposer = disposer;
         this.maxSize = maxSize;
@@ -61,7 +60,6 @@ public final class NonBlockingPool<T> implements Pool<T> {
         this.scheduler = scheduler;
         this.subject = PublishSubject.create();
 
-        AtomicReference<List<Member<T>>> list = new AtomicReference<>();
         Flowable<Member<T>> baseMembers = Flowable.defer(() -> {
             if (list.compareAndSet(null, Collections.emptyList())) {
                 List<Member<T>> m = IntStream.range(1, maxSize + 1)
@@ -82,7 +80,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
                 .doOnNext(m -> log.debug("returned member reentering")) //
                 .mergeWith(baseMembers) //
                 .doOnNext(x -> log.debug("member={}", x)) //
-                .<Member<T>>flatMap(member -> member.checkout().toFlowable(), false, 1) //
+                .<Member<T>> flatMap(member -> member.checkout().toFlowable(), false, 1) //
                 .doOnNext(x -> log.debug("checked out member={}", x));
     }
 
@@ -93,7 +91,12 @@ public final class NonBlockingPool<T> implements Pool<T> {
 
     @Override
     public void close() {
-        // TODO
+        List<Member<T>> ms = list.get();
+        if (ms != null) {
+            for (Member<T> m : ms) {
+                m.shutdown();
+            }
+        }
     }
 
     public static <T> Builder<T> builder() {
@@ -140,12 +143,12 @@ public final class NonBlockingPool<T> implements Pool<T> {
         public Builder<T> idleTimeBeforeHealthCheck(long value, TimeUnit unit) {
             return idleTimeBeforeHealthCheckMs(unit.toMillis(value));
         }
-        
+
         public Builder<T> maxIdleTimeMs(long value) {
             this.maxIdleTimeMs = value;
             return this;
         }
-        
+
         public Builder<T> maxIdleTime(long value, TimeUnit unit) {
             return maxIdleTimeMs(unit.toMillis(value));
         }

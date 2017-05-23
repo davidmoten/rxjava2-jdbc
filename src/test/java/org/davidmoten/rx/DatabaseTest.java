@@ -95,7 +95,8 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                .parameterListStream(
+                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
@@ -125,14 +126,29 @@ public class DatabaseTest {
                 .healthy(c -> c.prepareStatement("select 1").execute()) //
                 .maxPoolSize(3) //
                 .build();
-        Database.from(pool) //
-                .select("select score from person where name=?") //
-                .parameters("FRED", "JOSEPH") //
-                .getAs(Integer.class) //
-                .test() //
-                .assertNoErrors() //
-                .assertValues(21, 34) //
-                .assertComplete();
+
+        try (Database db = Database.from(pool)) {
+            db.select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .getAs(Integer.class) //
+                    .test() //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
+    }
+    
+    @Test
+    public void testDatabaseClose() {
+        try (Database db = db()) {
+            db.select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .getAs(Integer.class) //
+                    .test() //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
     }
 
     @Test
@@ -249,7 +265,8 @@ public class DatabaseTest {
 
     @Test
     public void testTupleSupport() {
-        db().select("select name, score from person").getAs(String.class, Integer.class).forEach(System.out::println);
+        db().select("select name, score from person").getAs(String.class, Integer.class)
+                .forEach(System.out::println);
     }
 
     @Test
