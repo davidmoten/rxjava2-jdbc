@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc.tuple;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -19,6 +20,11 @@ public class TupleN<T> {
      */
     public TupleN(List<T> list) {
         this.list = list;
+    }
+    
+    @SafeVarargs
+    public static <T> TupleN<T> create(T... array) {
+        return new TupleN<T>(Arrays.asList(array));
     }
 
     public List<T> values() {

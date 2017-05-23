@@ -20,6 +20,12 @@ import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.davidmoten.rx.jdbc.pool.Pools;
+import org.davidmoten.rx.jdbc.tuple.Tuple3;
+import org.davidmoten.rx.jdbc.tuple.Tuple4;
+import org.davidmoten.rx.jdbc.tuple.Tuple5;
+import org.davidmoten.rx.jdbc.tuple.Tuple6;
+import org.davidmoten.rx.jdbc.tuple.Tuple7;
+import org.davidmoten.rx.jdbc.tuple.TupleN;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -448,6 +454,72 @@ public class DatabaseTest {
     public void testSelectWithoutWhereClause() {
         Assert.assertEquals(3, (long) db().select("select name from person") //
                 .count().blockingGet());
+    }
+    
+    @Test
+    public void testTuple3() {
+        db() //
+        .select("select name, score, name from person order by name") //
+        .getAs(String.class, Integer.class, String.class) //
+        .firstOrError()
+        .test() //
+        .assertComplete()
+        .assertValue(Tuple3.create("FRED", 21, "FRED")); //
+    }
+    
+    @Test
+    public void testTuple4() {
+        db() //
+        .select("select name, score, name, score from person order by name") //
+        .getAs(String.class, Integer.class, String.class, Integer.class) //
+        .firstOrError()
+        .test() //
+        .assertComplete()
+        .assertValue(Tuple4.create("FRED", 21, "FRED", 21)); //
+    }
+    
+    @Test
+    public void testTuple5() {
+        db() //
+        .select("select name, score, name, score, name from person order by name") //
+        .getAs(String.class, Integer.class, String.class, Integer.class, String.class) //
+        .firstOrError()
+        .test() //
+        .assertComplete()
+        .assertValue(Tuple5.create("FRED", 21, "FRED", 21, "FRED")); //
+    }
+    
+    @Test
+    public void testTuple6() {
+        db() //
+        .select("select name, score, name, score, name, score from person order by name") //
+        .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
+        .firstOrError()
+        .test() //
+        .assertComplete()
+        .assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
+    }
+    
+    @Test
+    public void testTuple7() {
+        db() //
+        .select("select name, score, name, score, name, score, name from person order by name") //
+        .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class, String.class) //
+        .firstOrError()
+        .test() //
+        .assertComplete()
+        .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+    }
+    
+    @Test
+    public void testTupleN() {
+        db() //
+        .select("select name, score, name from person order by name") //
+        .getTupleN() //
+        .firstOrError()
+        .test() //
+        .assertComplete()
+        .assertValue(TupleN.create("FRED", 21, "FRED")); //
     }
 
     interface Person {

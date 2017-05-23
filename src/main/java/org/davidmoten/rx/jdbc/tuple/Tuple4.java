@@ -30,6 +30,10 @@ public class Tuple4<T1, T2, T3, T4> {
         this.value4 = value4;
     }
 
+    public static <T1, T2, T3, T4> Tuple4<T1, T2, T3, T4> create(T1 value1, T2 value2, T3 value3, T4 value4) {
+        return new Tuple4<T1, T2, T3, T4>(value1, value2, value3, value4);
+    }
+
     public T1 value1() {
         return value1;
     }
@@ -107,8 +111,7 @@ public class Tuple4<T1, T2, T3, T4> {
 
     @Override
     public String toString() {
-        return "Tuple4 [value1=" + value1 + ", value2=" + value2 + ", value3=" + value3
-                + ", value4=" + value4 + "]";
+        return "Tuple4 [value1=" + value1 + ", value2=" + value2 + ", value3=" + value3 + ", value4=" + value4 + "]";
     }
 
 }

@@ -25,6 +25,10 @@ public class Tuple3<T1, T2, T3> {
         this.value2 = value2;
         this.value3 = value3;
     }
+    
+    public static <T1,T2,T3> Tuple3<T1,T2,T3> create(T1 value1, T2 value2, T3 value3) {
+        return new Tuple3<T1,T2,T3>(value1, value2, value3);
+    }
 
     public T1 value1() {
         return value1;

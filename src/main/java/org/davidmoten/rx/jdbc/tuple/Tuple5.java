@@ -34,6 +34,11 @@ public class Tuple5<T1, T2, T3, T4, T5> {
         this.value5 = value5;
     }
 
+    public static <T1, T2, T3, T4, T5> Tuple5<T1, T2, T3, T4, T5> create(T1 value1, T2 value2, T3 value3, T4 value4,
+            T5 value5) {
+        return new Tuple5<T1, T2, T3, T4, T5>(value1, value2, value3, value4, value5);
+    }
+
     public T1 value1() {
         return value1;
     }
@@ -125,8 +130,8 @@ public class Tuple5<T1, T2, T3, T4, T5> {
 
     @Override
     public String toString() {
-        return "Tuple5 [value1=" + value1 + ", value2=" + value2 + ", value3=" + value3
-                + ", value4=" + value4 + ", value5=" + value5 + "]";
+        return "Tuple5 [value1=" + value1 + ", value2=" + value2 + ", value3=" + value3 + ", value4=" + value4
+                + ", value5=" + value5 + "]";
     }
 
 }
