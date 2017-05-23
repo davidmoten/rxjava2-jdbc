@@ -9,6 +9,7 @@ import org.davidmoten.rx.jdbc.Util;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
+import org.davidmoten.rx.pool.NonBlockingPool.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,15 +24,15 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
 
     private final AtomicReference<NonBlockingPool<Connection>> pool = new AtomicReference<NonBlockingPool<Connection>>();
 
-    public NonBlockingConnectionPool(ConnectionProvider cp, int maxSize, long retryDelayMs) {
+    public NonBlockingConnectionPool(ConnectionProvider cp, int maxSize, long returnToPoolDelayAfterHealthCheckFailureMs) {
         Preconditions.checkNotNull(cp);
         Preconditions.checkArgument(maxSize >= 1);
-        Preconditions.checkArgument(retryDelayMs >= 0);
+        Preconditions.checkArgument(returnToPoolDelayAfterHealthCheckFailureMs >= 0);
         pool.set(NonBlockingPool.factory(() -> cp.get()) //
                 .healthy(c -> true) //
                 .disposer(Util::closeSilently) //
                 .maxSize(maxSize) //
-                .retryDelayMs(retryDelayMs) //
+                .returnToPoolDelayAfterHealthCheckFailureMs(returnToPoolDelayAfterHealthCheckFailureMs) //
                 .memberFactory(p -> new ConnectionNonBlockingMember(pool.get())) //
                 .build());
     }
@@ -53,7 +54,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         private ConnectionProvider cp;
         private Predicate<Connection> healthy = c -> true;
         private int maxPoolSize = 5;
-        private long retryDelayMs = 1000;
+        private long returnToPoolDelayAfterHealthCheckFailureMs = 1000;
         private long idleTimeBeforeHealthCheckMs = 60000;
         private long maxIdleTimeMs = 30 * 60000;
 
@@ -97,10 +98,15 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             return this;
         }
 
-        public Builder retryDelayMs(long retryDelayMs) {
-            this.retryDelayMs = retryDelayMs;
+        public Builder returnToPoolDelayAfterHealthCheckFailureMs(long value) {
+            this.returnToPoolDelayAfterHealthCheckFailureMs = value;
             return this;
         }
+        
+        public Builder returnToPoolDelayAfterHealthCheckFailure(long value, TimeUnit unit) {
+            return returnToPoolDelayAfterHealthCheckFailureMs(unit.toMillis(value));
+        }
+
 
         public NonBlockingConnectionPool build() {
             return new NonBlockingConnectionPool(NonBlockingPool //
@@ -110,7 +116,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
                     .healthy(healthy) //
                     .disposer(Util::closeSilently) //
                     .maxSize(maxPoolSize) //
-                    .retryDelayMs(retryDelayMs)); //
+                    .returnToPoolDelayAfterHealthCheckFailureMs(returnToPoolDelayAfterHealthCheckFailureMs)); //
         }
 
     }

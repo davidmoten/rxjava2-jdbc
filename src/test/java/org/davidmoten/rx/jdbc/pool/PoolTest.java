@@ -32,7 +32,7 @@ public class PoolTest {
                 .disposer(n -> {
                 }) //
                 .maxSize(3)//
-                .retryDelayMs(1000)//
+                .returnToPoolDelayAfterHealthCheckFailureMs(1000)//
                 .memberFactory(memberFactory)//
                 .scheduler(Schedulers.computation())//
                 .build();

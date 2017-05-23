@@ -124,7 +124,7 @@ public final class NonBlockingMember<T> implements Member<T> {
                 s.idleTimeoutClose.dispose();
                 // schedule reconsideration of this member in retryDelayMs
                 worker.schedule(() -> pool.subject.onNext(NonBlockingMember.this), //
-                        pool.retryDelayMs, TimeUnit.MILLISECONDS);
+                        pool.returnToPoolDelayAfterHealthCheckFailureMs, TimeUnit.MILLISECONDS);
                 break;
             } else if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose, s.enabled))) {
                 break;

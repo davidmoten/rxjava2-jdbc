@@ -124,6 +124,7 @@ public class DatabaseTest {
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
                 .healthy(c -> c.prepareStatement("select 1").execute()) //
+                .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS ) //
                 .maxPoolSize(3) //
                 .build();
 
