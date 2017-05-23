@@ -108,7 +108,11 @@ public final class NonBlockingPool<T> implements Pool<T> {
         private Callable<T> factory;
         private Predicate<T> healthy = x -> true;
         private long idleTimeBeforeHealthCheckMs = 30;
-        private Consumer<T> disposer;
+        private Consumer<T> disposer = new Consumer<T>() {
+            @Override
+            public void accept(T t) throws Exception {
+                //do nothing
+            }};
         private int maxSize = 10;
         private long returnToPoolDelayAfterHealthCheckFailureMs = 30000;
         private MemberFactory<T, NonBlockingPool<T>> memberFactory;

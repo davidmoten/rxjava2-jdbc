@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
+import org.davidmoten.rx.jdbc.pool.Pools;
 import org.davidmoten.rx.pool.Pool;
 
 import io.reactivex.Flowable;
@@ -29,9 +30,13 @@ public class Database implements AutoCloseable {
     public static Database from(Flowable<Connection> connections, Action onClose) {
         return new Database(connections, onClose);
     }
-    
+
     public static Database from(String url, int maxPoolSize) {
-        return Database.from(new NonBlockingConnectionPool(Util.connectionProvider(url), maxPoolSize, 1000));
+        return Database.from( //
+                Pools.nonBlocking() //
+                        .url(url) //
+                        .maxPoolSize(maxPoolSize) //
+                        .build());
     }
 
     public static Database from(Pool<Connection> pool) {
@@ -39,7 +44,11 @@ public class Database implements AutoCloseable {
     }
 
     public static Database test(int maxPoolSize) {
-        return Database.from(new NonBlockingConnectionPool(testConnectionProvider(), maxPoolSize, 1000));
+        return Database.from( //
+                Pools.nonBlocking() //
+                        .connectionProvider(testConnectionProvider()) //
+                        .maxPoolSize(maxPoolSize) //
+                        .build());
     }
 
     static ConnectionProvider testConnectionProvider() {
@@ -52,13 +61,14 @@ public class Database implements AutoCloseable {
 
     private static void createDatabase(Connection c) {
         try {
-            Sql.statements(Database.class.getResourceAsStream("/database-test.sql")).stream().forEach(x -> {
-                try {
-                    c.prepareStatement(x).execute();
-                } catch (SQLException e) {
-                    throw new SQLRuntimeException(e);
-                }
-            });
+            Sql.statements(Database.class.getResourceAsStream("/database-test.sql")).stream()
+                    .forEach(x -> {
+                        try {
+                            c.prepareStatement(x).execute();
+                        } catch (SQLException e) {
+                            throw new SQLRuntimeException(e);
+                        }
+                    });
             c.commit();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
@@ -112,8 +122,8 @@ public class Database implements AutoCloseable {
     }
 
     public SelectBuilder select() {
-        //return new SelectBuilder(null, connections());
-        //TODO
+        // return new SelectBuilder(null, connections());
+        // TODO
         throw new UnsupportedOperationException();
     }
 

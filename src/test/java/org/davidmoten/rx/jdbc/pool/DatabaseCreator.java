@@ -13,17 +13,16 @@ import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 public class DatabaseCreator {
 
     private static AtomicInteger dbNumber = new AtomicInteger();
-    
 
     public static Database create(int maxSize) {
-        return Database
-                .from(new NonBlockingConnectionPool(connectionProvider(nextUrl()), maxSize, 1000));
+        return Database.from(Pools.nonBlocking().connectionProvider(connectionProvider(nextUrl()))
+                .maxPoolSize(maxSize).build());
     }
 
     public static ConnectionProvider connectionProvider() {
         return connectionProvider(nextUrl());
     }
-    
+
     private static ConnectionProvider connectionProvider(String url) {
         return new ConnectionProvider() {
 
