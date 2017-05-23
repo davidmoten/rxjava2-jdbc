@@ -1,6 +1,7 @@
 package org.davidmoten.rx;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.sql.SQLSyntaxErrorException;
 import java.util.Arrays;
@@ -23,6 +24,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
 
@@ -239,6 +241,7 @@ public class DatabaseTest {
     }
 
     @Test
+    @SuppressFBWarnings
     public void testReadMeFragment1() {
         Database db = Database.test();
         db.select("select name from person") //
@@ -267,6 +270,7 @@ public class DatabaseTest {
     }
 
     @Test
+    @SuppressFBWarnings
     public void testTupleSupport() {
         db().select("select name, score from person") //
                 .getAs(String.class, Integer.class) //
@@ -293,7 +297,7 @@ public class DatabaseTest {
                 .doOnNext(x -> latch.countDown()) //
                 .subscribe();
         list.add("subscribed");
-        latch.await(5, TimeUnit.SECONDS);
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
         assertEquals(Arrays.asList("subscribed", "emitted"), list);
     }
 

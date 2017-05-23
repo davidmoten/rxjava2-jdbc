@@ -35,7 +35,7 @@ public class SelectBuilder {
     int fetchSize = 0; // default
 
     public SelectBuilder(String sql, Flowable<Connection> connections) {
-        // sql can be null if we get it from an annotation for instance
+        Preconditions.checkNotNull(sql);
         Preconditions.checkNotNull(connections);
         this.sql = sql;
         this.connections = connections;

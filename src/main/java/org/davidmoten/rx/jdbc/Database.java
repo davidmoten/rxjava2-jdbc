@@ -112,7 +112,9 @@ public class Database implements AutoCloseable {
     }
 
     public SelectBuilder select() {
-        return new SelectBuilder(null, connections());
+        //return new SelectBuilder(null, connections());
+        //TODO
+        throw new UnsupportedOperationException();
     }
 
     public SelectBuilder select(String sql) {
