@@ -166,6 +166,20 @@ public class DatabaseTest {
                 .assertComplete();
     }
 
+    @Test(expected = NullPointerException.class)
+    public void testSelectUsingNullNameInParameter() {
+        db() //
+                .select("select score from person where name=:name") //
+                .parameter(null, "FRED"); //
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void testSelectUsingNameDoesNotExist() {
+        db() //
+                .select("select score from person where name=:name") //
+                .parameters("nam","FRED");
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testSelectUsingNameWithoutSpecifyingNameThrowsImmediately() {
         db() //
