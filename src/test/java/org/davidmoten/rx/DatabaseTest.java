@@ -534,13 +534,17 @@ public class DatabaseTest {
                 .build();
 
         try (Database db = Database.from(pool)) {
-            TestSubscriber<Integer> ts = db.select("select score from person where name=?") //
-                    .parameters("FRED") //
+            TestSubscriber<Integer> ts = db
+                    .select( //
+                            "select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
                     .getAs(Integer.class) //
                     .test();
             Thread.sleep(200);
-            ts.assertNoValues();
+            ts.assertValueCount(1);
             scheduler.advanceTimeBy(1, TimeUnit.MINUTES);
+            Thread.sleep(200);
+            ts.assertValueCount(1);
             Thread.sleep(200);
             ts.assertValue(21) //
                     .assertComplete();
