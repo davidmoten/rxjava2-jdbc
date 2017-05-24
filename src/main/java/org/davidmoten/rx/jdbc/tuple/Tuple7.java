@@ -1,5 +1,7 @@
 package org.davidmoten.rx.jdbc.tuple;
 
+import java.util.Objects;
+
 /**
  * An explicitly typed tuple. *
  * 
@@ -119,49 +121,21 @@ public class Tuple7<T1, T2, T3, T4, T5, T6, T7> {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        Tuple7<?, ?, ?, ?, ?, ?, ?> other = (Tuple7<?, ?, ?, ?, ?, ?, ?>) obj;
-        if (value1 == null) {
-            if (other.value1 != null)
-                return false;
-        } else if (!value1.equals(other.value1))
-            return false;
-        if (value2 == null) {
-            if (other.value2 != null)
-                return false;
-        } else if (!value2.equals(other.value2))
-            return false;
-        if (value3 == null) {
-            if (other.value3 != null)
-                return false;
-        } else if (!value3.equals(other.value3))
-            return false;
-        if (value4 == null) {
-            if (other.value4 != null)
-                return false;
-        } else if (!value4.equals(other.value4))
-            return false;
-        if (value5 == null) {
-            if (other.value5 != null)
-                return false;
-        } else if (!value5.equals(other.value5))
-            return false;
-        if (value6 == null) {
-            if (other.value6 != null)
-                return false;
-        } else if (!value6.equals(other.value6))
-            return false;
-        if (value7 == null) {
-            if (other.value7 != null)
-                return false;
-        } else if (!value7.equals(other.value7))
-            return false;
-        return true;
+        }
+        @SuppressWarnings("rawtypes")
+        final Tuple7 other = (Tuple7) obj;
+        return Objects.equals(value1, other.value1) //
+                && Objects.equals(value2, other.value2) //
+                && Objects.equals(value3, other.value3) //
+                && Objects.equals(value4, other.value4) //
+                && Objects.equals(value5, other.value5) //
+                && Objects.equals(value6, other.value6) //
+                && Objects.equals(value7, other.value7);
     }
 
     @Override

@@ -252,8 +252,14 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-                        <configuration>
-                        </configuration>
+			<configuration>
+			    <excludes>
+				<exclude>**/ConnectionNonBlockingMemberPreparedStatement.*</exclude>
+				<exclude>**/ConnectionNonBlockingMember.*</exclude>
+				<exclude>**/TransactedConnection.*</exclude>
+				<exclude>**/TransactedPreparedStatement.*</exclude>
+			    </excludes>
+			</configuration>
                     </execution>
                 </executions>
             </plugin>
