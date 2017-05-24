@@ -88,7 +88,7 @@ public final class ConnectionNonBlockingMember implements Connection, Member<Con
     }
 
     @Override
-    public void close() throws SQLException {
+    public void close() {
         // doesn't close the underlying connection, just releases it for reuse
         member.checkin();
     }

@@ -26,8 +26,9 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
 
     private final AtomicReference<NonBlockingPool<Connection>> pool = new AtomicReference<NonBlockingPool<Connection>>();
 
-    public NonBlockingConnectionPool(
-            org.davidmoten.rx.pool.NonBlockingPool.Builder<Connection> builder) {
+    private volatile boolean closed;
+
+    public NonBlockingConnectionPool(org.davidmoten.rx.pool.NonBlockingPool.Builder<Connection> builder) {
         pool.set(builder.memberFactory(p -> new ConnectionNonBlockingMember(pool.get())).build());
     }
 
@@ -92,7 +93,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         public Builder returnToPoolDelayAfterHealthCheckFailure(long value, TimeUnit unit) {
             return returnToPoolDelayAfterHealthCheckFailureMs(unit.toMillis(value));
         }
-        
+
         public Builder scheduler(Scheduler scheduler) {
             this.scheduler = scheduler;
             return this;
@@ -108,8 +109,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
                     .healthy(healthy) //
                     .scheduler(scheduler) //
                     .maxSize(maxPoolSize) //
-                    .returnToPoolDelayAfterHealthCheckFailureMs(
-                            returnToPoolDelayAfterHealthCheckFailureMs)); //
+                    .returnToPoolDelayAfterHealthCheckFailureMs(returnToPoolDelayAfterHealthCheckFailureMs)); //
         }
 
     }
@@ -117,12 +117,18 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
     @Override
     public Flowable<Member<Connection>> members() {
         return pool.get().members() //
+                .doOnNext(m -> {
+                    if (closed) {
+                        throw new PoolClosedException();
+                    }
+                }) //
                 .doOnRequest(n -> log.debug("connections requested={}", n)) //
                 .doOnNext(c -> log.debug("supplied {}", c));
     }
 
     @Override
     public void close() {
+        closed = true;
         pool.get().close();
     }
 

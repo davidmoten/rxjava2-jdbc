@@ -15,7 +15,6 @@ public interface Member<T> extends AutoCloseable {
      * @return the value of the pooled member
      */
     T value();
-    
-    void shutdown();
 
+    void shutdown();
 }

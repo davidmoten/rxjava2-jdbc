@@ -3,6 +3,7 @@ package org.davidmoten.rx;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.sql.Connection;
 import java.sql.SQLSyntaxErrorException;
 import java.util.Arrays;
 import java.util.List;
@@ -20,6 +21,7 @@ import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
+import org.davidmoten.rx.jdbc.pool.PoolClosedException;
 import org.davidmoten.rx.jdbc.pool.Pools;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
 import org.davidmoten.rx.jdbc.tuple.Tuple4;
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.reactivex.Flowable;
+import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
@@ -107,8 +110,7 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(
-                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
@@ -490,8 +492,7 @@ public class DatabaseTest {
     public void testTuple6() {
         db() //
                 .select("select name, score, name, score, name, score from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
                 .firstOrError().test() //
                 .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
     }
@@ -500,11 +501,10 @@ public class DatabaseTest {
     public void testTuple7() {
         db() //
                 .select("select name, score, name, score, name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class, String.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
+                        String.class) //
                 .firstOrError().test() //
-                .assertComplete()
-                .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+                .assertComplete().assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
 
     @Test
@@ -518,17 +518,34 @@ public class DatabaseTest {
 
     @Test
     public void testHealthCheck() throws InterruptedException {
-        TestScheduler scheduler = new TestScheduler();
         AtomicBoolean once = new AtomicBoolean(true);
+        testHealthCheck(c -> {
+            log.debug("doing health check");
+            return !once.compareAndSet(true, false);
+        });
+    }
+
+    @Test
+    public void testHealthCheckThatThrows() throws InterruptedException {
+        AtomicBoolean once = new AtomicBoolean(true);
+        testHealthCheck(c -> {
+            log.debug("doing health check");
+            if (!once.compareAndSet(true, false))
+                return true;
+            else
+                throw new RuntimeException("health check failed");
+        });
+    }
+
+    private void testHealthCheck(Predicate<Connection> healthy) throws InterruptedException {
+        TestScheduler scheduler = new TestScheduler();
+
         NonBlockingConnectionPool pool = Pools //
                 .nonBlocking() //
                 .connectionProvider(DatabaseCreator.connectionProvider()) //
                 .maxIdleTime(10, TimeUnit.MINUTES) //
                 .idleTimeBeforeHealthCheck(0, TimeUnit.MINUTES) //
-                .healthy(c -> {
-                    log.debug("doing health check");
-                    return !once.compareAndSet(true, false);
-                }) //
+                .healthy(healthy) //
                 .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.MINUTES) //
                 .scheduler(scheduler) //
                 .maxPoolSize(1) //
@@ -556,7 +573,24 @@ public class DatabaseTest {
             ts.assertValue(21) //
                     .assertComplete();
         }
+    }
 
+    @Test
+    public void testShutdownBeforeUse() {
+        NonBlockingConnectionPool pool = Pools //
+                .nonBlocking() //
+                .connectionProvider(DatabaseCreator.connectionProvider()) //
+                .scheduler(Schedulers.io()) //
+                .maxPoolSize(1) //
+                .build();
+        pool.close();
+        Database.from(pool) //
+                .select("select score from person where name=?") //
+                .parameters("FRED") //
+                .getAs(Integer.class) //
+                .test() //
+                .assertNoValues() //
+                .assertError(PoolClosedException.class);
     }
 
     interface Person {

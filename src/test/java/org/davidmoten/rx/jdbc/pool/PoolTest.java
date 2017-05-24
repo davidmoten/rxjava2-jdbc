@@ -25,9 +25,9 @@ public class PoolTest {
     @Test
     public void testSimplePool() throws InterruptedException {
         AtomicInteger count = new AtomicInteger();
-        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(
-                pool, null);
-        Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet())
+        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(pool,
+                null);
+        Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet()) //
                 .healthy(n -> true) //
                 .disposer(n -> {
                 }) //
@@ -75,12 +75,14 @@ public class PoolTest {
                 .assertValueCount(2) //
                 .assertNotTerminated();
         List<Connection> list = new ArrayList<>(ts.values());
-        list.get(1).close(); //should release a connection
-        ts.assertValueCount(3).assertNotTerminated();
-        ts.assertValues(list.get(0), list.get(1), list.get(1));
+        list.get(1).close(); // should release a connection
+        ts.assertValueCount(3) //
+                .assertNotTerminated() //
+                .assertValues(list.get(0), list.get(1), list.get(1));
         list.get(0).close();
-        ts.assertValues(list.get(0), list.get(1), list.get(1), list.get(0));
-        ts.assertValueCount(4).assertNotTerminated();
+        ts.assertValues(list.get(0), list.get(1), list.get(1), list.get(0)) //
+                .assertValueCount(4) //
+                .assertNotTerminated();
     }
 
 }
