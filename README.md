@@ -47,7 +47,9 @@ To start things off you need a `Database` instance. Given the jdbc url of your d
 Database db = Database.from(url, maxPoolSize);
 ```
 
-If you want to have a play with the built-in test database then do this:
+### Support for playing with rxjava2-jdbc!
+
+If you want to have a play with a built-in test database then do this:
 
 ```java
 Database db = Database.test(maxPoolSize);
@@ -56,6 +58,8 @@ Database db = Database.test(maxPoolSize);
 The test database has a couple of tables `Person` and `Address` with three rows in `Person` and two rows in `Address`:
 
 <img src="src/docs/tables.png?raw=true"/>
+
+Each time you call `Database.test(maxPoolSize)` you will have a fresh new database to play with that is loaded with data as described above.
 
 A query example
 ---------------
