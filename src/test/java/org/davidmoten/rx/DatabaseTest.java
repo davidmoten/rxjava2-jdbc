@@ -3,7 +3,10 @@ package org.davidmoten.rx;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.sql.Connection;
 import java.sql.SQLSyntaxErrorException;
@@ -667,6 +670,43 @@ public class DatabaseTest {
                 .assertValue("some text here") //
                 .assertComplete();
     }
+    
+    @Test
+    public void testInsertBlobAndReadBlobAsByteArray() {
+        Database db = db();
+        byte[] bytes = "some text here".getBytes();
+        db.update("insert into person_blob(name,document) values(?,?)") //
+                .parameters("FRED", bytes) //
+                .counts() //
+                .test() //
+                .assertValue(1) //
+                .assertComplete();
+        db.select("select document from person_blob where name='FRED'") //
+                .getAs(byte[].class) //
+                .map(b -> new String(b)) //
+                .test() //
+                .assertValue("some text here") //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testInsertBlobAndReadBlobAsInputStream() {
+        Database db = db();
+        byte[] bytes = "some text here".getBytes();
+        db.update("insert into person_blob(name,document) values(?,?)") //
+                .parameters("FRED", new ByteArrayInputStream(bytes)) //
+                .counts() //
+                .test() //
+                .assertValue(1) //
+                .assertComplete();
+        db.select("select document from person_blob where name='FRED'") //
+                .getAs(InputStream.class) //
+                .map(is -> read(is)) //
+                .map(b -> new String(b)) //
+                .test() //
+                .assertValue("some text here") //
+                .assertComplete();
+    }
 
     private static String read(Reader reader) throws IOException {
         StringBuffer s = new StringBuffer();
@@ -677,7 +717,17 @@ public class DatabaseTest {
         }
         reader.close();
         return s.toString();
-
+    }
+    
+    private static byte[] read(InputStream is) throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        byte[] b = new byte[128];
+        int n = 0;
+        while ((n = is.read(b)) != -1) {
+            bytes.write(b, 0, n);
+        }
+        is.close();
+        return bytes.toByteArray();
     }
 
     private void testHealthCheck(Predicate<Connection> healthy) throws InterruptedException {
