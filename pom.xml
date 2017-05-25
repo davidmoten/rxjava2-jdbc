@@ -24,16 +24,16 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <cobertura.version>2.7</cobertura.version>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <checkstyle.version>2.11</checkstyle.version>
-        <findbugs.version>3.0.1</findbugs.version>
-        <javadoc.version>2.10.3</javadoc.version>
+        <checkstyle.version>2.17</checkstyle.version>
+        <findbugs.version>3.0.4</findbugs.version>
+        <javadoc.version>2.10.4</javadoc.version>
         <pmd.version>3.0.1</pmd.version>
-        <jdepend.version>2.0-beta-2</jdepend.version>
-        <javancss.version>2.0</javancss.version>
-        <project.info.version>2.4</project.info.version>
-        <jxr.version>2.4</jxr.version>
+        <jdepend.version>2.0</jdepend.version>
+        <javancss.version>2.1</javancss.version>
+        <project.info.version>2.9</project.info.version>
+        <jxr.version>2.5</jxr.version>
         <taglist.version>2.4</taglist.version>
-        <m3.site.version>3.4</m3.site.version>
+        <m3.site.version>3.6</m3.site.version>
         <changelog.version>2.2</changelog.version>
         <coverage.reports.dir>${project.build.directory}/target/coverage-reports</coverage.reports.dir>
         <slf4j.version>1.7.21</slf4j.version>
@@ -89,12 +89,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.reactivestreams</groupId>
-            <artifactId>reactive-streams</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-
-        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.4</version>
@@ -121,26 +115,19 @@
         </dependency>
 
         <dependency>
-            <groupId>org.easymock</groupId>
-            <artifactId>easymock</artifactId>
-            <version>3.4</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>1.4.192</version>
+            <version>1.4.195</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
-            <version>2.3.4</version>
+            <version>2.4.0</version>
             <scope>test</scope>
         </dependency>
-      
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
@@ -164,7 +151,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.2.9</version>
+            <version>2.8.9</version>
             <scope>test</scope>
         </dependency>
 
@@ -214,7 +201,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.6.1</version>
                 <configuration>
                     <source>${maven.compiler.target}</source>
                     <target>${maven.compiler.target}</target>
@@ -252,14 +239,14 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-			<configuration>
-			    <excludes>
-				<exclude>**/ConnectionNonBlockingMemberPreparedStatement.*</exclude>
-				<exclude>**/ConnectionNonBlockingMember.*</exclude>
-				<exclude>**/TransactedConnection.*</exclude>
-				<exclude>**/TransactedPreparedStatement.*</exclude>
-			    </excludes>
-			</configuration>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/ConnectionNonBlockingMemberPreparedStatement.*</exclude>
+                                <exclude>**/ConnectionNonBlockingMember.*</exclude>
+                                <exclude>**/TransactedConnection.*</exclude>
+                                <exclude>**/TransactedPreparedStatement.*</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -276,8 +263,8 @@
                 </executions>
                 <configuration>
                     <reportPlugins>
-                        <!-- this one should go first so that it is available 
-                            to other plugins when they run -->
+                        <!-- this one should go first so that it is available to other plugins when they 
+                            run -->
                         <plugin>
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-jxr-plugin</artifactId>
@@ -354,11 +341,9 @@
                                 <aggregate>true</aggregate>
                             </configuration>
                         </plugin>
-                        <!-- commented this plugin out because cannot run 
-                            offline (e.g. at home) -->
-                        <!-- <plugin> <groupId>org.apache.maven.plugins</groupId> 
-                            <artifactId>maven-changelog-plugin</artifactId> <version>${changelog.version}</version> 
-                            <configuration> <username>${svn.username}</username> <password>${svn.password}</password> 
+                        <!-- commented this plugin out because cannot run offline (e.g. at home) -->
+                        <!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-changelog-plugin</artifactId> 
+                            <version>${changelog.version}</version> <configuration> <username>${svn.username}</username> <password>${svn.password}</password> 
                             </configuration> </plugin> -->
                     </reportPlugins>
                 </configuration>
@@ -374,7 +359,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>1.5.0</version>
+                        <version>1.6.0</version>
                         <executions>
                             <execution>
                                 <id>run-benchmarks</id>
