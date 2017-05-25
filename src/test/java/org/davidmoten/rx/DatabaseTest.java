@@ -542,20 +542,41 @@ public class DatabaseTest {
 
     @Test
     public void testUpdateOneRow() {
-        db().update("update person set score=20 where name='FRED'").counts() //
+        db().update("update person set score=20 where name='FRED'") //
+                .counts() //
+                .test() //
+                .assertValue(1) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateThreeRows() {
+        db().update("update person set score=20") //
+                .counts() //
+                .test() //
+                .assertValue(3) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateWithParameter() {
+        db().update("update person set score=20 where name=?") //
+                .parameters("FRED")
+                .counts() //
                 .test() //
                 .assertValue(1) //
                 .assertComplete();
     }
     
     @Test
-    public void testUpdateThreeRows() {
-        db().update("update person set score=20").counts() //
+    public void testUpdateWithParameterTwoRuns() {
+        db().update("update person set score=20 where name=?") //
+                .parameters("FRED", "JOSEPH")
+                .counts() //
                 .test() //
-                .assertValue(3) //
+                .assertValues(1, 1) //
                 .assertComplete();
     }
-
 
     private void testHealthCheck(Predicate<Connection> healthy) throws InterruptedException {
         TestScheduler scheduler = new TestScheduler();

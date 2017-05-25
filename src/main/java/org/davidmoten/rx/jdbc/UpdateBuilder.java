@@ -54,7 +54,7 @@ public final class UpdateBuilder {
         parameters.parameters(values);
         return this;
     }
-
+    
     /**
      * Appends a parameter to the parameter list for the query for a CLOB
      * parameter and handles null appropriately. If there are more parameters

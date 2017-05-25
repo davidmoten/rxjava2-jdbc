@@ -65,7 +65,7 @@ public final class SelectBuilder {
         parameters.parameters(values);
         return this;
     }
-
+    
     public SelectBuilder fetchSize(int size) {
         Preconditions.checkArgument(size >= 0);
         this.fetchSize = size;
