@@ -120,7 +120,7 @@ public class Database implements AutoCloseable {
         }
     }
 
-    public SelectBuilder select() {
+    public SelectBuilder select(Class<?> cls) {
         // return new SelectBuilder(null, connections());
         // TODO
         throw new UnsupportedOperationException();
@@ -129,7 +129,7 @@ public class Database implements AutoCloseable {
     public SelectBuilder select(String sql) {
         return new SelectBuilder(sql, connections());
     }
-
+    
     public UpdateBuilder update(String sql) {
         return new UpdateBuilder(sql, connections());
     }
