@@ -16,13 +16,19 @@ public final class UpdateBuilder {
 
     private final String sql;
     private final Flowable<Connection> connections;
-    private Flowable<Parameter> parameters;
+    private final SqlInfo sqlInfo;
+
+    final List<Flowable<List<Object>>> parameterGroups = new ArrayList<>();
+    // for building up a number of parameters
+    final List<Object> parameterBuffer = new ArrayList<>();
     private List<Flowable<?>> dependsOn;
     private int batchSize = DEFAULT_BATCH_SIZE;
+
 
     public UpdateBuilder(String sql, Flowable<Connection> connections) {
         this.sql = sql;
         this.connections = connections;
+        this.sqlInfo = SqlInfo.parse(sql);
     }
 
     /**
@@ -47,13 +53,8 @@ public final class UpdateBuilder {
      * @return this
      */
     public UpdateBuilder parameters(Object... objects) {
-        Flowable<Parameter> p = Flowable.fromArray(objects).map(TO_PARAMETER);
-        if (parameters == null) {
-            parameters = p;
-        } else {
-            this.parameters = Flowable.concat(parameters, p);
-        }
-        return this;
+
+return this;
     }
 
     /**
@@ -159,5 +160,9 @@ public final class UpdateBuilder {
             return new Parameter(parameter);
         }
     };
+    
+    public Flowable<Integer> count() {
+        return null;
+    }
 
 }

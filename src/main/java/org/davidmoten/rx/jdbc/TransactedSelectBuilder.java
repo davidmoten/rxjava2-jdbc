@@ -69,7 +69,6 @@ public class TransactedSelectBuilder {
         }
 
         public <T> Flowable<T> getAs(Class<T> cls) {
-            b.selectBuilder.useAndCloseParameterBuffer();
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
             Flowable<Tx<T>> o = Select.create(b.selectBuilder.connections.firstOrError() //
                     .map(c -> {
@@ -100,7 +99,6 @@ public class TransactedSelectBuilder {
     }
 
     public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
-        selectBuilder.useAndCloseParameterBuffer();
         AtomicReference<Connection> connection = new AtomicReference<Connection>();
         Flowable<Tx<T>> o = Select.create(selectBuilder.connections.firstOrError() //
                 .map(c -> {

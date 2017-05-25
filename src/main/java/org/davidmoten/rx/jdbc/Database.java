@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
-import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.davidmoten.rx.jdbc.pool.Pools;
 import org.davidmoten.rx.pool.Pool;
 

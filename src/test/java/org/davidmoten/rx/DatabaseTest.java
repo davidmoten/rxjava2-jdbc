@@ -536,6 +536,12 @@ public class DatabaseTest {
                 throw new RuntimeException("health check failed");
         });
     }
+    
+    @Test
+    public void testUpdate() {
+        db().update("update person set score=20 where name='FRED'");
+        //TODO
+    }
 
     private void testHealthCheck(Predicate<Connection> healthy) throws InterruptedException {
         TestScheduler scheduler = new TestScheduler();
