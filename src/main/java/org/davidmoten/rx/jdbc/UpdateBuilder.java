@@ -17,7 +17,7 @@ public final class UpdateBuilder {
     final Flowable<Connection> connections;
     private final ParametersBuilder parameters;
     private List<Flowable<?>> dependsOn;
-    private int batchSize = DEFAULT_BATCH_SIZE;
+    int batchSize = DEFAULT_BATCH_SIZE;
 
     public UpdateBuilder(String sql, Flowable<Connection> connections) {
         this.sql = sql;
@@ -123,7 +123,7 @@ public final class UpdateBuilder {
     }
 
     public Flowable<Integer> counts() {
-        return Update.create(connections, parameters.parameterGroupsToFlowable(), sql);
+        return Update.create(connections, parameters.parameterGroupsToFlowable(), sql, batchSize);
     }
     
     Flowable<List<Object>> parameterGroupsToFlowable() {

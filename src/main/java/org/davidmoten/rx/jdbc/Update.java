@@ -19,14 +19,6 @@ public enum Update {
     ;
 
     public static Flowable<Integer> create(Flowable<Connection> connections,
-            Flowable<List<Object>> parameterGroups, String sql) {
-        return connections //
-                .firstOrError() //
-                .toFlowable() //
-                .flatMap(con -> create(con, sql, parameterGroups), true, 1);
-    }
-
-    public static Flowable<Integer> create(Flowable<Connection> connections,
             Flowable<List<Object>> parameterGroups, String sql, int batchSize) {
         return connections //
                 .firstOrError() //
@@ -35,35 +27,32 @@ public enum Update {
     }
 
     private static Flowable<Integer> create(Connection con, String sql,
-            Flowable<List<Object>> parameterGroups) {
-        Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql);
-        Function<NamedPreparedStatement, Flowable<Integer>> observableFactory = ps -> parameterGroups
-                .flatMap(parameters -> create(ps, parameters).toFlowable()) //
-                .doOnComplete(() -> Util.commit(ps.ps)) //
-                .doOnError(e -> Util.rollback(ps.ps));
-        Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
-        return Flowable.using(resourceFactory, observableFactory, disposer, true);
-    }
-
-    private static Flowable<Integer> create(Connection con, String sql,
             Flowable<List<Object>> parameterGroups, int batchSize) {
         Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql);
-        Function<NamedPreparedStatement, Flowable<Integer>> observableFactory = ps -> {
-            int[] count = new int[1];
-            return parameterGroups.flatMap(parameters -> {
-                count[0] += 1;
-                Flowable<Integer> result;
-                if (count[0] == batchSize) {
-                    count[0] = 0;
-                    result = createExecuteBatch(ps, parameters);
-                } else {
-                    result = createAddBatch(ps, parameters).toFlowable();
-                }
-                return result //
-                        .doOnComplete(() -> Util.commit(ps.ps)) //
-                        .doOnError(e -> Util.rollback(ps.ps));
-            });
-        };
+        Function<NamedPreparedStatement, Flowable<Integer>> observableFactory;
+        if (batchSize == 0) {
+            observableFactory = ps -> parameterGroups
+                    .flatMap(parameters -> create(ps, parameters).toFlowable()) //
+                    .doOnComplete(() -> Util.commit(ps.ps)) //
+                    .doOnError(e -> Util.rollback(ps.ps));
+        } else {
+            observableFactory = ps -> {
+                int[] count = new int[1];
+                return parameterGroups.flatMap(parameters -> {
+                    count[0] += 1;
+                    Flowable<Integer> result;
+                    if (count[0] == batchSize) {
+                        count[0] = 0;
+                        result = createExecuteBatch(ps, parameters);
+                    } else {
+                        result = createAddBatch(ps, parameters).toFlowable();
+                    }
+                    return result //
+                            .doOnComplete(() -> Util.commit(ps.ps)) //
+                            .doOnError(e -> Util.rollback(ps.ps));
+                });
+            };
+        }
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(resourceFactory, observableFactory, disposer, true);
     }

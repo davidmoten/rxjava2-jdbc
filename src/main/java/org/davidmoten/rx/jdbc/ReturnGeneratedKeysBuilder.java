@@ -2,11 +2,11 @@ package org.davidmoten.rx.jdbc;
 
 import io.reactivex.Flowable;
 
-public class ReturnGeneratedKeysBuilder {
+public final class ReturnGeneratedKeysBuilder {
 
     private final UpdateBuilder update;
 
-    public ReturnGeneratedKeysBuilder(UpdateBuilder update) {
+    ReturnGeneratedKeysBuilder(UpdateBuilder update) {
         this.update = update;
     }
 

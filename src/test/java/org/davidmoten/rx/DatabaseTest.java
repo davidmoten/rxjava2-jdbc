@@ -607,6 +607,7 @@ public class DatabaseTest {
     @Test
     public void testReturnGeneratedKeys() {
         Database db = db();
+        // note is a table with auto increment
         db.update("insert into note(text) values(?)") //
                 .parameters("HI", "THERE") //
                 .returnGeneratedKeys() //
