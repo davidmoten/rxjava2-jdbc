@@ -162,6 +162,18 @@ If you don't configure things correctly these exceptions may be emitted and incl
 * `ColumnNotFoundException`
 * `ClassCastException`
 
+Auto mappings
+------------------
+The automatic mappings below of objects are used in the ```autoMap()``` method and for typed ```getAs()``` calls.
+* ```java.sql.Date```,```java.sql.Time```,```java.sql.Timestamp``` <==> ```java.util.Date```
+* ```java.sql.Date```,```java.sql.Time```,```java.sql.Timestamp```  ==> ```java.lang.Long```
+* ```java.sql.Blob``` <==> ```java.io.InputStream```, ```byte[]```
+* ```java.sql.Clob``` <==> ```java.io.Reader```, ```String```
+* ```java.math.BigInteger``` ==> ```Long```, ```Integer```, ```Decimal```, ```Float```, ```Short```, ```java.math.BigDecimal```
+* ```java.math.BigDecimal``` ==> ```Long```, ```Integer```, ```Decimal```, ```Float```, ```Short```, ```java.math.BigInteger```
+
+Note that automappings do not occur to primitives so use ```Long``` instead of ```long```.
+
 Parameters
 ----------------
 Parameters are passed to individual queries but can also be used as a streaming source to prompt the query to be run many times.
@@ -372,5 +384,121 @@ What has happened is that
 * in fact we see that the second query runs on the same Thread as the first query as a direct consequence of non-blocking design  
 
 
+Large objects support
+------------------------------
+Blob and Clobs are straightforward to handle.
+
+### Insert a Clob
+Here's how to insert a String value into a Clob (*document* column below is of type ```CLOB```):
+```java
+String document = ...
+Observable<Integer> count = db
+		.update("insert into person_clob(name,document) values(?,?)")
+		.parameter("FRED")
+		.parameter(Database.toSentinelIfNull(document)).count();
+```
+(Note the use of the ```Database.toSentinelIfNull(String)``` method to handle the null case correctly)
+
+or using a ```java.io.Reader```:
+```java
+Reader reader = ...;
+Observable<Integer> count = db
+		.update("insert into person_clob(name,document) values(?,?)")
+		.parameter("FRED")
+		.parameter(reader).count();
+```
+### Insert a Null Clob
+This requires *either* a special call (```parameterClob(String)```) to identify the parameter as a CLOB:
+```java
+Observable<Integer> count = db
+		.update("insert into person_clob(name,document) values(?,?)")
+		.parameter("FRED")
+		.parameterClob(null).count();
+```
+or use the null Sentinel object for Clobs:
+```java
+Observable<Integer> count = db
+		.update("insert into person_clob(name,document) values(?,?)")
+		.parameter("FRED")
+		.parameter(Database.NULL_CLOB).count();
+```
+or wrap the String parameter with ```Database.toSentinelIfNull(String)``` as above in the Insert a Clob section.
+
+### Read a Clob
+```java
+Observable<String> document = db.select("select document from person_clob")
+				.getAs(String.class);
+```
+or
+```java
+Observable<Reader> document = db.select("select document from person_clob")
+				.getAs(Reader.class);
+```
+### Insert a Blob
+Similarly for Blobs (*document* column below is of type ```BLOB```):
+```java
+byte[] bytes = ...
+Observable<Integer> count = db
+		.update("insert into person_blob(name,document) values(?,?)")
+		.parameter("FRED")
+		.parameter(Database.toSentinelIfNull(bytes)).count();
+```
+### Insert a Null Blob
+This requires *either* a special call (```parameterBlob(String)``` to identify the parameter as a CLOB:
+```java
+Observable<Integer> count = db
+		.update("insert into person_blob(name,document) values(?,?)")
+		.parameter("FRED")
+		.parameterBlob(null).count();
+```
+or use the null Sentinel object for Blobs:
+```java
+Observable<Integer> count = db
+		.update("insert into person_clob(name,document) values(?,?)")
+		.parameter("FRED")
+		.parameter(Database.NULL_BLOB).count();
+```
+or wrap the byte[] parameter with ```Database.toSentinelIfNull(byte[])``` as above in the Insert a Blob section.
+
+### Read a Blob
+```java
+Observable<byte[]> document = db.select("select document from person_clob")
+				.getAs(byte[].class);
+```
+or
+```java
+Observable<InputStream> document = db.select("select document from person_clob")
+				.getAs(InputStream.class);
+```
+
+Returning generated keys
+-------------------------
+If you insert into a table that say in h2 is of type `auto_increment` then you don't need to specify a value but you may want to know what value was inserted in the generated key field.
+
+Given a table like this
+```
+create table note(
+    id bigint auto_increment primary key,
+    text varchar(255)
+)
+```
+This code inserts two rows into the *note* table and returns the two generated keys:
+
+```java
+Flowable<Integer> keys = 
+    db.update("insert into note(text) values(?)")
+      .parameters("hello", "there")
+      .returnGeneratedKeys()
+      .getAs(Integer.class)
+      .counts()
+      .blockingSubscribe();
+```
+
+The `returnGeneratedKeys` method also supports returning multiple keys per row so the builder offers methods just like `select` to do explicit mapping or auto mapping.
+
+Logging
+-----------------
+Logging is handled by slf4j which bridges to the logging framework of your choice. Add
+the dependency for your logging framework as a maven dependency and you are sorted. See the test scoped log4j example in [rxjava-jdbc/pom.xml](https://github.com/davidmoten/rxjava-jdbc/blob/master/pom.xml).
 
 
