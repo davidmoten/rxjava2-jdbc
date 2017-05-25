@@ -462,7 +462,8 @@ public class DatabaseTest {
     @Test
     public void testSelectWithoutWhereClause() {
         Assert.assertEquals(3, (long) db().select("select name from person") //
-                .count().blockingGet());
+                .count() //
+                .blockingGet());
     }
 
     @Test
@@ -470,8 +471,10 @@ public class DatabaseTest {
         db() //
                 .select("select name, score, name from person order by name") //
                 .getAs(String.class, Integer.class, String.class) //
-                .firstOrError().test() //
-                .assertComplete().assertValue(Tuple3.create("FRED", 21, "FRED")); //
+                .firstOrError() //
+                .test() //
+                .assertComplete() //
+                .assertValue(Tuple3.create("FRED", 21, "FRED")); //
     }
 
     @Test
@@ -479,8 +482,10 @@ public class DatabaseTest {
         db() //
                 .select("select name, score, name, score from person order by name") //
                 .getAs(String.class, Integer.class, String.class, Integer.class) //
-                .firstOrError().test() //
-                .assertComplete().assertValue(Tuple4.create("FRED", 21, "FRED", 21)); //
+                .firstOrError() //
+                .test() //
+                .assertComplete() //
+                .assertValue(Tuple4.create("FRED", 21, "FRED", 21)); //
     }
 
     @Test
@@ -488,7 +493,8 @@ public class DatabaseTest {
         db() //
                 .select("select name, score, name, score, name from person order by name") //
                 .getAs(String.class, Integer.class, String.class, Integer.class, String.class) //
-                .firstOrError().test() //
+                .firstOrError() //
+                .test() //
                 .assertComplete().assertValue(Tuple5.create("FRED", 21, "FRED", 21, "FRED")); //
     }
 
@@ -498,7 +504,8 @@ public class DatabaseTest {
                 .select("select name, score, name, score, name, score from person order by name") //
                 .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
                         Integer.class) //
-                .firstOrError().test() //
+                .firstOrError() //
+                .test() //
                 .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
     }
 
@@ -508,7 +515,8 @@ public class DatabaseTest {
                 .select("select name, score, name, score, name, score, name from person order by name") //
                 .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
                         Integer.class, String.class) //
-                .firstOrError().test() //
+                .firstOrError() //
+                .test() //
                 .assertComplete()
                 .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
@@ -519,7 +527,8 @@ public class DatabaseTest {
                 .select("select name, score, name from person order by name") //
                 .getTupleN() //
                 .firstOrError().test() //
-                .assertComplete().assertValue(TupleN.create("FRED", 21, "FRED")); //
+                .assertComplete() //
+                .assertValue(TupleN.create("FRED", 21, "FRED")); //
     }
 
     @Test
