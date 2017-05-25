@@ -490,7 +490,6 @@ Flowable<Integer> keys =
       .parameters("hello", "there")
       .returnGeneratedKeys()
       .getAs(Integer.class)
-      .counts()
       .blockingSubscribe();
 ```
 
