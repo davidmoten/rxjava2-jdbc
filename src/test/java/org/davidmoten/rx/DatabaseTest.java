@@ -3,6 +3,8 @@ package org.davidmoten.rx;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.sql.Connection;
 import java.sql.SQLSyntaxErrorException;
 import java.util.Arrays;
@@ -623,6 +625,50 @@ public class DatabaseTest {
                 .test() //
                 .assertValues(3, 4) //
                 .assertComplete();
+    }
+
+    @Test
+    public void testInsertClobAndReadClobAsString() {
+        Database db = db();
+        db.update("insert into person_clob(name,document) values(?,?)") //
+                .parameters("FRED", "some text here") //
+                .counts() //
+                .test() //
+                .assertValue(1) //
+                .assertComplete();
+        db.select("select document from person_clob where name='FRED'") //
+                .getAs(String.class) //
+                .test() //
+                .assertValue("some text here") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testInsertClobAndReadClobUsingReader() {
+        Database db = db();
+        db.update("insert into person_clob(name,document) values(?,?)") //
+                .parameters("FRED", "some text here") //
+                .counts() //
+                .test() //
+                .assertValue(1) //
+                .assertComplete();
+        db.select("select document from person_clob where name='FRED'") //
+                .getAs(Reader.class) //
+                .map(r -> read(r)).test() //
+                .assertValue("some text here") //
+                .assertComplete();
+    }
+
+    private static String read(Reader reader) throws IOException {
+        StringBuffer s = new StringBuffer();
+        char[] ch = new char[128];
+        int n = 0;
+        while ((n = reader.read(ch)) != -1) {
+            s.append(ch, 0, n);
+        }
+        reader.close();
+        return s.toString();
+
     }
 
     private void testHealthCheck(Predicate<Connection> healthy) throws InterruptedException {
