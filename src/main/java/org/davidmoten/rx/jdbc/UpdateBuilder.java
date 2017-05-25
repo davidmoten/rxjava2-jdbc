@@ -8,80 +8,51 @@ import java.util.List;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
-import io.reactivex.functions.Function;
 
 public final class UpdateBuilder {
-    
+
     private static final int DEFAULT_BATCH_SIZE = 1;
 
     private final String sql;
     private final Flowable<Connection> connections;
-    private final SqlInfo sqlInfo;
-
-    final List<Flowable<List<Object>>> parameterGroups = new ArrayList<>();
-    // for building up a number of parameters
-    final List<Object> parameterBuffer = new ArrayList<>();
+    private final ParametersBuilder parameters;
     private List<Flowable<?>> dependsOn;
     private int batchSize = DEFAULT_BATCH_SIZE;
-
 
     public UpdateBuilder(String sql, Flowable<Connection> connections) {
         this.sql = sql;
         this.connections = connections;
-        this.sqlInfo = SqlInfo.parse(sql);
+        this.parameters = new ParametersBuilder(sql);
     }
 
-    /**
-     * Appends the given parameters to the parameter list for the query. If
-     * there are more parameters than required for one execution of the query
-     * then more than one execution of the query will occur.
-     * 
-     * @param parameters
-     * @return this
-     */
-    public <T> UpdateBuilder parameters(Flowable<T> parameters) {
-        //TODO
-        throw new UnsupportedOperationException();
+    public UpdateBuilder parameterStream(Flowable<?> values) {
+        parameters.parameterStream(values);
+        return this;
     }
 
-    /**
-     * Appends the given parameter values to the parameter list for the query.
-     * If there are more parameters than required for one execution of the query
-     * then more than one execution of the query will occur.
-     * 
-     * @param objects
-     * @return this
-     */
-    public UpdateBuilder parameters(Object... objects) {
-
-return this;
+    public UpdateBuilder parameterListStream(Flowable<List<?>> valueLists) {
+        parameters.parameterListStream(valueLists);
+        return this;
     }
 
-    /**
-     * Appends a parameter to the parameter list for the query. If there are
-     * more parameters than required for one execution of the query then more
-     * than one execution of the query will occur.
-     * 
-     * @param value
-     * @return this
-     */
-    public UpdateBuilder parameter(Object value) {
-        return parameters(Flowable.just(value));
+    public UpdateBuilder parameterList(List<Object> values) {
+        parameters.parameterList(values);
+        return this;
     }
 
-    /**
-     * Sets a named parameter. If name is null throws a
-     * {@link NullPointerException}. If value is instance of Observable then
-     * throws an {@link IllegalArgumentException}.
-     * 
-     * @param name
-     *            the parameter name. Cannot be null.
-     * @param value
-     *            the parameter value
-     */
+    public UpdateBuilder parameterList(Object... values) {
+        parameters.parameterList(values);
+        return this;
+    }
+
     public UpdateBuilder parameter(String name, Object value) {
-        //TODO
-        throw new UnsupportedOperationException();
+        parameters.parameter(name, value);
+        return this;
+    }
+
+    public UpdateBuilder parameters(Object... values) {
+        parameters.parameters(values);
+        return this;
     }
 
     /**
@@ -95,7 +66,7 @@ return this;
      * @return this
      */
     public UpdateBuilder parameterClob(String value) {
-        parameter(Database.toSentinelIfNull(value));
+        parameters(Database.toSentinelIfNull(value));
         return this;
     }
 
@@ -109,7 +80,7 @@ return this;
      * @return this
      */
     public UpdateBuilder parameterBlob(byte[] bytes) {
-        parameter(Database.toSentinelIfNull(bytes));
+        parameters(Database.toSentinelIfNull(bytes));
         return this;
     }
 
@@ -130,7 +101,7 @@ return this;
         this.dependsOn.add(dependency);
         return this;
     }
-    
+
     public UpdateBuilder batchSize(int batchSize) {
         this.batchSize = batchSize;
         return this;
@@ -138,10 +109,9 @@ return this;
 
     /**
      * Returns a builder used to specify how to process the generated keys
-     * {@link ResultSet}. Not all jdbc drivers support this functionality
-     * and some have limitations in their support (h2 for instance only
-     * returns the last generated key when multiple inserts happen in the
-     * one statement).
+     * {@link ResultSet}. Not all jdbc drivers support this functionality and
+     * some have limitations in their support (h2 for instance only returns the
+     * last generated key when multiple inserts happen in the one statement).
      * 
      * @return a builder used to specify how to process the generated keys
      *         ResultSet
@@ -151,18 +121,9 @@ return this;
                 "Cannot return generated keys if batchSize > 1");
         return new ReturnGeneratedKeysBuilder(this);
     }
-    
-    private static final Function<Object, Parameter> TO_PARAMETER = new Function<Object, Parameter>() {
 
-        @Override
-        public Parameter apply(Object parameter) {
-            Preconditions.checkArgument(!(parameter instanceof Parameter));
-            return new Parameter(parameter);
-        }
-    };
-    
-    public Flowable<Integer> count() {
-        return null;
+    public Flowable<Integer> counts() {
+        return Update.create(connections, parameters.parameterGroupsToFlowable(), sql);
     }
 
 }

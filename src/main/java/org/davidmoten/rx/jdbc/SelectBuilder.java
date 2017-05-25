@@ -21,7 +21,7 @@ import io.reactivex.Single;
 public final class SelectBuilder {
 
     //TODO make final
-    String sql;
+    final String sql;
     final Flowable<Connection> connections;
     
     private final ParametersBuilder parameters;
@@ -141,7 +141,8 @@ public final class SelectBuilder {
      */
     public <T> Flowable<T> autoMap(Class<T> cls) {
         if (sql == null) {
-            sql = Util.getSqlFromQueryAnnotation(cls);
+            //TODO get sql from query annotation
+            // sql = Util.getSqlFromQueryAnnotation(cls);
         }
         return get(Util.autoMap(cls));
     }
