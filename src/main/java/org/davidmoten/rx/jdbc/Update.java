@@ -97,7 +97,7 @@ public enum Update {
 
     public static <T> Flowable<T> createReturnGeneratedKeys(Flowable<Connection> connections,
             Flowable<List<Object>> parameterGroups, String sql,
-            Function<? super ResultSet, T> mapper) {
+            Function<? super ResultSet, ? extends T> mapper) {
         return connections //
                 .firstOrError() //
                 .toFlowable() //

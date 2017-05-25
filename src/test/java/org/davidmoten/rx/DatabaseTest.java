@@ -23,6 +23,7 @@ import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.davidmoten.rx.jdbc.pool.PoolClosedException;
 import org.davidmoten.rx.jdbc.pool.Pools;
+import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
 import org.davidmoten.rx.jdbc.tuple.Tuple4;
 import org.davidmoten.rx.jdbc.tuple.Tuple5;
@@ -561,20 +562,65 @@ public class DatabaseTest {
     @Test
     public void testUpdateWithParameter() {
         db().update("update person set score=20 where name=?") //
-                .parameters("FRED")
-                .counts() //
+                .parameters("FRED").counts() //
                 .test() //
                 .assertValue(1) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testUpdateWithParameterTwoRuns() {
         db().update("update person set score=20 where name=?") //
-                .parameters("FRED", "JOSEPH")
+                .parameters("FRED", "JOSEPH").counts() //
+                .test() //
+                .assertValues(1, 1) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateAllWithParameterFourRuns() {
+        db().update("update person set score=?") //
+                .parameters(1, 2, 3, 4) //
+                .counts() //
+                .test() //
+                .assertValues(3, 3, 3, 3) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testInsert() {
+        Database db = db();
+        db.update("insert into person(name, score) values(?,?)") //
+                .parameters("DAVE", 12, "ANNE", 18) //
                 .counts() //
                 .test() //
                 .assertValues(1, 1) //
+                .assertComplete();
+        List<Tuple2<String, Integer>> list = db.select("select name, score from person") //
+                .getAs(String.class, Integer.class) //
+                .toList() //
+                .blockingGet();
+        assertTrue(list.contains(Tuple2.create("DAVE", 12)));
+        assertTrue(list.contains(Tuple2.create("ANNE", 18)));
+    }
+
+    @Test
+    public void testReturnGeneratedKeys() {
+        Database db = db();
+        db.update("insert into note(text) values(?)") //
+                .parameters("HI", "THERE") //
+                .returnGeneratedKeys() //
+                .getAs(Integer.class)//
+                .test() //
+                .assertValues(1, 2) //
+                .assertComplete();
+
+        db.update("insert into note(text) values(?)") //
+                .parameters("ME", "TOO") //
+                .returnGeneratedKeys() //
+                .getAs(Integer.class)//
+                .test() //
+                .assertValues(3, 4) //
                 .assertComplete();
     }
 
