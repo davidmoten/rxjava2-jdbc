@@ -233,7 +233,6 @@ public class DatabaseTest {
 
     @Test
     public void testSelectTransactedChained() throws Exception {
-        System.out.println("testSelectTransactedChained");
         Database db = db();
         db //
                 .select("select score from person where name=?") //
@@ -242,8 +241,7 @@ public class DatabaseTest {
                 .transactedValuesOnly() //
                 .getAs(Integer.class) //
                 .doOnNext(System.out::println)//
-                .flatMap(tx -> db //
-                        .tx(tx) //
+                .flatMap(tx -> tx //
                         .select("select name from person where score = ?") //
                         .parameters(tx.value()) //
                         .valuesOnly() //

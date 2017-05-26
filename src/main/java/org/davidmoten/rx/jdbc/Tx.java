@@ -15,6 +15,8 @@ public interface Tx<T> {
     T value();
 
     Throwable throwable();
+    
+    TransactedSelectBuilder select(String sql);
 
     public static <T> Predicate<Tx<T>> valuesOnly() {
         return tx -> tx.isValue();

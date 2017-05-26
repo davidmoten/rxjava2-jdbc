@@ -23,17 +23,19 @@ public final class SelectBuilder {
     //TODO make final
     final String sql;
     final Flowable<Connection> connections;
+    private final Database db;
     
     private final ParametersBuilder parameters;
 
     int fetchSize = 0; // default
     
-    public SelectBuilder(String sql, Flowable<Connection> connections) {
+    public SelectBuilder(String sql, Flowable<Connection> connections, Database db) {
         Preconditions.checkNotNull(sql);
         Preconditions.checkNotNull(connections);
         this.sql = sql;
         this.connections = connections;
         this.parameters = new ParametersBuilder(sql);
+        this.db = db;
     }
 
     public SelectBuilder parameterStream(Flowable<?> values) {
@@ -86,7 +88,7 @@ public final class SelectBuilder {
     }
 
     public TransactedSelectBuilder transacted() {
-        return new TransactedSelectBuilder(this);
+        return new TransactedSelectBuilder(this, db);
     }
 
     /**

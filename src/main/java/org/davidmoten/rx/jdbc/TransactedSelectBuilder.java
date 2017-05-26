@@ -18,8 +18,11 @@ public class TransactedSelectBuilder {
 
     private boolean valuesOnly = false;
 
-    public TransactedSelectBuilder(SelectBuilder selectBuilder) {
+    private final Database db;
+
+    public TransactedSelectBuilder(SelectBuilder selectBuilder, Database db) {
         this.selectBuilder = selectBuilder;
+        this.db = db;
     }
 
     public TransactedSelectBuilder parameters(Flowable<List<Object>> parameters) {
@@ -58,14 +61,16 @@ public class TransactedSelectBuilder {
     }
 
     public TransactedSelectBuilderValuesOnly valuesOnly() {
-        return new TransactedSelectBuilderValuesOnly(this);
+        return new TransactedSelectBuilderValuesOnly(this, db);
     }
 
     public static final class TransactedSelectBuilderValuesOnly {
         private final TransactedSelectBuilder b;
+        private final Database db;
 
-        TransactedSelectBuilderValuesOnly(TransactedSelectBuilder b) {
+        TransactedSelectBuilderValuesOnly(TransactedSelectBuilder b, Database db) {
             this.b = b;
+            this.db = db;
         }
 
         public <T> Flowable<T> getAs(Class<T> cls) {
@@ -88,7 +93,7 @@ public class TransactedSelectBuilder {
                     b.selectBuilder.fetchSize, //
                     rs -> Util.mapObject(rs, cls, 1)) //
                     .materialize() //
-                    .flatMap(n -> toTx(n, connection.get())).doOnNext(tx -> {
+                    .flatMap(n -> toTx(n, connection.get(), db)).doOnNext(tx -> {
                         if (tx.isComplete()) {
                             ((TxImpl<T>) tx).connection().commit();
                         }
@@ -118,7 +123,7 @@ public class TransactedSelectBuilder {
                 selectBuilder.fetchSize, //
                 rs -> Util.mapObject(rs, cls, 1)) //
                 .materialize() //
-                .flatMap(n -> toTx(n, connection.get())).doOnNext(tx -> {
+                .flatMap(n -> toTx(n, connection.get(), db)).doOnNext(tx -> {
                     if (tx.isComplete()) {
                         ((TxImpl<T>) tx).connection().commit();
                     }
@@ -130,11 +135,11 @@ public class TransactedSelectBuilder {
         }
     }
 
-    private static <T> Flowable<Tx<T>> toTx(Notification<T> n, Connection con) {
+    private static <T> Flowable<Tx<T>> toTx(Notification<T> n, Connection con, Database db) {
         if (n.isOnComplete())
-            return Flowable.just(new TxImpl<T>(con, null, null, true));
+            return Flowable.just(new TxImpl<T>(con, null, null, true, db));
         else if (n.isOnNext())
-            return Flowable.just(new TxImpl<T>(con, n.getValue(), null, false));
+            return Flowable.just(new TxImpl<T>(con, n.getValue(), null, false, db));
         else
             return Flowable.error(n.getError());
     }

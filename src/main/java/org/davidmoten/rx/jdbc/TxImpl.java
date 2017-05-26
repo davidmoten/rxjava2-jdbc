@@ -8,8 +8,10 @@ final class TxImpl<T> implements Tx<T> {
     private final T value;
     private final Throwable e;
     private final boolean completed;
+    private final Database db;
 
-    TxImpl(Connection con, T value, Throwable e, boolean completed) {
+    TxImpl(Connection con, T value, Throwable e, boolean completed, Database db) {
+        this.db = db;
         if (con instanceof TransactedConnection) {
             this.con = (TransactedConnection) con;
         } else {
@@ -50,6 +52,11 @@ final class TxImpl<T> implements Tx<T> {
     }
 
     @Override
+    public TransactedSelectBuilder select(String sql) {
+        return db.tx(this).select(sql);
+    }
+
+    @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("TxImpl [con=");
@@ -67,5 +74,6 @@ final class TxImpl<T> implements Tx<T> {
         builder.append("]");
         return builder.toString();
     }
+
 
 }
