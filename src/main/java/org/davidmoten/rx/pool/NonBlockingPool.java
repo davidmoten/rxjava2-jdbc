@@ -109,7 +109,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
 
     @Override
     public void close() {
-        List<Member<T>> ms = list.get();
+        List<Member<T>> ms = list.getAndSet(null);
         if (ms != null) {
             for (Member<T> m : ms) {
                 m.shutdown();
