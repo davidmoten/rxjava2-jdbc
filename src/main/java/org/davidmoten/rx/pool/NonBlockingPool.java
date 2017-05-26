@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.davidmoten.rx.jdbc.pool.PoolClosedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,11 +37,13 @@ public final class NonBlockingPool<T> implements Pool<T> {
     final MemberFactory<T, NonBlockingPool<T>> memberFactory;
     final Scheduler scheduler;
 
-    private final Flowable<Member<T>> members;
-    private final AtomicReference<List<Member<T>>> list = new AtomicReference<>();
+    private final AtomicReference<Flowable<Member<T>>> members = new AtomicReference<>();
+    private final AtomicReference<List<Member<T>>> list = new AtomicReference<>(
+            Collections.emptyList());
 
     private NonBlockingPool(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer,
-            int maxSize, long returnToPoolDelayAfterHealthCheckFailureMs, long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs,
+            int maxSize, long returnToPoolDelayAfterHealthCheckFailureMs,
+            long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs,
             MemberFactory<T, NonBlockingPool<T>> memberFactory, Scheduler scheduler) {
         Preconditions.checkNotNull(factory);
         Preconditions.checkNotNull(healthy);
@@ -59,34 +62,49 @@ public final class NonBlockingPool<T> implements Pool<T> {
         this.memberFactory = memberFactory;
         this.scheduler = scheduler;
         this.subject = PublishSubject.create();
+    }
 
-        Flowable<Member<T>> baseMembers = Flowable.defer(() -> {
-            if (list.compareAndSet(null, Collections.emptyList())) {
-                List<Member<T>> m = IntStream.range(1, maxSize + 1)
-                        .mapToObj(n -> memberFactory.create(NonBlockingPool.this)) //
-                        .collect(Collectors.toList());
-                list.set(m);
-                log.debug("created pool of size={}", maxSize);
-            }
-            return Flowable.fromIterable(list.get()) //
-                    .doOnRequest(n -> log.debug("requested={}", n));
-        });
+    private Flowable<Member<T>> createMembers() {
+        List<Member<T>> ms = IntStream.range(1, maxSize + 1)
+                .mapToObj(n -> memberFactory.create(NonBlockingPool.this)) //
+                .collect(Collectors.toList());
+
+        Flowable<Member<T>> baseMembers = Flowable.fromIterable(ms) //
+                .doOnRequest(n -> log.debug("requested={}", n));
 
         Flowable<Member<T>> returnedMembers = subject //
                 .toSerialized() //
                 .toFlowable(BackpressureStrategy.BUFFER);
 
-        this.members = returnedMembers //
-                .doOnNext(m -> log.debug("returned member reentering")) //
-                .mergeWith(baseMembers) //
-                .doOnNext(x -> log.debug("member={}", x)) //
-                .<Member<T>> flatMap(member -> member.checkout().toFlowable(), false, 1) //
-                .doOnNext(x -> log.debug("checked out member={}", x));
+        // use CAS loop to handle a race with close
+        while (true) {
+            List<Member<T>> l = list.get();
+            if (l == null) {
+                return Flowable.error(new PoolClosedException());
+            } else if (list.compareAndSet(Collections.emptyList(), ms)) {
+                return returnedMembers //
+                        .doOnNext(m -> log.debug("returned member reentering")) //
+                        .mergeWith(baseMembers) //
+                        .doOnNext(x -> log.debug("member={}", x)) //
+                        .<Member<T>> flatMap(member -> member.checkout().toFlowable(), false, 1) //
+                        .doOnNext(x -> log.debug("checked out member={}", x));
+            }
+        }
     }
 
     @Override
     public Flowable<Member<T>> members() {
-        return members;
+        while (true) {
+            Flowable<Member<T>> m = members.get();
+            if (m != null)
+                return m;
+            else {
+                m = createMembers();
+                if (members.compareAndSet(null, m)) {
+                    return m;
+                }
+            }
+        }
     }
 
     @Override
@@ -111,8 +129,9 @@ public final class NonBlockingPool<T> implements Pool<T> {
         private Consumer<T> disposer = new Consumer<T>() {
             @Override
             public void accept(T t) throws Exception {
-                //do nothing
-            }};
+                // do nothing
+            }
+        };
         private int maxSize = 10;
         private long returnToPoolDelayAfterHealthCheckFailureMs = 30000;
         private MemberFactory<T, NonBlockingPool<T>> memberFactory;
@@ -170,7 +189,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
             this.returnToPoolDelayAfterHealthCheckFailureMs = retryDelayMs;
             return this;
         }
-        
+
         public Builder<T> returnToPoolDelayAfterHealthCheckFailure(long value, TimeUnit unit) {
             return returnToPoolDelayAfterHealthCheckFailureMs(unit.toMillis(value));
         }
@@ -188,8 +207,9 @@ public final class NonBlockingPool<T> implements Pool<T> {
         }
 
         public NonBlockingPool<T> build() {
-            return new NonBlockingPool<T>(factory, healthy, disposer, maxSize, returnToPoolDelayAfterHealthCheckFailureMs,
-                    idleTimeBeforeHealthCheckMs, maxIdleTimeMs, memberFactory, scheduler);
+            return new NonBlockingPool<T>(factory, healthy, disposer, maxSize,
+                    returnToPoolDelayAfterHealthCheckFailureMs, idleTimeBeforeHealthCheckMs,
+                    maxIdleTimeMs, memberFactory, scheduler);
         }
     }
 
