@@ -29,6 +29,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
@@ -947,5 +948,19 @@ public enum Util {
                 //
             }
         };
+    }
+    
+    static Connection toTransactedConnection(AtomicReference<Connection> connection, Connection c)
+            throws SQLException {
+        if (c instanceof TransactedConnection) {
+            connection.set(c);
+            return c;
+        } else {
+            c.setAutoCommit(false);
+            log.debug("creating new TransactedConnection");
+            TransactedConnection c2 = new TransactedConnection(c);
+            connection.set(c2);
+            return c2;
+        }
     }
 }

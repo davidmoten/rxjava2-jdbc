@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import io.reactivex.Flowable;
 import io.reactivex.Notification;
 
-public class TransactedSelectBuilder {
+public final class TransactedSelectBuilder {
 
     private static final Logger log = LoggerFactory.getLogger(TransactedSelectBuilder.class);
 
@@ -78,7 +78,7 @@ public class TransactedSelectBuilder {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
             Flowable<Tx<T>> o = Select
                     .create(b.selectBuilder.connections.firstOrError() //
-                            .map(c -> toTransactedConnection(connection, c)), //
+                            .map(c -> Util.toTransactedConnection(connection, c)), //
                             b.selectBuilder.parameterGroupsToFlowable(), //
                             b.selectBuilder.sql, //
                             b.selectBuilder.fetchSize, //
@@ -97,7 +97,7 @@ public class TransactedSelectBuilder {
         AtomicReference<Connection> connection = new AtomicReference<Connection>();
         Flowable<Tx<T>> o = Select
                 .create(selectBuilder.connections.firstOrError() //
-                        .map(c -> toTransactedConnection(connection, c)), //
+                        .map(c -> Util.toTransactedConnection(connection, c)), //
                         selectBuilder.parameterGroupsToFlowable(), //
                         selectBuilder.sql, //
                         selectBuilder.fetchSize, //
@@ -124,17 +124,4 @@ public class TransactedSelectBuilder {
             return Flowable.error(n.getError());
     }
 
-    private static Connection toTransactedConnection(AtomicReference<Connection> connection, Connection c)
-            throws SQLException {
-        if (c instanceof TransactedConnection) {
-            connection.set(c);
-            return c;
-        } else {
-            c.setAutoCommit(false);
-            log.debug("creating new TransactedConnection");
-            TransactedConnection c2 = new TransactedConnection(c);
-            connection.set(c2);
-            return c2;
-        }
-    }
 }
