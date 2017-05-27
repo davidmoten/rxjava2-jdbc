@@ -76,43 +76,37 @@ public final class TransactedSelectBuilder {
 
         public <T> Flowable<T> getAs(Class<T> cls) {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
-            Flowable<Tx<T>> o = Select
-                    .create(b.selectBuilder.connections.firstOrError() //
-                            .map(c -> Util.toTransactedConnection(connection, c)), //
-                            b.selectBuilder.parameterGroupsToFlowable(), //
-                            b.selectBuilder.sql, //
-                            b.selectBuilder.fetchSize, //
-                            rs -> Util.mapObject(rs, cls, 1)) //
-                    .materialize() //
-                    .flatMap(n -> toTx(n, connection.get(), db)).doOnNext(tx -> {
-                        if (tx.isComplete()) {
-                            ((TxImpl<T>) tx).connection().commit();
-                        }
-                    });
-            return o.flatMap(Tx.flattenToValuesOnly());
+            return createFlowable(b.selectBuilder, cls, connection, db) //
+                    .flatMap(Tx.flattenToValuesOnly());
         }
     }
 
     public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
         AtomicReference<Connection> connection = new AtomicReference<Connection>();
-        Flowable<Tx<T>> o = Select
-                .create(selectBuilder.connections.firstOrError() //
-                        .map(c -> Util.toTransactedConnection(connection, c)), //
-                        selectBuilder.parameterGroupsToFlowable(), //
-                        selectBuilder.sql, //
-                        selectBuilder.fetchSize, //
-                        rs -> Util.mapObject(rs, cls, 1)) //
-                .materialize() //
-                .flatMap(n -> toTx(n, connection.get(), db)).doOnNext(tx -> {
-                    if (tx.isComplete()) {
-                        ((TxImpl<T>) tx).connection().commit();
-                    }
-                });
+        Flowable<Tx<T>> o = createFlowable(selectBuilder, cls, connection, db);
         if (valuesOnly) {
             return o.filter(tx -> tx.isValue());
         } else {
             return o;
         }
+    }
+
+    private static <T> Flowable<Tx<T>> createFlowable(SelectBuilder sb, Class<T> cls,
+            AtomicReference<Connection> connection, Database db) {
+        return Select
+                .create(sb.connections.firstOrError() //
+                        .map(c -> Util.toTransactedConnection(connection, c)), //
+                        sb.parameterGroupsToFlowable(), //
+                        sb.sql, //
+                        sb.fetchSize, //
+                        rs -> Util.mapObject(rs, cls, 1)) //
+                .materialize() //
+                .flatMap(n -> toTx(n, connection.get(), db)) //
+                .doOnNext(tx -> {
+                    if (tx.isComplete()) {
+                        ((TxImpl<T>) tx).connection().commit();
+                    }
+                });
     }
 
     private static <T> Flowable<Tx<T>> toTx(Notification<T> n, Connection con, Database db) {
