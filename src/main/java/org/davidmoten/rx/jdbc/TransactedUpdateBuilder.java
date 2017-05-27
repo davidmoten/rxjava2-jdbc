@@ -1,47 +1,50 @@
 package org.davidmoten.rx.jdbc;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.reactivex.Flowable;
 
 public final class TransactedUpdateBuilder {
 
-    private final UpdateBuilder b;
+    private final UpdateBuilder updateBuilder;
     private final Database db;
+    private boolean valuesOnly;
 
     public TransactedUpdateBuilder(UpdateBuilder b, Database db) {
-        this.b = b;
+        this.updateBuilder = b;
         this.db = db;
     }
 
     public TransactedUpdateBuilder parameterStream(Flowable<?> values) {
-        b.parameterStream(values);
+        updateBuilder.parameterStream(values);
         return this;
     }
 
     public TransactedUpdateBuilder parameterListStream(Flowable<List<?>> valueLists) {
-        b.parameterListStream(valueLists);
+        updateBuilder.parameterListStream(valueLists);
         return this;
     }
 
     public TransactedUpdateBuilder parameterList(List<Object> values) {
-        b.parameterList(values);
+        updateBuilder.parameterList(values);
         return this;
     }
 
     public TransactedUpdateBuilder parameterList(Object... values) {
-        b.parameterList(values);
+        updateBuilder.parameterList(values);
         return this;
     }
 
     public TransactedUpdateBuilder parameter(String name, Object value) {
-        b.parameter(name, value);
+        updateBuilder.parameter(name, value);
         return this;
     }
 
     public TransactedUpdateBuilder parameters(Object... values) {
-        b.parameters(values);
+        updateBuilder.parameters(values);
         return this;
     }
 
@@ -56,7 +59,7 @@ public final class TransactedUpdateBuilder {
      * @return this
      */
     public TransactedUpdateBuilder parameterClob(String value) {
-        b.parameterClob(value);
+        updateBuilder.parameterClob(value);
         return this;
     }
 
@@ -70,7 +73,7 @@ public final class TransactedUpdateBuilder {
      * @return this
      */
     public TransactedUpdateBuilder parameterBlob(byte[] bytes) {
-        b.parameterBlob(bytes);
+        updateBuilder.parameterBlob(bytes);
         return this;
     }
 
@@ -84,12 +87,12 @@ public final class TransactedUpdateBuilder {
      * @return this this
      */
     public TransactedUpdateBuilder dependsOn(Flowable<?> dependency) {
-        b.dependsOn(dependency);
+        updateBuilder.dependsOn(dependency);
         return this;
     }
 
     public TransactedUpdateBuilder batchSize(int batchSize) {
-        b.batchSize(batchSize);
+        updateBuilder.batchSize(batchSize);
         return this;
     }
 
@@ -103,10 +106,57 @@ public final class TransactedUpdateBuilder {
      *         ResultSet
      */
     public ReturnGeneratedKeysBuilder returnGeneratedKeys() {
-        return b.returnGeneratedKeys();
+        return updateBuilder.returnGeneratedKeys();
     }
 
-    public Flowable<Integer> counts() {
-        return b.counts();
+    public TransactedUpdateBuilder transactedValuesOnly() {
+        this.valuesOnly = true;
+        return this;
+    }
+
+    public TransactedUpdateBuilderValuesOnly valuesOnly() {
+        return new TransactedUpdateBuilderValuesOnly(this, db);
+    }
+
+    public static final class TransactedUpdateBuilderValuesOnly {
+        private final TransactedUpdateBuilder b;
+        private final Database db;
+
+        TransactedUpdateBuilderValuesOnly(TransactedUpdateBuilder b, Database db) {
+            this.b = b;
+            this.db = db;
+        }
+
+        public Flowable<Integer> counts() {
+            return createFlowable(b.updateBuilder, db) //
+                    .flatMap(Tx.flattenToValuesOnly());
+        }
+    }
+
+    public Flowable<Tx<Integer>> counts() {
+        Flowable<Tx<Integer>> o = createFlowable(updateBuilder, db);
+        if (valuesOnly) {
+            return o.filter(tx -> tx.isValue());
+        } else {
+            return o;
+        }
+    }
+
+    private static Flowable<Tx<Integer>> createFlowable(UpdateBuilder ub, Database db) {
+        return Flowable.defer(() -> {
+            AtomicReference<Connection> connection = new AtomicReference<Connection>();
+            return Update
+                    .create(ub.connections //
+                            .firstOrError() //
+                            .map(c -> Util.toTransactedConnection(connection, c)), //
+                            ub.parameterGroupsToFlowable(), ub.sql, ub.batchSize)
+                    .materialize() //
+                    .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
+                    .doOnNext(tx -> {
+                        if (tx.isComplete()) {
+                            ((TxImpl<Integer>) tx).connection().commit();
+                        }
+                    });
+        });
     }
 }

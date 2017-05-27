@@ -1,4 +1,4 @@
-package org.davidmoten.rx;
+package org.davidmoten.rx.jdbc;
 
 import org.davidmoten.rx.jdbc.Select;
 import org.junit.Test;

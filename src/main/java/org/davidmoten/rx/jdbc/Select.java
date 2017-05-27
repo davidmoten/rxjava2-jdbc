@@ -16,7 +16,7 @@ import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
-public final class Select {
+final class Select {
 
     private Select() {
         // prevent instantiation
