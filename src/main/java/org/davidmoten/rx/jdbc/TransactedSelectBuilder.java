@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -75,23 +76,13 @@ public class TransactedSelectBuilder {
 
         public <T> Flowable<T> getAs(Class<T> cls) {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
-            Flowable<Tx<T>> o = Select.create(b.selectBuilder.connections.firstOrError() //
-                    .map(c -> {
-                        if (c instanceof TransactedConnection) {
-                            connection.set(c);
-                            return c;
-                        } else {
-                            c.setAutoCommit(false);
-                            log.debug("creating new TransactedConnection");
-                            TransactedConnection c2 = new TransactedConnection(c);
-                            connection.set(c2);
-                            return c2;
-                        }
-                    }), //
-                    b.selectBuilder.parameterGroupsToFlowable(), //
-                    b.selectBuilder.sql, //
-                    b.selectBuilder.fetchSize, //
-                    rs -> Util.mapObject(rs, cls, 1)) //
+            Flowable<Tx<T>> o = Select
+                    .create(b.selectBuilder.connections.firstOrError() //
+                            .map(c -> toTransactedConnection(connection, c)), //
+                            b.selectBuilder.parameterGroupsToFlowable(), //
+                            b.selectBuilder.sql, //
+                            b.selectBuilder.fetchSize, //
+                            rs -> Util.mapObject(rs, cls, 1)) //
                     .materialize() //
                     .flatMap(n -> toTx(n, connection.get(), db)).doOnNext(tx -> {
                         if (tx.isComplete()) {
@@ -100,28 +91,17 @@ public class TransactedSelectBuilder {
                     });
             return o.flatMap(Tx.flattenToValuesOnly());
         }
-
     }
 
     public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
         AtomicReference<Connection> connection = new AtomicReference<Connection>();
-        Flowable<Tx<T>> o = Select.create(selectBuilder.connections.firstOrError() //
-                .map(c -> {
-                    if (c instanceof TransactedConnection) {
-                        connection.set(c);
-                        return c;
-                    } else {
-                        c.setAutoCommit(false);
-                        log.debug("creating new TransactedConnection");
-                        TransactedConnection c2 = new TransactedConnection(c);
-                        connection.set(c2);
-                        return c2;
-                    }
-                }), //
-                selectBuilder.parameterGroupsToFlowable(), //
-                selectBuilder.sql, //
-                selectBuilder.fetchSize, //
-                rs -> Util.mapObject(rs, cls, 1)) //
+        Flowable<Tx<T>> o = Select
+                .create(selectBuilder.connections.firstOrError() //
+                        .map(c -> toTransactedConnection(connection, c)), //
+                        selectBuilder.parameterGroupsToFlowable(), //
+                        selectBuilder.sql, //
+                        selectBuilder.fetchSize, //
+                        rs -> Util.mapObject(rs, cls, 1)) //
                 .materialize() //
                 .flatMap(n -> toTx(n, connection.get(), db)).doOnNext(tx -> {
                     if (tx.isComplete()) {
@@ -144,4 +124,17 @@ public class TransactedSelectBuilder {
             return Flowable.error(n.getError());
     }
 
+    private static Connection toTransactedConnection(AtomicReference<Connection> connection, Connection c)
+            throws SQLException {
+        if (c instanceof TransactedConnection) {
+            connection.set(c);
+            return c;
+        } else {
+            c.setAutoCommit(false);
+            log.debug("creating new TransactedConnection");
+            TransactedConnection c2 = new TransactedConnection(c);
+            connection.set(c2);
+            return c2;
+        }
+    }
 }

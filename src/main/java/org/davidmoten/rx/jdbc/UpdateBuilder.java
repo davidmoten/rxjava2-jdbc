@@ -134,8 +134,7 @@ public final class UpdateBuilder {
     }
 
     public TransactedUpdateBuilder transacted() {
-        // TODO Auto-generated method stub
-        return null;
+        return new TransactedUpdateBuilder(this, db);
     }
 
 }
