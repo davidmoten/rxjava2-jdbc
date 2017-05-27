@@ -15,13 +15,16 @@ public final class UpdateBuilder {
 
     final String sql;
     final Flowable<Connection> connections;
+    private final Database db;
     private final ParametersBuilder parameters;
     private List<Flowable<?>> dependsOn;
     int batchSize = DEFAULT_BATCH_SIZE;
 
-    public UpdateBuilder(String sql, Flowable<Connection> connections) {
+
+    public UpdateBuilder(String sql, Flowable<Connection> connections, Database db) {
         this.sql = sql;
         this.connections = connections;
+        this.db = db;
         this.parameters = new ParametersBuilder(sql);
     }
     
@@ -128,6 +131,11 @@ public final class UpdateBuilder {
     
     Flowable<List<Object>> parameterGroupsToFlowable() {
         return parameters.parameterGroupsToFlowable();
+    }
+
+    public TransactedUpdateBuilder transacted() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

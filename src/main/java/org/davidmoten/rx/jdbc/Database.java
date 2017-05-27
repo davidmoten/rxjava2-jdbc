@@ -131,7 +131,7 @@ public class Database implements AutoCloseable {
     }
     
     public UpdateBuilder update(String sql) {
-        return new UpdateBuilder(sql, connections());
+        return new UpdateBuilder(sql, connections(), this);
     }
 
     public TransactedBuilder tx(Tx<?> tx) {

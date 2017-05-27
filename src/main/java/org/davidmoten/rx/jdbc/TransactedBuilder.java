@@ -8,7 +8,6 @@ public class TransactedBuilder {
 
     private final Flowable<Connection> connections;
     private final Database db;
-    private SelectBuilder selectBuilder;
 
     public TransactedBuilder(TransactedConnection con, Database db) {
         this.db = db;
@@ -16,8 +15,11 @@ public class TransactedBuilder {
     }
 
     public TransactedSelectBuilder select(String sql) {
-        this.selectBuilder = new SelectBuilder(sql, connections, db);
-        return selectBuilder.transacted();
+        return new SelectBuilder(sql, connections, db).transacted();
+    }
+    
+    public TransactedUpdateBuilder update(String sql) {
+        return  new UpdateBuilder(sql, connections, db).transacted();
     }
 
 }
