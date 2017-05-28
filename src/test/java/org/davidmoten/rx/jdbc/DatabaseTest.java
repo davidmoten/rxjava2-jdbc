@@ -680,6 +680,22 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testUpdateWithinTransactionErrorsMeansUpdateDoesNotHappen() {
+        db() //
+                .select("select name from person") //
+                .transactedValuesOnly() //
+                .getAs(String.class) //
+                .doOnNext(System.out::println) //
+                .flatMap(tx -> tx.update("update person set score=-1 where name=:name") //
+                        .parameter("name", tx.value()) //
+                        .counts()) //
+                .map(Tx.toValue())//
+                .test() //
+                .assertValues(1, 1, 1) //
+                .assertComplete();
+    }
+
+    @Test
     public void testInsertClobAndReadClobAsString() {
         Database db = db();
         db.update("insert into person_clob(name,document) values(?,?)") //

@@ -21,6 +21,8 @@ public interface Tx<T> {
     
     TransactedSelectBuilder select(String sql);
     
+    TransactedUpdateBuilder update(String sql);
+    
     public static <T> Predicate<Tx<T>> valuesOnly() {
         return tx -> tx.isValue();
     }

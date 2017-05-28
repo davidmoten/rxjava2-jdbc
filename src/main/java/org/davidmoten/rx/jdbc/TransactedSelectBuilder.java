@@ -14,7 +14,7 @@ public final class TransactedSelectBuilder {
 
     private final Database db;
 
-    public TransactedSelectBuilder(SelectBuilder selectBuilder, Database db) {
+    TransactedSelectBuilder(SelectBuilder selectBuilder, Database db) {
         this.selectBuilder = selectBuilder;
         this.db = db;
     }

@@ -13,7 +13,7 @@ public final class TransactedUpdateBuilder {
     private final Database db;
     private boolean valuesOnly;
 
-    public TransactedUpdateBuilder(UpdateBuilder b, Database db) {
+    TransactedUpdateBuilder(UpdateBuilder b, Database db) {
         this.updateBuilder = b;
         this.db = db;
     }

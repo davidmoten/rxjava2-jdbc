@@ -26,7 +26,7 @@ public final class TransactedPreparedStatement implements PreparedStatement {
     private final TransactedConnection con;
     private final PreparedStatement ps;
 
-    public TransactedPreparedStatement(TransactedConnection con, PreparedStatement ps) {
+    TransactedPreparedStatement(TransactedConnection con, PreparedStatement ps) {
         this.con = con;
         this.ps = ps;
     }

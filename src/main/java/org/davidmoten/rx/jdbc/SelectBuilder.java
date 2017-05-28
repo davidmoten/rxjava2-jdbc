@@ -91,6 +91,10 @@ public final class SelectBuilder {
     public TransactedSelectBuilder transacted() {
         return new TransactedSelectBuilder(this, db);
     }
+    
+    public TransactedSelectBuilder transactedValuesOnly() {
+        return transacted().transactedValuesOnly();
+    }
 
     /**
      * Transforms the results using the given function.

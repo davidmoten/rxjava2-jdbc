@@ -29,7 +29,7 @@ public final class TransactedConnection implements Connection {
     private final Connection con;
     private final AtomicInteger counter;
 
-    public TransactedConnection(Connection con, AtomicInteger counter) {
+    TransactedConnection(Connection con, AtomicInteger counter) {
         log.info("constructing TransactedConnection from {}, {}", con, counter);
         this.con = con;
         this.counter = counter;
