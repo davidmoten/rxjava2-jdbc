@@ -9,7 +9,7 @@ import io.reactivex.Flowable;
 
 public final class TransactedUpdateBuilder {
 
-    private final UpdateBuilder updateBuilder;
+    final UpdateBuilder updateBuilder;
     private final Database db;
     private boolean valuesOnly;
 
@@ -158,5 +158,9 @@ public final class TransactedUpdateBuilder {
                         }
                     });
         });
+    }
+
+    public Flowable<List<Object>> parameterGroupsToFlowable() {
+        return updateBuilder.parameterGroupsToFlowable();
     }
 }
