@@ -21,7 +21,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 
-public class TransactedPreparedStatement implements PreparedStatement {
+public final class TransactedPreparedStatement implements PreparedStatement {
 
     private final TransactedConnection con;
     private final PreparedStatement ps;

@@ -15,7 +15,7 @@ import org.davidmoten.rx.pool.Pool;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Action;
 
-public class Database implements AutoCloseable {
+public final class Database implements AutoCloseable {
 
     private final Flowable<Connection> connections;
 

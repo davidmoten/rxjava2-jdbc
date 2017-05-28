@@ -8,7 +8,7 @@ import java.util.Map;
 
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 
-class ResultSetCache {
+final class ResultSetCache {
 
     final ResultSet rs;
     final Map<String, Integer> colIndexes;

@@ -15,15 +15,15 @@ import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
-class Update {
+final class Update {
 
     private Update() {
         // prevent instantiation
     }
 
-    public static Flowable<Integer> create(Single<Connection> connections, Flowable<List<Object>> parameterGroups,
+    public static Flowable<Integer> create(Single<Connection> connection, Flowable<List<Object>> parameterGroups,
             String sql, int batchSize) {
-        return connections //
+        return connection //
                 .toFlowable() //
                 .flatMap(con -> create(con, sql, parameterGroups, batchSize), true, 1);
     }
@@ -31,13 +31,13 @@ class Update {
     private static Flowable<Integer> create(Connection con, String sql, Flowable<List<Object>> parameterGroups,
             int batchSize) {
         Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql);
-        Function<NamedPreparedStatement, Flowable<Integer>> observableFactory;
+        final Function<NamedPreparedStatement, Flowable<Integer>> flowableFactory;
         if (batchSize == 0) {
-            observableFactory = ps -> parameterGroups.flatMap(parameters -> create(ps, parameters).toFlowable()) //
+            flowableFactory = ps -> parameterGroups.flatMap(parameters -> create(ps, parameters).toFlowable()) //
                     .doOnComplete(() -> Util.commit(ps.ps)) //
                     .doOnError(e -> Util.rollback(ps.ps));
         } else {
-            observableFactory = ps -> {
+            flowableFactory = ps -> {
                 int[] count = new int[1];
                 return parameterGroups.flatMap(parameters -> {
                     count[0] += 1;
@@ -55,7 +55,7 @@ class Update {
             };
         }
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
-        return Flowable.using(resourceFactory, observableFactory, disposer, true);
+        return Flowable.using(resourceFactory, flowableFactory, disposer, true);
     }
 
     private static Single<Integer> create(NamedPreparedStatement ps, List<Object> parameters) {
@@ -84,10 +84,9 @@ class Update {
         });
     }
 
-    public static <T> Flowable<T> createReturnGeneratedKeys(Flowable<Connection> connections,
+    public static <T> Flowable<T> createReturnGeneratedKeys(Single<Connection> connection,
             Flowable<List<Object>> parameterGroups, String sql, Function<? super ResultSet, ? extends T> mapper) {
-        return connections //
-                .firstOrError() //
+        return connection //
                 .toFlowable() //
                 .flatMap(con -> createReturnGeneratedKeys(con, parameterGroups, sql, mapper), true, 1);
     }

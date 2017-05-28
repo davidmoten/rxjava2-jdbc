@@ -3,7 +3,7 @@ package org.davidmoten.rx.jdbc;
 import java.sql.PreparedStatement;
 import java.util.List;
 
-class NamedPreparedStatement {
+final class NamedPreparedStatement {
     final PreparedStatement ps;
     final List<String> names;
 

@@ -26,6 +26,7 @@ public final class TransactedReturnGeneratedKeysBuilder {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
             Flowable<T> o = Update.<T>createReturnGeneratedKeys( //
                     update.updateBuilder.connections //
+                            .firstOrError() //
                             .map(c -> Util.toTransactedConnection(connection, c)),
                     update.parameterGroupsToFlowable(), update.updateBuilder.sql, function);
             return o.materialize() //

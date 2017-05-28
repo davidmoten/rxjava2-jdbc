@@ -4,7 +4,7 @@ import java.sql.Connection;
 
 import io.reactivex.Flowable;
 
-public class TransactedBuilder {
+public final class TransactedBuilder {
 
     private final Flowable<Connection> connections;
     private final Database db;

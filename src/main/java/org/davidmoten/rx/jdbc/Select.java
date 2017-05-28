@@ -24,18 +24,16 @@ final class Select {
 
     private static final Logger log = LoggerFactory.getLogger(Select.class);
 
-    public static <T> Flowable<T> create(Single<Connection> connections,
-            Flowable<List<Object>> parameterGroups, String sql, int fetchSize,
-            Function<? super ResultSet, ? extends T> mapper) {
+    public static <T> Flowable<T> create(Single<Connection> connections, Flowable<List<Object>> parameterGroups,
+            String sql, int fetchSize, Function<? super ResultSet, ? extends T> mapper) {
         return connections //
                 .toFlowable() //
                 .flatMap(con -> create(con, sql, parameterGroups, fetchSize, mapper));
     }
 
-    private static <T> Flowable<T> create(Connection con, String sql,
-            Flowable<List<Object>> parameterGroups, int fetchSize,
-            Function<? super ResultSet, T> mapper) {
-        log.debug("create called with con=" + con);
+    private static <T> Flowable<T> create(Connection con, String sql, Flowable<List<Object>> parameterGroups,
+            int fetchSize, Function<? super ResultSet, T> mapper) {
+        log.debug("create called with con={}", con);
         Callable<NamedPreparedStatement> initialState = () -> Util.prepare(con, fetchSize, sql);
         Function<NamedPreparedStatement, Flowable<T>> observableFactory = ps -> parameterGroups
                 .flatMap(parameters -> create(con, ps.ps, parameters, mapper, ps.names), true, 1);
@@ -43,10 +41,10 @@ final class Select {
         return Flowable.using(initialState, observableFactory, disposer, true);
     }
 
-    private static <T> Flowable<? extends T> create(Connection con, PreparedStatement ps,
-            List<Object> parameters, Function<? super ResultSet, T> mapper, List<String> names) {
-        log.debug("parameters=" + parameters);
-        log.debug("names=" + names);
+    private static <T> Flowable<? extends T> create(Connection con, PreparedStatement ps, List<Object> parameters,
+            Function<? super ResultSet, T> mapper, List<String> names) {
+        log.debug("parameters={}", parameters);
+        log.debug("names={}", names);
         Callable<ResultSet> initialState = () -> Util //
                 .setParameters(ps, parameters, names) //
                 .executeQuery();

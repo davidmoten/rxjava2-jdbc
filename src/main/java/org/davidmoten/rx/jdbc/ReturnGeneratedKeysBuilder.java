@@ -17,7 +17,7 @@ public final class ReturnGeneratedKeysBuilder {
      * @return the results of the query as an Observable
      */
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
-        return Update.<T> createReturnGeneratedKeys(update.connections,
+        return Update.<T>createReturnGeneratedKeys(update.connections.firstOrError(),
                 update.parameterGroupsToFlowable(), update.sql, function);
     }
 
