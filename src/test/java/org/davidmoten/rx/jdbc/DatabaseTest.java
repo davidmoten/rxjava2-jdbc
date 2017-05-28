@@ -116,8 +116,7 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(
-                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
@@ -462,9 +461,10 @@ public class DatabaseTest {
 
     @Test
     public void testSelectWithoutWhereClause() {
-        Assert.assertEquals(3, (long) db().select("select name from person") //
-                .count() //
-                .blockingGet());
+        Assert.assertEquals(3,
+                (long) db().select("select name from person") //
+                        .count() //
+                        .blockingGet());
     }
 
     @Test
@@ -503,8 +503,7 @@ public class DatabaseTest {
     public void testTuple6() {
         db() //
                 .select("select name, score, name, score, name, score from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
                 .firstOrError() //
                 .test() //
                 .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
@@ -514,12 +513,11 @@ public class DatabaseTest {
     public void testTuple7() {
         db() //
                 .select("select name, score, name, score, name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class, String.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
+                        String.class) //
                 .firstOrError() //
                 .test() //
-                .assertComplete()
-                .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+                .assertComplete().assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
 
     @Test
@@ -638,6 +636,50 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testTransactedReturnGeneratedKeys() {
+        Database db = db();
+        // note is a table with auto increment
+        db.update("insert into note(text) values(?)") //
+                .parameters("HI", "THERE") //
+                .transacted() //
+                .returnGeneratedKeys() //
+                .getAs(Integer.class)//
+                .test() //
+                .assertValues(1, 2) //
+                .assertComplete();
+
+        db.update("insert into note(text) values(?)") //
+                .parameters("ME", "TOO") //
+                .transacted() //
+                .returnGeneratedKeys() //
+                .getAs(Integer.class)//
+                .test() //
+                .assertValues(3, 4) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testTransactedReturnGeneratedKeys2() {
+        Database db = db();
+        // note is a table with auto increment
+        Flowable<Integer> a = db.update("insert into note(text) values(?)") //
+                .parameters("HI", "THERE") //
+                .transacted() //
+                .returnGeneratedKeys() //
+                .getAs(Integer.class);
+
+        db.update("insert into note(text) values(?)") //
+                .parameters("ME", "TOO") //
+                .transacted() //
+                .returnGeneratedKeys() //
+                .getAs(Integer.class)//
+                .startWith(a) //
+                .test() //
+                .assertValues(1, 2, 3, 4) //
+                .assertComplete();
+    }
+
+    @Test
     public void testInsertClobAndReadClobAsString() {
         Database db = db();
         db.update("insert into person_clob(name,document) values(?,?)") //
@@ -668,7 +710,7 @@ public class DatabaseTest {
                 .assertValue("some text here") //
                 .assertComplete();
     }
-    
+
     @Test
     public void testInsertBlobAndReadBlobAsByteArray() {
         Database db = db();
@@ -686,7 +728,7 @@ public class DatabaseTest {
                 .assertValue("some text here") //
                 .assertComplete();
     }
-    
+
     @Test
     public void testInsertBlobAndReadBlobAsInputStream() {
         Database db = db();
@@ -716,7 +758,7 @@ public class DatabaseTest {
         reader.close();
         return s.toString();
     }
-    
+
     private static byte[] read(InputStream is) throws IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         byte[] b = new byte[128];
