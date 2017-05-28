@@ -20,15 +20,15 @@ import io.reactivex.Single;
 
 public final class SelectBuilder {
 
-    //TODO make final
+    // TODO make final
     final String sql;
     final Flowable<Connection> connections;
     private final Database db;
-    
+
     private final ParametersBuilder parameters;
 
     int fetchSize = 0; // default
-    
+
     public SelectBuilder(String sql, Flowable<Connection> connections, Database db) {
         Preconditions.checkNotNull(sql);
         Preconditions.checkNotNull(connections);
@@ -67,7 +67,7 @@ public final class SelectBuilder {
         parameters.parameters(values);
         return this;
     }
-    
+
     public SelectBuilder fetchSize(int size) {
         Preconditions.checkArgument(size >= 0);
         this.fetchSize = size;
@@ -79,7 +79,8 @@ public final class SelectBuilder {
      * <code>cls</code>.
      * 
      * @param cls
-     * @return
+     *            class to map the first column of the result set to
+     * @return Flowable of T
      */
     public <T> Flowable<T> getAs(Class<T> cls) {
         // TODO make static class so lambda doesn't enclose more state than
@@ -95,11 +96,12 @@ public final class SelectBuilder {
      * Transforms the results using the given function.
      *
      * @param function
+     *            to map the row of a ResultSet to an object
      * @return the results of the query as an Observable
      */
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
         Flowable<List<Object>> pg = parameters.parameterGroupsToFlowable();
-        return Select.<T> create(connections.firstOrError(), pg, sql, fetchSize, function);
+        return Select.<T>create(connections.firstOrError(), pg, sql, fetchSize, function);
     }
 
     //
@@ -139,11 +141,15 @@ public final class SelectBuilder {
      * </p>
      *
      * @param cls
-     * @return
+     *            class to automap each row of the ResultSet to
+     * @param <T>
+     *            generic type of returned stream emissions
+     * @return Flowable of T
+     * 
      */
     public <T> Flowable<T> autoMap(Class<T> cls) {
         if (sql == null) {
-            //TODO get sql from query annotation
+            // TODO get sql from query annotation
             // sql = Util.getSqlFromQueryAnnotation(cls);
         }
         return get(Util.autoMap(cls));
@@ -154,9 +160,12 @@ public final class SelectBuilder {
      * <code>cls</code>. See {@link #autoMap(Class) autoMap()}.
      *
      * @param cls
-     * @return
+     *            class of the TupleN elements
+     * @param <T>
+     *            generic type of returned stream emissions
+     * @return a stream of TupleN
      */
-    public <S> Flowable<TupleN<S>> getTupleN(Class<S> cls) {
+    public <T> Flowable<TupleN<T>> getTupleN(Class<T> cls) {
         return get(Tuples.tupleN(cls));
     }
 
@@ -192,8 +201,7 @@ public final class SelectBuilder {
      * @param cls3
      * @return
      */
-    public <T1, T2, T3> Flowable<Tuple3<T1, T2, T3>> getAs(Class<T1> cls1, Class<T2> cls2,
-            Class<T3> cls3) {
+    public <T1, T2, T3> Flowable<Tuple3<T1, T2, T3>> getAs(Class<T1> cls1, Class<T2> cls2, Class<T3> cls3) {
         return get(Tuples.tuple(cls1, cls2, cls3));
     }
 
@@ -207,8 +215,8 @@ public final class SelectBuilder {
      * @param cls4
      * @return
      */
-    public <T1, T2, T3, T4> Flowable<Tuple4<T1, T2, T3, T4>> getAs(Class<T1> cls1, Class<T2> cls2,
-            Class<T3> cls3, Class<T4> cls4) {
+    public <T1, T2, T3, T4> Flowable<Tuple4<T1, T2, T3, T4>> getAs(Class<T1> cls1, Class<T2> cls2, Class<T3> cls3,
+            Class<T4> cls4) {
         return get(Tuples.tuple(cls1, cls2, cls3, cls4));
     }
 
@@ -223,8 +231,8 @@ public final class SelectBuilder {
      * @param cls5
      * @return
      */
-    public <T1, T2, T3, T4, T5> Flowable<Tuple5<T1, T2, T3, T4, T5>> getAs(Class<T1> cls1,
-            Class<T2> cls2, Class<T3> cls3, Class<T4> cls4, Class<T5> cls5) {
+    public <T1, T2, T3, T4, T5> Flowable<Tuple5<T1, T2, T3, T4, T5>> getAs(Class<T1> cls1, Class<T2> cls2,
+            Class<T3> cls3, Class<T4> cls4, Class<T5> cls5) {
         return get(Tuples.tuple(cls1, cls2, cls3, cls4, cls5));
     }
 
@@ -240,8 +248,8 @@ public final class SelectBuilder {
      * @param cls6
      * @return
      */
-    public <T1, T2, T3, T4, T5, T6> Flowable<Tuple6<T1, T2, T3, T4, T5, T6>> getAs(Class<T1> cls1,
-            Class<T2> cls2, Class<T3> cls3, Class<T4> cls4, Class<T5> cls5, Class<T6> cls6) {
+    public <T1, T2, T3, T4, T5, T6> Flowable<Tuple6<T1, T2, T3, T4, T5, T6>> getAs(Class<T1> cls1, Class<T2> cls2,
+            Class<T3> cls3, Class<T4> cls4, Class<T5> cls5, Class<T6> cls6) {
         return get(Tuples.tuple(cls1, cls2, cls3, cls4, cls5, cls6));
     }
 
@@ -258,9 +266,8 @@ public final class SelectBuilder {
      * @param cls7
      * @return
      */
-    public <T1, T2, T3, T4, T5, T6, T7> Flowable<Tuple7<T1, T2, T3, T4, T5, T6, T7>> getAs(
-            Class<T1> cls1, Class<T2> cls2, Class<T3> cls3, Class<T4> cls4, Class<T5> cls5,
-            Class<T6> cls6, Class<T7> cls7) {
+    public <T1, T2, T3, T4, T5, T6, T7> Flowable<Tuple7<T1, T2, T3, T4, T5, T6, T7>> getAs(Class<T1> cls1,
+            Class<T2> cls2, Class<T3> cls3, Class<T4> cls4, Class<T5> cls5, Class<T6> cls6, Class<T7> cls7) {
         return get(Tuples.tuple(cls1, cls2, cls3, cls4, cls5, cls6, cls7));
     }
 
