@@ -680,16 +680,17 @@ public class DatabaseTest {
     }
 
     @Test
-    public void testUpdateWithinTransactionErrorsMeansUpdateDoesNotHappen() {
+    public void testUpdateWithinTransaction() {
         db() //
                 .select("select name from person") //
                 .transactedValuesOnly() //
                 .getAs(String.class) //
                 .doOnNext(System.out::println) //
-                .flatMap(tx -> tx.update("update person set score=-1 where name=:name") //
+                .flatMap(tx -> tx//
+                        .update("update person set score=-1 where name=:name") //
                         .parameter("name", tx.value()) //
+                        .valuesOnly() //
                         .counts()) //
-                .map(Tx.toValue())//
                 .test() //
                 .assertValues(1, 1, 1) //
                 .assertComplete();
