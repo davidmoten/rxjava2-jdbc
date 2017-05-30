@@ -72,18 +72,18 @@ public final class TransactedConnection implements Connection {
 
     @Override
     public void commit() throws SQLException {
-        log.debug("TransactedConnection commit attempt, counter=" + counter.get());
+        log.debug("TransactedConnection commit attempt, counter={}", counter.get());
         if (counter.decrementAndGet() == 0) {
-            log.debug("TransactedConnection commit");
+            log.debug("TransactedConnection actual commit");
             con.commit();
         }
     }
 
     @Override
     public void rollback() throws SQLException {
-        log.debug("TransactedConnection rollback attempt, counter=" + counter.get());
+        log.debug("TransactedConnection rollback attempt, counter={}", counter.get());
         if (counter.decrementAndGet() == 0) {
-            log.debug("TransactedConnection rollback");
+            log.debug("TransactedConnection actual rollback");
             con.rollback();
         }
     }
@@ -342,6 +342,14 @@ public final class TransactedConnection implements Connection {
     @Override
     public <T> T unwrap(Class<T> arg0) throws SQLException {
         return con.unwrap(arg0);
+    }
+
+    public void incrementCounter() {
+        counter.incrementAndGet();
+    }
+    
+    public void decrementCounter() {
+        counter.decrementAndGet();
     }
 
 }

@@ -688,6 +688,25 @@ public class DatabaseTest {
                 .doOnNext(System.out::println) //
                 .flatMap(tx -> tx//
                         .update("update person set score=-1 where name=:name") //
+                        .batchSize(1) //
+                        .parameter("name", tx.value()) //
+                        .valuesOnly() //
+                        .counts()) //
+                .test() //
+                .assertValues(1, 1, 1) //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testUpdateWithinTransactionBatchSize0() {
+        db() //
+                .select("select name from person") //
+                .transactedValuesOnly() //
+                .getAs(String.class) //
+                .doOnNext(System.out::println) //
+                .flatMap(tx -> tx//
+                        .update("update person set score=-1 where name=:name") //
+                        .batchSize(0) //
                         .parameter("name", tx.value()) //
                         .valuesOnly() //
                         .counts()) //

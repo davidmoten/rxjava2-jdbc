@@ -21,25 +21,27 @@ final class Update {
         // prevent instantiation
     }
 
-    public static Flowable<Integer> create(Single<Connection> connection, Flowable<List<Object>> parameterGroups,
-            String sql, int batchSize) {
+    public static Flowable<Integer> create(Single<Connection> connection,
+            Flowable<List<Object>> parameterGroups, String sql, int batchSize) {
         return connection //
                 .toFlowable() //
                 .flatMap(con -> create(con, sql, parameterGroups, batchSize), true, 1);
     }
 
-    private static Flowable<Integer> create(Connection con, String sql, Flowable<List<Object>> parameterGroups,
-            int batchSize) {
+    private static Flowable<Integer> create(Connection con, String sql,
+            Flowable<List<Object>> parameterGroups, int batchSize) {
         Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql);
         final Function<NamedPreparedStatement, Flowable<Integer>> flowableFactory;
         if (batchSize == 0) {
-            flowableFactory = ps -> parameterGroups.flatMap(parameters -> create(ps, parameters).toFlowable()) //
+            flowableFactory = ps -> parameterGroups
+                    .flatMap(parameters -> create(ps, parameters).toFlowable()) //
                     .doOnComplete(() -> Util.commit(ps.ps)) //
                     .doOnError(e -> Util.rollback(ps.ps));
         } else {
             flowableFactory = ps -> {
                 int[] count = new int[1];
                 return parameterGroups.flatMap(parameters -> {
+                    incrementCounter(ps.ps.getConnection());
                     count[0] += 1;
                     Flowable<Integer> result;
                     if (count[0] == batchSize) {
@@ -60,19 +62,28 @@ final class Update {
 
     private static Single<Integer> create(NamedPreparedStatement ps, List<Object> parameters) {
         return Single.fromCallable(() -> {
+            incrementCounter(ps.ps.getConnection());
             Util.setParameters(ps.ps, parameters, ps.names);
             return ps.ps.executeUpdate();
         });
     }
 
-    private static Flowable<Integer> createExecuteBatch(NamedPreparedStatement ps, List<Object> parameters) {
+    private static Flowable<Integer> createExecuteBatch(NamedPreparedStatement ps,
+            List<Object> parameters) {
         return Flowable.defer(() -> {
             Util.setParameters(ps.ps, parameters, ps.names);
             ps.ps.addBatch();
             return toFlowable(ps.ps.executeBatch());
         });
     }
-
+    
+    private static void incrementCounter(Connection connection) {
+        if (connection instanceof TransactedConnection) {
+            TransactedConnection c = (TransactedConnection) connection;
+            c.incrementCounter();
+        } 
+    }
+    
     private static Publisher<? extends Integer> toFlowable(int[] a) {
         return Flowable.range(0, a.length).map(i -> a[i]);
     }
@@ -85,15 +96,19 @@ final class Update {
     }
 
     public static <T> Flowable<T> createReturnGeneratedKeys(Single<Connection> connection,
-            Flowable<List<Object>> parameterGroups, String sql, Function<? super ResultSet, ? extends T> mapper) {
+            Flowable<List<Object>> parameterGroups, String sql,
+            Function<? super ResultSet, ? extends T> mapper) {
         return connection //
                 .toFlowable() //
-                .flatMap(con -> createReturnGeneratedKeys(con, parameterGroups, sql, mapper), true, 1);
+                .flatMap(con -> createReturnGeneratedKeys(con, parameterGroups, sql, mapper), true,
+                        1);
     }
 
-    private static <T> Flowable<T> createReturnGeneratedKeys(Connection con, Flowable<List<Object>> parameterGroups,
-            String sql, Function<? super ResultSet, T> mapper) {
-        Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepareReturnGeneratedKeys(con, sql);
+    private static <T> Flowable<T> createReturnGeneratedKeys(Connection con,
+            Flowable<List<Object>> parameterGroups, String sql,
+            Function<? super ResultSet, T> mapper) {
+        Callable<NamedPreparedStatement> resourceFactory = () -> Util
+                .prepareReturnGeneratedKeys(con, sql);
         Function<NamedPreparedStatement, Flowable<T>> obsFactory = ps -> parameterGroups
                 .flatMap(parameters -> create(ps, parameters, mapper), true, 1) //
                 .doOnComplete(() -> Util.commit(ps.ps)) //
