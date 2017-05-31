@@ -17,7 +17,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
@@ -36,6 +35,7 @@ import org.davidmoten.rx.jdbc.tuple.Tuple6;
 import org.davidmoten.rx.jdbc.tuple.Tuple7;
 import org.davidmoten.rx.jdbc.tuple.TupleN;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -662,6 +662,28 @@ public class DatabaseTest {
                 .getAs(Integer.class)//
                 .test() //
                 .assertValues(3, 4) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testReturnGeneratedKeysDerby() {
+        Database db = DatabaseCreator.createDerby(1);
+
+        // note is a table with auto increment
+        db.update("insert into note2(text) values(?)") //
+                .parameters("HI", "THERE") //
+                .returnGeneratedKeys() //
+                .getAs(Integer.class)//
+                .test() //
+                .assertNoErrors().assertValues(1, 3) //
+                .assertComplete();
+
+        db.update("insert into note2(text) values(?)") //
+                .parameters("ME", "TOO") //
+                .returnGeneratedKeys() //
+                .getAs(Integer.class)//
+                .test() //
+                .assertValues(5, 7) //
                 .assertComplete();
     }
 

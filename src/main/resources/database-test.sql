@@ -16,3 +16,4 @@ create table person_image (name varchar(50) not null, document blob);
 
 -- test auto pk
 create table note(id bigint auto_increment primary key, text varchar(255);
+

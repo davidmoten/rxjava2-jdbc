@@ -59,9 +59,8 @@ final class Update {
                             .doOnComplete(() -> Util.commit(ps.ps)) //
                             .doOnError(e -> Util.rollback(ps.ps));
                 }).materialize() //
-                        .<Notification<Integer>> flatMap(
-                                n -> executeFinalBatch(ps, n, batchSize > 0)) //
-                        .<Integer> dematerialize();
+                        .flatMap(n -> executeFinalBatch(ps, n, count[0] > 0)) //
+                        .dematerialize();
             };
         }
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
@@ -69,8 +68,8 @@ final class Update {
     }
 
     private static Flowable<Notification<Integer>> executeFinalBatch(NamedPreparedStatement ps,
-            Notification<Integer> n, boolean batching) throws SQLException {
-        if (n.isOnComplete()) {
+            Notification<Integer> n, boolean outstandingBatch) throws SQLException {
+        if (n.isOnComplete() && outstandingBatch) {
             log.info("executing final batch");
             return toFlowable(ps.ps.executeBatch()) //
                     .map(x -> Notification.createOnNext(x)) //
@@ -93,7 +92,10 @@ final class Update {
         return Flowable.defer(() -> {
             Util.setParameters(ps.ps, parameters, ps.names);
             ps.ps.addBatch();
-            return toFlowable(ps.ps.executeBatch());
+            log.debug("batch added with {}",parameters);
+            Flowable<Integer> o = toFlowable(ps.ps.executeBatch());
+            log.debug("batch executed");
+            return o;
         });
     }
 
@@ -112,6 +114,7 @@ final class Update {
         return Completable.fromAction(() -> {
             Util.setParameters(ps.ps, parameters, ps.names);
             ps.ps.addBatch();
+            log.debug("batch added with {}",parameters);
         });
     }
 
