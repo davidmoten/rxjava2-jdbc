@@ -11,13 +11,16 @@ import io.reactivex.Single;
 
 public final class SelectAutomappedBuilder<T> {
 
-    private final SelectBuilder selectBuilder;
+    final SelectBuilder selectBuilder;
 
-    private final Class<T> cls;
+    final Class<T> cls;
+
+    private final Database db;
 
     SelectAutomappedBuilder(Class<T> cls, Flowable<Connection> connections, Database db) {
         this.selectBuilder = new SelectBuilder(getSql(cls), connections, db);
         this.cls = cls;
+        this.db = db;
     }
 
     private static String getSql(Class<?> cls) {
@@ -29,13 +32,11 @@ public final class SelectAutomappedBuilder<T> {
         return q.value();
     }
 
-    public TransactedSelectBuilder transacted() {
-        // TODO
-        return selectBuilder.transacted();
+    public TransactedSelectAutomappedBuilder<T> transacted() {
+        return new TransactedSelectAutomappedBuilder<T>(this, db);
     }
 
-    public TransactedSelectBuilder transactedValuesOnly() {
-        // TODO
+    public TransactedSelectAutomappedBuilder<T> transactedValuesOnly() {
         return transacted().transactedValuesOnly();
     }
 
