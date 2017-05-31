@@ -71,13 +71,7 @@ public final class SelectBuilder implements Getter {
         return transacted().transactedValuesOnly();
     }
 
-    /**
-     * Transforms the results using the given function.
-     *
-     * @param function
-     *            to map the row of a ResultSet to an object
-     * @return the results of the query as an Observable
-     */
+    @Override
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
         Flowable<List<Object>> pg = parameters.parameterGroupsToFlowable();
         return Select.<T> create(connections.firstOrError(), pg, sql, fetchSize, function);

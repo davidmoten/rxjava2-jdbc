@@ -27,7 +27,7 @@ public final class Tuples {
 
             @Override
             public T apply(ResultSet rs) {
-                return (T) mapObject(rs, cls, 1);
+                return mapObject(rs, cls, 1);
             }
 
         };
@@ -39,7 +39,7 @@ public final class Tuples {
 
             @Override
             public Tuple2<T1, T2> apply(ResultSet rs) {
-                return new Tuple2<T1, T2>((T1) mapObject(rs, cls1, 1), (T2) mapObject(rs, cls2, 2));
+                return new Tuple2<T1, T2>(mapObject(rs, cls1, 1), mapObject(rs, cls2, 2));
             }
         };
     }
@@ -49,8 +49,8 @@ public final class Tuples {
         return new ResultSetMapper<Tuple3<T1, T2, T3>>() {
             @Override
             public Tuple3<T1, T2, T3> apply(ResultSet rs) {
-                return new Tuple3<T1, T2, T3>((T1) mapObject(rs, cls1, 1),
-                        (T2) mapObject(rs, cls2, 2), (T3) mapObject(rs, cls3, 3));
+                return new Tuple3<T1, T2, T3>(mapObject(rs, cls1, 1),
+                        mapObject(rs, cls2, 2), mapObject(rs, cls3, 3));
             }
         };
     }
@@ -61,9 +61,9 @@ public final class Tuples {
         return new ResultSetMapper<Tuple4<T1, T2, T3, T4>>() {
             @Override
             public Tuple4<T1, T2, T3, T4> apply(ResultSet rs) {
-                return new Tuple4<T1, T2, T3, T4>((T1) mapObject(rs, cls1, 1),
-                        (T2) mapObject(rs, cls2, 2), (T3) mapObject(rs, cls3, 3),
-                        (T4) mapObject(rs, cls4, 4));
+                return new Tuple4<T1, T2, T3, T4>(mapObject(rs, cls1, 1),
+                        mapObject(rs, cls2, 2), mapObject(rs, cls3, 3),
+                        mapObject(rs, cls4, 4));
             }
         };
     }
@@ -74,9 +74,9 @@ public final class Tuples {
         return new ResultSetMapper<Tuple5<T1, T2, T3, T4, T5>>() {
             @Override
             public Tuple5<T1, T2, T3, T4, T5> apply(ResultSet rs) {
-                return new Tuple5<T1, T2, T3, T4, T5>((T1) mapObject(rs, cls1, 1),
-                        (T2) mapObject(rs, cls2, 2), (T3) mapObject(rs, cls3, 3),
-                        (T4) mapObject(rs, cls4, 4), (T5) mapObject(rs, cls5, 5));
+                return new Tuple5<T1, T2, T3, T4, T5>(mapObject(rs, cls1, 1),
+                        mapObject(rs, cls2, 2), mapObject(rs, cls3, 3),
+                        mapObject(rs, cls4, 4), mapObject(rs, cls5, 5));
             }
         };
     }
@@ -88,10 +88,10 @@ public final class Tuples {
         return new ResultSetMapper<Tuple6<T1, T2, T3, T4, T5, T6>>() {
             @Override
             public Tuple6<T1, T2, T3, T4, T5, T6> apply(ResultSet rs) {
-                return new Tuple6<T1, T2, T3, T4, T5, T6>((T1) mapObject(rs, cls1, 1),
-                        (T2) mapObject(rs, cls2, 2), (T3) mapObject(rs, cls3, 3),
-                        (T4) mapObject(rs, cls4, 4), (T5) mapObject(rs, cls5, 5),
-                        (T6) mapObject(rs, cls6, 6));
+                return new Tuple6<T1, T2, T3, T4, T5, T6>(mapObject(rs, cls1, 1),
+                        mapObject(rs, cls2, 2), mapObject(rs, cls3, 3),
+                        mapObject(rs, cls4, 4), mapObject(rs, cls5, 5),
+                        mapObject(rs, cls6, 6));
             }
         };
     }
@@ -103,10 +103,10 @@ public final class Tuples {
         return new ResultSetMapper<Tuple7<T1, T2, T3, T4, T5, T6, T7>>() {
             @Override
             public Tuple7<T1, T2, T3, T4, T5, T6, T7> apply(ResultSet rs) {
-                return new Tuple7<T1, T2, T3, T4, T5, T6, T7>((T1) mapObject(rs, cls1, 1),
-                        (T2) mapObject(rs, cls2, 2), (T3) mapObject(rs, cls3, 3),
-                        (T4) mapObject(rs, cls4, 4), (T5) mapObject(rs, cls5, 5),
-                        (T6) mapObject(rs, cls6, 6), (T7) mapObject(rs, cls7, 7));
+                return new Tuple7<T1, T2, T3, T4, T5, T6, T7>(mapObject(rs, cls1, 1),
+                        mapObject(rs, cls2, 2), mapObject(rs, cls3, 3),
+                        mapObject(rs, cls4, 4), mapObject(rs, cls5, 5),
+                        mapObject(rs, cls6, 6), mapObject(rs, cls7, 7));
             }
         };
     }
@@ -125,7 +125,7 @@ public final class Tuples {
             int n = rs.getMetaData().getColumnCount();
             List<T> list = new ArrayList<T>();
             for (int i = 1; i <= n; i++) {
-                list.add((T) mapObject(rs, cls, i));
+                list.add(mapObject(rs, cls, i));
             }
             return new TupleN<T>(list);
         } catch (SQLException e) {
