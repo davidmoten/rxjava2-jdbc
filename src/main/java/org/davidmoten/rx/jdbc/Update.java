@@ -2,20 +2,25 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.reactivex.Completable;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
+import io.reactivex.Notification;
 import io.reactivex.Single;
 import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
 final class Update {
+
+    private static final Logger log = LoggerFactory.getLogger(Update.class);
 
     private Update() {
         // prevent instantiation
@@ -53,11 +58,26 @@ final class Update {
                     return result //
                             .doOnComplete(() -> Util.commit(ps.ps)) //
                             .doOnError(e -> Util.rollback(ps.ps));
-                });
+                }).materialize() //
+                        .<Notification<Integer>> flatMap(
+                                n -> executeFinalBatch(ps, n, batchSize > 0)) //
+                        .<Integer> dematerialize();
             };
         }
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(resourceFactory, flowableFactory, disposer, true);
+    }
+
+    private static Flowable<Notification<Integer>> executeFinalBatch(NamedPreparedStatement ps,
+            Notification<Integer> n, boolean batching) throws SQLException {
+        if (n.isOnComplete()) {
+            log.info("executing final batch");
+            return toFlowable(ps.ps.executeBatch()) //
+                    .map(x -> Notification.createOnNext(x)) //
+                    .concatWith(Flowable.just(n));
+        } else {
+            return Flowable.just(n);
+        }
     }
 
     private static Single<Integer> create(NamedPreparedStatement ps, List<Object> parameters) {
@@ -76,15 +96,15 @@ final class Update {
             return toFlowable(ps.ps.executeBatch());
         });
     }
-    
+
     private static void incrementCounter(Connection connection) {
         if (connection instanceof TransactedConnection) {
             TransactedConnection c = (TransactedConnection) connection;
             c.incrementCounter();
-        } 
+        }
     }
-    
-    private static Publisher<? extends Integer> toFlowable(int[] a) {
+
+    private static Flowable<Integer> toFlowable(int[] a) {
         return Flowable.range(0, a.length).map(i -> a[i]);
     }
 

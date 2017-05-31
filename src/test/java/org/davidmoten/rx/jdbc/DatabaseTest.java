@@ -49,6 +49,7 @@ import io.reactivex.subscribers.TestSubscriber;
 
 public class DatabaseTest {
 
+    private static final int NAMES_COUNT_BIG = 5163;
     private static final Logger log = LoggerFactory.getLogger(DatabaseTest.class);
 
     private static Database db() {
@@ -57,6 +58,10 @@ public class DatabaseTest {
 
     private static Database db(int poolSize) {
         return DatabaseCreator.create(poolSize);
+    }
+
+    private static Database big(int poolSize) {
+        return DatabaseCreator.create(poolSize, true);
     }
 
     @Test
@@ -116,7 +121,8 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                .parameterListStream(
+                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
@@ -503,7 +509,8 @@ public class DatabaseTest {
     public void testTuple6() {
         db() //
                 .select("select name, score, name, score, name, score from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                        Integer.class) //
                 .firstOrError() //
                 .test() //
                 .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
@@ -513,11 +520,12 @@ public class DatabaseTest {
     public void testTuple7() {
         db() //
                 .select("select name, score, name, score, name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
-                        String.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                        Integer.class, String.class) //
                 .firstOrError() //
                 .test() //
-                .assertComplete().assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+                .assertComplete()
+                .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
 
     @Test
@@ -590,6 +598,28 @@ public class DatabaseTest {
     @Test
     public void testUpdateAllWithParameterFourRuns() {
         db().update("update person set score=?") //
+                .parameters(1, 2, 3, 4) //
+                .counts() //
+                .test() //
+                .assertValues(3, 3, 3, 3) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateWithBatchSize2() {
+        db().update("update person set score=?") //
+                .batchSize(2) //
+                .parameters(1, 2, 3, 4) //
+                .counts() //
+                .test() //
+                .assertValues(3, 3, 3, 3) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateWithBatchSize3GreaterThanNumRecords() {
+        db().update("update person set score=?") //
+                .batchSize(3) //
                 .parameters(1, 2, 3, 4) //
                 .counts() //
                 .test() //
@@ -696,7 +726,7 @@ public class DatabaseTest {
                 .assertValues(1, 1, 1) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testUpdateWithinTransactionBatchSize0() {
         db() //
@@ -712,6 +742,54 @@ public class DatabaseTest {
                         .counts()) //
                 .test() //
                 .assertValues(1, 1, 1) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testCreateBig() {
+        big(5) //
+                .select("select count(*) from person") //
+                .getAs(Integer.class) //
+                .test() //
+                .assertValue(5163) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testTxWithBig() {
+        big(1) //
+                .select("select name from person") //
+                .transactedValuesOnly() //
+                .getAs(String.class) //
+                .doOnNext(System.out::println) //
+                .flatMap(tx -> tx//
+                        .update("update person set score=-1 where name=:name") //
+                        .batchSize(1) //
+                        .parameter("name", tx.value()) //
+                        .valuesOnly() //
+                        .counts()) //
+                .count() //
+                .test() //
+                .assertValue((long) NAMES_COUNT_BIG) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testTxWithBigInputBatchSize2000() {
+        big(1) //
+                .select("select name from person") //
+                .transactedValuesOnly() //
+                .getAs(String.class) //
+                .doOnNext(System.out::println) //
+                .flatMap(tx -> tx//
+                        .update("update person set score=-1 where name=:name") //
+                        .batchSize(2000) //
+                        .parameter("name", tx.value()) //
+                        .valuesOnly() //
+                        .counts()) //
+                .count() //
+                .test() //
+                .assertValue((long) NAMES_COUNT_BIG) //
                 .assertComplete();
     }
 

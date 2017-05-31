@@ -11,6 +11,7 @@ import io.reactivex.MaybeSource;
 import io.reactivex.Scheduler.Worker;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.disposables.DisposableHelper;
+import io.reactivex.plugins.RxJavaPlugins;
 
 public final class NonBlockingMember<T> implements Member<T> {
 
@@ -51,6 +52,7 @@ public final class NonBlockingMember<T> implements Member<T> {
                                 // 4 Connection case)
                                 value = pool.factory.call();
                             } catch (Throwable e) {
+                                RxJavaPlugins.onError(e);
                                 return disposeAndReset();
                             }
                             // we don't do a health check on a just-created
