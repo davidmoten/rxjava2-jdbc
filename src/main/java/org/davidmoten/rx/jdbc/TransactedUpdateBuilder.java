@@ -141,7 +141,7 @@ public final class TransactedUpdateBuilder {
             return o;
         }
     }
-    
+
     private static Flowable<Tx<Integer>> createFlowable(UpdateBuilder ub, Database db) {
         return Flowable.defer(() -> {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
