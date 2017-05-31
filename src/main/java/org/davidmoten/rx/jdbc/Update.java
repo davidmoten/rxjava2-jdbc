@@ -70,7 +70,7 @@ final class Update {
     private static Flowable<Notification<Integer>> executeFinalBatch(NamedPreparedStatement ps,
             Notification<Integer> n, boolean outstandingBatch) throws SQLException {
         if (n.isOnComplete() && outstandingBatch) {
-            log.info("executing final batch");
+            log.debug("executing final batch");
             return toFlowable(ps.ps.executeBatch()) //
                     .map(x -> Notification.createOnNext(x)) //
                     .concatWith(Flowable.just(n));

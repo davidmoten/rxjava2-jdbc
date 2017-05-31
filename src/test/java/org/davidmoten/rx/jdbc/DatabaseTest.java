@@ -17,6 +17,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.annotations.Query;
@@ -781,23 +783,32 @@ public class DatabaseTest {
                 .assertComplete();
     }
 
+    private static void info() {
+        LogManager.getRootLogger().setLevel(Level.INFO);
+    }
+
+    private static void debug() {
+        LogManager.getRootLogger().setLevel(Level.DEBUG);
+    }
+
     @Test
     public void testCreateBig() {
-        big(5) //
-                .select("select count(*) from person") //
+        info();
+        big(5).select("select count(*) from person") //
                 .getAs(Integer.class) //
                 .test() //
                 .assertValue(5163) //
                 .assertComplete();
+        debug();
     }
 
     @Test
     public void testTxWithBig() {
+        info();
         big(1) //
                 .select("select name from person") //
                 .transactedValuesOnly() //
                 .getAs(String.class) //
-                .doOnNext(System.out::println) //
                 .flatMap(tx -> tx//
                         .update("update person set score=-1 where name=:name") //
                         .batchSize(1) //
@@ -808,15 +819,16 @@ public class DatabaseTest {
                 .test() //
                 .assertValue((long) NAMES_COUNT_BIG) //
                 .assertComplete();
+        debug();
     }
 
     @Test
     public void testTxWithBigInputBatchSize2000() {
+        info();
         big(1) //
                 .select("select name from person") //
                 .transactedValuesOnly() //
                 .getAs(String.class) //
-                .doOnNext(System.out::println) //
                 .flatMap(tx -> tx//
                         .update("update person set score=-1 where name=:name") //
                         .batchSize(2000) //
@@ -827,6 +839,7 @@ public class DatabaseTest {
                 .test() //
                 .assertValue((long) NAMES_COUNT_BIG) //
                 .assertComplete();
+        debug();
     }
 
     @Test
