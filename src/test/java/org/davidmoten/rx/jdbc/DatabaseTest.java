@@ -24,6 +24,7 @@ import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
+import org.davidmoten.rx.jdbc.exceptions.QueryAnnotationMissingException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.davidmoten.rx.jdbc.pool.PoolClosedException;
@@ -473,6 +474,11 @@ public class DatabaseTest {
                 .test() //
                 .assertValue(21) //
                 .assertComplete();
+    }
+
+    @Test(expected = QueryAnnotationMissingException.class)
+    public void testAutoMapWithoutQueryInAnnotation() {
+        db().select(Person.class);
     }
 
     @Test

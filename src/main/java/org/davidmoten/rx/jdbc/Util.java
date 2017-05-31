@@ -761,10 +761,10 @@ public enum Util {
             return returnType;
         }
 
-        @Override
-        public String toString() {
-            return "NamedCol [name=" + name + ", returnType=" + returnType + "]";
-        }
+        // @Override
+        // public String toString() {
+        // return "NamedCol [name=" + name + ", returnType=" + returnType + "]";
+        // }
 
     }
 
@@ -782,10 +782,10 @@ public enum Util {
             return returnType;
         }
 
-        @Override
-        public String toString() {
-            return "IndexedCol [index=" + index + ", returnType=" + returnType + "]";
-        }
+//        @Override
+//        public String toString() {
+//            return "IndexedCol [index=" + index + ", returnType=" + returnType + "]";
+//        }
 
     }
 
