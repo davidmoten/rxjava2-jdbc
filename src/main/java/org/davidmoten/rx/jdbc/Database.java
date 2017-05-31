@@ -60,14 +60,13 @@ public final class Database implements AutoCloseable {
 
     private static void createDatabase(Connection c) {
         try {
-            Sql.statements(Database.class.getResourceAsStream("/database-test.sql")).stream()
-                    .forEach(x -> {
-                        try {
-                            c.prepareStatement(x).execute();
-                        } catch (SQLException e) {
-                            throw new SQLRuntimeException(e);
-                        }
-                    });
+            Sql.statements(Database.class.getResourceAsStream("/database-test.sql")).stream().forEach(x -> {
+                try {
+                    c.prepareStatement(x).execute();
+                } catch (SQLException e) {
+                    throw new SQLRuntimeException(e);
+                }
+            });
             c.commit();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
@@ -120,16 +119,14 @@ public final class Database implements AutoCloseable {
         }
     }
 
-    public SelectBuilder select(Class<?> cls) {
-        // return new SelectBuilder(null, connections());
-        // TODO
-        throw new UnsupportedOperationException();
+    public <T> SelectAutomappedBuilder<T> select(Class<T> cls) {
+        return new SelectAutomappedBuilder<T>(cls, connections, this);
     }
 
     public SelectBuilder select(String sql) {
         return new SelectBuilder(sql, connections(), this);
     }
-    
+
     public UpdateBuilder update(String sql) {
         return new UpdateBuilder(sql, connections(), this);
     }
