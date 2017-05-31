@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
+import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
@@ -463,6 +464,20 @@ public class DatabaseTest {
                 .assertValue(21) //
                 .assertComplete();
     }
+    
+//    @Test
+//    public void testAutoMapWithQueryInAnnotation() {
+//        db() //
+//                .select(Person10.class) //
+//                .autoMap()
+//                .get() //
+//                .firstOrError() //
+//                .map(Person9::score) //
+//                .test() //
+//                .assertValue(21) //
+//                .assertComplete();
+//    }
+
 
     @Test
     public void testSelectWithoutWhereClause() {
@@ -1029,6 +1044,16 @@ public class DatabaseTest {
 
     interface PersonNoAnnotation {
         String name();
+    }
+    
+    @Query("select name, score from person order by name")
+    interface Person10 {
+        
+        @Column
+        String name();
+        
+        @Column
+        int score();
     }
 
 }

@@ -9,7 +9,6 @@ import io.reactivex.Flowable;
 
 public final class SelectBuilder implements Getter {
 
-    // TODO make final
     final String sql;
     final Flowable<Connection> connections;
     private final Database db;
@@ -56,6 +55,10 @@ public final class SelectBuilder implements Getter {
         parameters.parameters(values);
         return this;
     }
+    
+    Flowable<List<Object>> parameterGroupsToFlowable() {
+        return parameters.parameterGroupsToFlowable();
+    }
 
     public SelectBuilder fetchSize(int size) {
         Preconditions.checkArgument(size >= 0);
@@ -75,10 +78,6 @@ public final class SelectBuilder implements Getter {
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
         Flowable<List<Object>> pg = parameters.parameterGroupsToFlowable();
         return Select.<T> create(connections.firstOrError(), pg, sql, fetchSize, function);
-    }
-
-    Flowable<List<Object>> parameterGroupsToFlowable() {
-        return parameters.parameterGroupsToFlowable();
     }
 
 }
