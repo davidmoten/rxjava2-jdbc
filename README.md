@@ -505,7 +505,7 @@ Transactions are a critical feature of relational databases.
 
 When we're talking RxJava we need to consider the behaviour of individual JDBC objects when called by different threads, possibly concurrently. The approach taken by *rxjava2-jdbc* outside of a transaction safely uses Connection pools (in a non-blocking way). Inside a transaction we must make all calls to the database using the same Connection object so the behaviour of that Connection when called from different threads is important. Some JDBC drivers provide thread-safety on JDBC objects by synchronizing every call.
 
-The safest approach with transactions is to perform all db interaction synchronously.
+The safest approach with transactions is to perform all db interaction synchronously. Asynchronous processing within transactions was problematic in *rxjava-jdbc* because `ThreadLocal` was used to hold the Connection. Asynchronous processing with transactions *is* possible with *rxjava2-jdbc* but should be handled with care given that your JDBC driver may block or indeed suffer from race conditions that most users don't encounter.
 
 Let's look at some examples. The first example uses a transaction across two select statement calls:
 
