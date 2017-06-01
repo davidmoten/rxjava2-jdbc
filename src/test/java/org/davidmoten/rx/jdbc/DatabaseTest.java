@@ -44,7 +44,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.schedulers.TestScheduler;
@@ -765,6 +768,69 @@ public class DatabaseTest {
                         .counts()) //
                 .test() //
                 .assertValues(1, 1, 1) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testDependsOnFlowable() {
+        Database db = db();
+        Flowable<Integer> a = db.update("update person set score=100 where name=?") //
+                .parameters("FRED") //
+                .counts();
+        db.select("select score from person where name=?") //
+                .parameters("FRED") //
+                .dependsOn(a) //
+                .getAs(Integer.class)//
+                .test() //
+                .assertValues(100) //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testDependsOnObservable() {
+        Database db = db();
+        Observable<Integer> a = db.update("update person set score=100 where name=?") //
+                .parameters("FRED") //
+                .counts()
+                .toObservable();
+        db.select("select score from person where name=?") //
+                .parameters("FRED") //
+                .dependsOn(a) //
+                .getAs(Integer.class)//
+                .test() //
+                .assertValues(100) //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testDependsOnSingle() {
+        Database db = db();
+        Single<Long> a = db.update("update person set score=100 where name=?") //
+                .parameters("FRED") //
+                .counts()
+                .count();
+        db.select("select score from person where name=?") //
+                .parameters("FRED") //
+                .dependsOn(a) //
+                .getAs(Integer.class)//
+                .test() //
+                .assertValues(100) //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testDependsOnCompletable() {
+        Database db = db();
+        Completable a = db.update("update person set score=100 where name=?") //
+                .parameters("FRED") //
+                .counts()
+                .ignoreElements();
+        db.select("select score from person where name=?") //
+                .parameters("FRED") //
+                .dependsOn(a) //
+                .getAs(Integer.class)//
+                .test() //
+                .assertValues(100) //
                 .assertComplete();
     }
 
