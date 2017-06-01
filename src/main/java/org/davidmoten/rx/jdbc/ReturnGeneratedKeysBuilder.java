@@ -18,8 +18,10 @@ public final class ReturnGeneratedKeysBuilder implements Getter {
      */
     @Override
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
-        return Update.<T>createReturnGeneratedKeys(update.connections.firstOrError(),
-                update.parameterGroupsToFlowable(), update.sql, function);
+        return update.startWithDependency(
+                Update.<T> createReturnGeneratedKeys(update.connections.firstOrError(),
+                        update.parameterGroupsToFlowable(), update.sql, function));
+
     }
 
 }

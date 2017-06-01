@@ -17,7 +17,7 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder> implem
     private final Database db;
 
     int fetchSize = 0; // default
-    private Flowable<?> dependsOnFlowable;
+    private Flowable<?> dependsOn;
 
     public SelectBuilder(String sql, Flowable<Connection> connections, Database db) {
         super(sql);
@@ -46,17 +46,17 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder> implem
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
         Flowable<List<Object>> pg = super.parameterGroupsToFlowable();
         Flowable<T> f = Select.<T> create(connections.firstOrError(), pg, sql, fetchSize, function);
-        if (dependsOnFlowable != null) {
-            return dependsOnFlowable.ignoreElements().andThen(f);
+        if (dependsOn != null) {
+            return dependsOn.ignoreElements().andThen(f);
         } else {
             return f;
         }
     }
 
     public Getter dependsOn(Flowable<?> flowable) {
-        Preconditions.checkArgument(dependsOnFlowable == null, "can only set dependsOn once");
+        Preconditions.checkArgument(dependsOn == null, "can only set dependsOn once");
         Preconditions.checkNotNull(flowable);
-        dependsOnFlowable = flowable;
+        dependsOn = flowable;
         return this;
     }
 

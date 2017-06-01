@@ -772,7 +772,7 @@ public class DatabaseTest {
     }
 
     @Test
-    public void testDependsOnFlowable() {
+    public void testSelectDependsOnFlowable() {
         Database db = db();
         Flowable<Integer> a = db.update("update person set score=100 where name=?") //
                 .parameters("FRED") //
@@ -787,7 +787,7 @@ public class DatabaseTest {
     }
     
     @Test
-    public void testDependsOnObservable() {
+    public void testSelectDependsOnObservable() {
         Database db = db();
         Observable<Integer> a = db.update("update person set score=100 where name=?") //
                 .parameters("FRED") //
@@ -803,7 +803,7 @@ public class DatabaseTest {
     }
     
     @Test
-    public void testDependsOnSingle() {
+    public void testSelectDependsOnOnSingle() {
         Database db = db();
         Single<Long> a = db.update("update person set score=100 where name=?") //
                 .parameters("FRED") //
@@ -819,7 +819,7 @@ public class DatabaseTest {
     }
     
     @Test
-    public void testDependsOnCompletable() {
+    public void testSelectDependsOnCompletable() {
         Database db = db();
         Completable a = db.update("update person set score=100 where name=?") //
                 .parameters("FRED") //
