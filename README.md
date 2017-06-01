@@ -9,7 +9,7 @@ See [wiki](https://github.com/davidmoten/rxjava2-jdbc/wiki)
 
 Status: *in development*
 
-JDBC is so much simpler with *rxjava2-jdbc*:
+JDBC is so much simpler with *rxjava2-jdbc*.
 
 How to build
 -------------
