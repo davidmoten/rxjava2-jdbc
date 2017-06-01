@@ -501,13 +501,13 @@ The `returnGeneratedKeys` method also supports returning multiple keys per row s
 
 Transactions
 -----------------
-You probably don't need me to tell you this but transactions are a critical feature of relational databases. 
+Transactions are a critical feature of relational databases. 
 
-When we're talking RxJava we need to consider the behaviour of individual JDBC objects when called by different threads, possibly concurrently. The approach taken by* rxjava2-jdbc* outside of a transaction safely uses Connection pools (in a non-blocking way). Inside a transaction we must make all calls to the database using the same Connection object so the behaviour of that Connection when called from different threads is important. Some JDBC drivers provide thread-safety on JDBC objects by synchronizing every call.
+When we're talking RxJava we need to consider the behaviour of individual JDBC objects when called by different threads, possibly concurrently. The approach taken by *rxjava2-jdbc* outside of a transaction safely uses Connection pools (in a non-blocking way). Inside a transaction we must make all calls to the database using the same Connection object so the behaviour of that Connection when called from different threads is important. Some JDBC drivers provide thread-safety on JDBC objects by synchronizing every call.
 
 The safest approach with transactions is to perform all db interaction synchronously.
 
-Let's look at some examples. The first example uses a transaction but does not make any database changes in the transaction so doesn't do much.
+Let's look at some examples. The first example uses a transaction across two select statement calls:
 
 ```java
 Database.test()
@@ -530,7 +530,7 @@ Note that the commit/rollback of the transaction happens automatically.
 
 What we see above is that each emission from the select statement is wrapped with a Tx object including the terminal event (error or complete). This is so you can for instance perform an action using the same transaction. 
 
-Let's show another that uses the `Tx` object to update the database. We are going to do something a bit laborious that could be done in one update statement just to demonstrate the capability:
+Let's see another example that uses the `Tx` object to update the database. We are going to do something a bit laborious that would normally be done in one update statement (`update person set score = -1`) just to demonstrate usage:
 
 ```java
 Database.test()
