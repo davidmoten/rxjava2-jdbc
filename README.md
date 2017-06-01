@@ -1,11 +1,11 @@
 # rxjava2-jdbc
-[![Travis CI](https://travis-ci.org/davidmoten/rxjava2-jdbc.svg)](https://travis-ci.org/davidmoten/rxjava2-jdbc)<br/>
-[![codecov](https://codecov.io/gh/davidmoten/rxjava2-jdbc/branch/master/graph/badge.svg)](https://codecov.io/gh/davidmoten/rxjava2-jdbc)
-<!--[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc)<br/>-->
+[![Travis CI](https:travis-ci.org/davidmoten/rxjava2-jdbc.svg)](https:travis-ci.org/davidmoten/rxjava2-jdbc)<br/>
+[![codecov](https:codecov.io/gh/davidmoten/rxjava2-jdbc/branch/master/graph/badge.svg)](https:codecov.io/gh/davidmoten/rxjava2-jdbc)
+<!--[![Maven Central](https:maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc/badge.svg?style=flat)](https:maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc)<br/>-->
 
-With the release of RxJava 2 now is a good time for a rewrite of [rxjava-jdbc](https://github.com/davidmoten/rxjava-jdbc). 
+With the release of RxJava 2 now is a good time for a rewrite of [rxjava-jdbc](https:github.com/davidmoten/rxjava-jdbc). 
 
-See [wiki](https://github.com/davidmoten/rxjava2-jdbc/wiki)
+See [wiki](https:github.com/davidmoten/rxjava2-jdbc/wiki)
 
 Status: *in development*
 
@@ -319,10 +319,10 @@ If you want more control over the behaviour of the non-blocking connection pool:
 NonBlockingConnectionPool pool = Pools
     .nonBlocking()
     .url(url)
-    // an unused connection will be closed after thirty minutes
+     an unused connection will be closed after thirty minutes
     .maxIdleTime(30, TimeUnit.MINUTES)
-    // connections are checked for healthiness on checkout if the connection 
-    // has been idle for at least `idleTimeBeforeHealthCheckMs`
+     connections are checked for healthiness on checkout if the connection 
+     has been idle for at least `idleTimeBeforeHealthCheckMs`
     .healthy(c -> c.prepareStatement("select 1").execute())
     .idleTimeBeforeHealthCheckMs(1, TimeUnit.MINUTES)
     .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) 
@@ -344,33 +344,33 @@ Lets create a database with a non-blocking connection pool of size 1 only and de
 so you can copy and paste this code to your ide and it will run (in a main method or unit test say):
 
 ```java
-// create database with non-blocking connection pool 
-// of size 1
+ create database with non-blocking connection pool 
+ of size 1
 Database db = Database.test(1); 
 
-//start a slow query
+start a slow query
 db.select("select score from person where name=?") 
   .parameters("FRED") 
   .getAs(Integer.class) 
-  // slow things down by sleeping
+   slow things down by sleeping
   .doOnNext(x -> Thread.sleep(1000)) 
-  // run in background thread
+   run in background thread
   .subscribeOn(Schedulers.io()) 
   .subscribe();
 
-//ensure that query starts
+ensure that query starts
 Thread.sleep(100);
 
-//query again while first query running
+query again while first query running
 db.select("select score from person where name=?") 
   .parameters("FRED") 
-  .getAs(Integer.class) //
-  .doOnNext(x -> System.out.println("emitted on " + Thread.currentThread().getName())) //
+  .getAs(Integer.class) 
+  .doOnNext(x -> System.out.println("emitted on " + Thread.currentThread().getName())) 
   .subscribe();
 
 System.out.println("second query submitted");
 
-//wait for stuff to happen asynchronously
+wait for stuff to happen asynchronously
 Thread.sleep(5000);
 ```
 
@@ -499,9 +499,64 @@ Flowable<Integer> keys =
 
 The `returnGeneratedKeys` method also supports returning multiple keys per row so the builder offers methods just like `select` to do explicit mapping or auto mapping.
 
+Transactions
+-----------------
+You probably don't need me to tell you this but transactions are a critical feature of relational databases. 
+
+When we're talking RxJava we need to consider the behaviour of individual JDBC objects when called by different threads, possibly concurrently. The approach taken by* rxjava2-jdbc* outside of a transaction safely uses Connection pools (in a non-blocking way). Inside a transaction we must make all calls to the database using the same Connection object so the behaviour of that Connection when called from different threads is important. Some JDBC drivers provide thread-safety on JDBC objects by synchronizing every call.
+
+The safest approach with transactions is to perform all db interaction synchronously.
+
+Let's look at some examples. The first example uses a transaction but does not make any database changes in the transaction so doesn't do much.
+
+```java
+Database.test()
+  .select("select score from person where name=?") 
+  .parameters("FRED", "JOSEPH") 
+  .transacted() 
+  .getAs(Integer.class) 
+  .blockingForEach(tx -> 
+    System.out.println(tx.isComplete() ? "complete" : tx.value()));
+```
+
+Output:
+```
+21
+34
+complete
+```
+
+Note that the commit/rollback of the transaction happens automatically.
+
+What we see above is that each emission from the select statement is wrapped with a Tx object including the terminal event (error or complete). This is so you can for instance perform an action using the same transaction. 
+
+Let's show another that uses the `Tx` object to update the database. We are going to do something a bit laborious that could be done in one update statement just to demonstrate the capability:
+
+```java
+Database.test()
+  .select("select name from person") 
+  // don't emit a Tx completed event
+  .transactedValuesOnly() 
+  .getAs(String.class) 
+  .flatMap(tx -> tx
+    .update("update person set score=-1 where name=:name") 
+    .parameter("name", tx.value()) 
+    // don't wrap value in Tx object 
+    .valuesOnly() 
+    .counts()) 
+  .toList()
+  .blockingForEach(System.out::println);
+```
+
+Output:
+```
+[1, 1, 1]
+
+```
+
 Logging
 -----------------
 Logging is handled by slf4j which bridges to the logging framework of your choice. Add
-the dependency for your logging framework as a maven dependency and you are sorted. See the test scoped log4j example in [rxjava2-jdbc/pom.xml](https://github.com/davidmoten/rxjava2-jdbc/blob/master/pom.xml).
+the dependency for your logging framework as a maven dependency and you are sorted. See the test scoped log4j example in [rxjava2-jdbc/pom.xml](https:github.com/davidmoten/rxjava2-jdbc/blob/master/pom.xml).
 
 

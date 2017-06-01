@@ -352,4 +352,9 @@ public final class TransactedConnection implements Connection {
         counter.decrementAndGet();
     }
 
+    @Override
+    public String toString() {
+        return "TransactedConnection [con=" + con + ", counter=" + counter + "]";
+    }
+
 }

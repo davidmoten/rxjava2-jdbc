@@ -124,7 +124,8 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                .parameterListStream(
+                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
@@ -232,7 +233,7 @@ public class DatabaseTest {
                 .parameters("FRED", "JOSEPH") //
                 .transacted() //
                 .getAs(Integer.class) //
-                .doOnNext(System.out::println) //
+                .doOnNext(tx -> System.out.println(tx.isComplete() ? "complete" : tx.value())) //
                 .test() //
                 .assertValueCount(3) //
                 .assertComplete();
@@ -247,7 +248,7 @@ public class DatabaseTest {
                 .transacted() //
                 .transactedValuesOnly() //
                 .getAs(Integer.class) //
-                .doOnNext(System.out::println)//
+                .doOnNext(tx -> System.out.println(tx.isComplete() ? "complete" : tx.value()))//
                 .flatMap(tx -> tx //
                         .select("select name from person where score = ?") //
                         .parameters(tx.value()) //
@@ -527,7 +528,8 @@ public class DatabaseTest {
     public void testTuple6() {
         db() //
                 .select("select name, score, name, score, name, score from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                        Integer.class) //
                 .firstOrError() //
                 .test() //
                 .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
@@ -537,11 +539,12 @@ public class DatabaseTest {
     public void testTuple7() {
         db() //
                 .select("select name, score, name, score, name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
-                        String.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                        Integer.class, String.class) //
                 .firstOrError() //
                 .test() //
-                .assertComplete().assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+                .assertComplete()
+                .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
 
     @Test
