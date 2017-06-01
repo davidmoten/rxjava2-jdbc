@@ -11,7 +11,7 @@ import java.io.Reader;
 import java.sql.Connection;
 import java.sql.SQLSyntaxErrorException;
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Date;
@@ -133,8 +133,7 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(
-                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
@@ -537,8 +536,7 @@ public class DatabaseTest {
     public void testTuple6() {
         db() //
                 .select("select name, score, name, score, name, score from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
                 .firstOrError() //
                 .test() //
                 .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
@@ -548,12 +546,11 @@ public class DatabaseTest {
     public void testTuple7() {
         db() //
                 .select("select name, score, name, score, name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class, String.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
+                        String.class) //
                 .firstOrError() //
                 .test() //
-                .assertComplete()
-                .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+                .assertComplete().assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
 
     @Test
@@ -1072,7 +1069,8 @@ public class DatabaseTest {
 
     @Test
     public void testMoreColumnsMappedThanAvailable() {
-        db().select("select name, score from person where name='FRED'") //
+        db() //
+                .select("select name, score from person where name='FRED'") //
                 .getAs(String.class, Integer.class, String.class) //
                 .test() //
                 .assertNoValues() //
@@ -1081,7 +1079,8 @@ public class DatabaseTest {
 
     @Test
     public void testSelectTimestamp() {
-        db().select("select registered from person where name='FRED'") //
+        db() //
+                .select("select registered from person where name='FRED'") //
                 .getAs(Long.class) //
                 .test() //
                 .assertValue(FRED_REGISTERED_TIME) //
@@ -1090,7 +1089,8 @@ public class DatabaseTest {
 
     @Test
     public void testSelectTimestampAsDate() {
-        db().select("select registered from person where name='FRED'") //
+        db() //
+                .select("select registered from person where name='FRED'") //
                 .getAs(Date.class) //
                 .map(d -> d.getTime()) //
                 .test() //
@@ -1100,7 +1100,8 @@ public class DatabaseTest {
 
     @Test
     public void testSelectTimestampAsInstant() {
-        db().select("select registered from person where name='FRED'") //
+        db() //
+                .select("select registered from person where name='FRED'") //
                 .getAs(Instant.class) //
                 .map(d -> d.toEpochMilli()) //
                 .test() //
@@ -1110,26 +1111,37 @@ public class DatabaseTest {
 
     @Test
     public void testUpdateTimestampAsInstant() {
-        db().update("update person set registered=? where name='FRED'") //
-                .parameters(Instant.now()) //
+        Database db = db();
+        db.update("update person set registered=? where name='FRED'") //
+                .parameters(Instant.ofEpochMilli(FRED_REGISTERED_TIME)) //
                 .counts() //
                 .test() //
-                .assertValueCount(1) //
+                .assertValue(1) //
                 .assertComplete();
-        // TODO read and check
+        db.select("select registered from person where name='FRED'") //
+                .getAs(Long.class) //
+                .test() //
+                .assertValue(FRED_REGISTERED_TIME) //
+                .assertComplete();
     }
 
     @Test
     public void testUpdateTimestampAsZonedDateTime() {
-        db().update("update person set registered=? where name='FRED'") //
-                .parameters(ZonedDateTime.now()) //
+        Database db = db();
+        db.update("update person set registered=? where name='FRED'") //
+                .parameters(ZonedDateTime.ofInstant(Instant.ofEpochMilli(FRED_REGISTERED_TIME),
+                        ZoneOffset.UTC.normalized())) //
                 .counts() //
                 .test() //
-                .assertValueCount(1) //
+                .assertValue(1) //
                 .assertComplete();
-        // TODO read and check
+        db.select("select registered from person where name='FRED'") //
+                .getAs(Long.class) //
+                .test() //
+                .assertValue(FRED_REGISTERED_TIME) //
+                .assertComplete();
     }
-    
+
     interface Person {
         @Column
         String name();
