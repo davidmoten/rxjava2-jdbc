@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import io.reactivex.Flowable;
 
-public final class TransactedSelectBuilder {
+public final class TransactedSelectBuilder implements DependsOn<TransactedSelectBuilder> {
 
     private final SelectBuilder selectBuilder;
 
@@ -49,14 +49,26 @@ public final class TransactedSelectBuilder {
         return this;
     }
 
+    public TransactedSelectBuilder fetchSize(int size) {
+        selectBuilder.fetchSize(size);
+        return this;
+    }
+
     public TransactedSelectBuilder transactedValuesOnly() {
         this.valuesOnly = true;
+        return this;
+    }
+
+    @Override
+    public TransactedSelectBuilder dependsOn(Flowable<?> flowable) {
+        selectBuilder.dependsOn(flowable);
         return this;
     }
 
     public TransactedSelectBuilderValuesOnly valuesOnly() {
         return new TransactedSelectBuilderValuesOnly(this, db);
     }
+
 
     public static final class TransactedSelectBuilderValuesOnly {
         private final TransactedSelectBuilder b;

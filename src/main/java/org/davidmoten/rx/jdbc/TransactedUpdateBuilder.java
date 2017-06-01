@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import io.reactivex.Flowable;
 
-public final class TransactedUpdateBuilder {
+public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdateBuilder> {
 
     final UpdateBuilder updateBuilder;
     private final Database db;
@@ -77,15 +77,7 @@ public final class TransactedUpdateBuilder {
         return this;
     }
 
-    /**
-     * Appends a dependency to the dependencies that have to complete their
-     * emitting before the query is executed.
-     * 
-     * @param dependency
-     *            dependency that must complete before the Flowable built by
-     *            this subscribes.
-     * @return this this
-     */
+    @Override
     public TransactedUpdateBuilder dependsOn(Flowable<?> dependency) {
         updateBuilder.dependsOn(dependency);
         return this;

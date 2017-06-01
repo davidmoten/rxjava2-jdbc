@@ -5,12 +5,9 @@ import java.sql.ResultSet;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
-import io.reactivex.Completable;
 import io.reactivex.Flowable;
-import io.reactivex.Observable;
-import io.reactivex.Single;
 
-public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> {
+public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> implements DependsOn<UpdateBuilder> {
 
     static final int DEFAULT_BATCH_SIZE = 1;
 
@@ -27,33 +24,13 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> {
         this.db = db;
     }
 
-    /**
-     * Appends a dependency to the dependencies that have to complete their
-     * emitting before the query is executed.
-     * 
-     * @param dependency
-     *            dependency that must complete before the Flowable built by
-     *            this subscribes.
-     * @return this this
-     */
+    @Override
     public UpdateBuilder dependsOn(Flowable<?> flowable) {
         Preconditions.checkArgument(dependsOn == null, "dependsOn can only be set once");
         dependsOn = flowable;
         return this;
     }
 
-    public UpdateBuilder dependsOn(Observable<?> observable) {
-        return dependsOn(observable.ignoreElements().toFlowable());
-    }
-
-    public UpdateBuilder dependsOn(Single<?> single) {
-        return dependsOn(single.toFlowable());
-    }
-
-    public UpdateBuilder dependsOn(Completable completable) {
-        return dependsOn(completable.toFlowable());
-    }
-    
     public UpdateBuilder batchSize(int batchSize) {
         this.batchSize = batchSize;
         return this;
@@ -69,14 +46,13 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> {
      *         ResultSet
      */
     public ReturnGeneratedKeysBuilder returnGeneratedKeys() {
-        Preconditions.checkArgument(batchSize == 1,
-                "Cannot return generated keys if batchSize > 1");
+        Preconditions.checkArgument(batchSize == 1, "Cannot return generated keys if batchSize > 1");
         return new ReturnGeneratedKeysBuilder(this);
     }
 
     public Flowable<Integer> counts() {
-        return startWithDependency(Update.create(connections.firstOrError(),
-                super.parameterGroupsToFlowable(), sql, batchSize));
+        return startWithDependency(
+                Update.create(connections.firstOrError(), super.parameterGroupsToFlowable(), sql, batchSize));
     }
 
     <T> Flowable<T> startWithDependency(Flowable<T> f) {
