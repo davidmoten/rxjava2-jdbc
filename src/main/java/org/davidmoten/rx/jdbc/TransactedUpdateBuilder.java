@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdateBuilder> {
 
@@ -133,22 +134,30 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
             return o;
         }
     }
+    
+    public Flowable<Integer> countsOnly() {
+        return valuesOnly().counts();
+    }
+
+    @SuppressWarnings("unchecked")
+    public Single<Tx<?>> tx() {
+        return (Single<Tx<?>>) (Single<?>) createFlowable(updateBuilder, db).lastOrError();
+    }
 
     private static Flowable<Tx<Integer>> createFlowable(UpdateBuilder ub, Database db) {
         return Flowable.defer(() -> {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
-            return Update
+            return ub.startWithDependency(Update
                     .create(ub.connections //
                             .firstOrError() //
                             .map(c -> Util.toTransactedConnection(connection, c)), //
-                            ub.parameterGroupsToFlowable(), ub.sql, ub.batchSize)
-                    .materialize() //
+                    ub.parameterGroupsToFlowable(), ub.sql, ub.batchSize).materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                     .doOnNext(tx -> {
-                        if (tx.isComplete()) {
-                            ((TxImpl<Integer>) tx).connection().commit();
-                        }
-                    });
+                if (tx.isComplete()) {
+                    ((TxImpl<Integer>) tx).connection().commit();
+                }
+            }));
         });
     }
 

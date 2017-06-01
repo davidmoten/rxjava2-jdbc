@@ -5,9 +5,12 @@ import java.sql.ResultSet;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
-public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> implements DependsOn<UpdateBuilder> {
+public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder>
+        implements DependsOn<UpdateBuilder> {
 
     static final int DEFAULT_BATCH_SIZE = 1;
 
@@ -46,13 +49,14 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> implem
      *         ResultSet
      */
     public ReturnGeneratedKeysBuilder returnGeneratedKeys() {
-        Preconditions.checkArgument(batchSize == 1, "Cannot return generated keys if batchSize > 1");
+        Preconditions.checkArgument(batchSize == 1,
+                "Cannot return generated keys if batchSize > 1");
         return new ReturnGeneratedKeysBuilder(this);
     }
 
     public Flowable<Integer> counts() {
-        return startWithDependency(
-                Update.create(connections.firstOrError(), super.parameterGroupsToFlowable(), sql, batchSize));
+        return startWithDependency(Update.create(connections.firstOrError(),
+                super.parameterGroupsToFlowable(), sql, batchSize));
     }
 
     <T> Flowable<T> startWithDependency(Flowable<T> f) {
@@ -65,6 +69,14 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> implem
 
     public TransactedUpdateBuilder transacted() {
         return new TransactedUpdateBuilder(this, db);
+    }
+    
+    public Single<Tx<?>> transaction() {
+        return transacted().tx();
+    }
+
+    public Completable complete() {
+        return counts().ignoreElements();
     }
 
 }

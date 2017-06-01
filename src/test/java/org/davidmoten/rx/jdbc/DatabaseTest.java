@@ -133,7 +133,8 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                .parameterListStream(
+                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
@@ -536,7 +537,8 @@ public class DatabaseTest {
     public void testTuple6() {
         db() //
                 .select("select name, score, name, score, name, score from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                        Integer.class) //
                 .firstOrError() //
                 .test() //
                 .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
@@ -546,11 +548,12 @@ public class DatabaseTest {
     public void testTuple7() {
         db() //
                 .select("select name, score, name, score, name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
-                        String.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                        Integer.class, String.class) //
                 .firstOrError() //
                 .test() //
-                .assertComplete().assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+                .assertComplete()
+                .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
 
     @Test
@@ -1139,6 +1142,36 @@ public class DatabaseTest {
                 .getAs(Long.class) //
                 .test() //
                 .assertValue(FRED_REGISTERED_TIME) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testComplete() throws InterruptedException {
+        Database db = db(1);
+        Completable a = db //
+                .update("update person set score=-3 where name='FRED'") //
+                .complete();
+        db.update("update person set score=-4 where score = -3") //
+                .dependsOn(a) //
+                .counts() //
+                .test() //
+                .assertValue(1) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testTx() throws InterruptedException {
+        Database db = db(3);
+        Single<Tx<?>> transaction = db //
+                .update("update person set score=-3 where name='FRED'") //
+                .transaction();
+
+        transaction
+                .flatMapPublisher(tx -> tx //
+                        .update("update person set score = -4 where score = -3") //
+                        .countsOnly()) //
+                .test() //
+                .assertValue(1) //
                 .assertComplete();
     }
 
