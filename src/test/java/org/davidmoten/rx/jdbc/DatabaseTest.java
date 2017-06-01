@@ -25,6 +25,7 @@ import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.MoreColumnsRequestedThanExistException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.exceptions.QueryAnnotationMissingException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
@@ -785,14 +786,13 @@ public class DatabaseTest {
                 .assertValues(100) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testSelectDependsOnObservable() {
         Database db = db();
         Observable<Integer> a = db.update("update person set score=100 where name=?") //
                 .parameters("FRED") //
-                .counts()
-                .toObservable();
+                .counts().toObservable();
         db.select("select score from person where name=?") //
                 .parameters("FRED") //
                 .dependsOn(a) //
@@ -801,14 +801,13 @@ public class DatabaseTest {
                 .assertValues(100) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testSelectDependsOnOnSingle() {
         Database db = db();
         Single<Long> a = db.update("update person set score=100 where name=?") //
                 .parameters("FRED") //
-                .counts()
-                .count();
+                .counts().count();
         db.select("select score from person where name=?") //
                 .parameters("FRED") //
                 .dependsOn(a) //
@@ -817,14 +816,13 @@ public class DatabaseTest {
                 .assertValues(100) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testSelectDependsOnCompletable() {
         Database db = db();
         Completable a = db.update("update person set score=100 where name=?") //
                 .parameters("FRED") //
-                .counts()
-                .ignoreElements();
+                .counts().ignoreElements();
         db.select("select score from person where name=?") //
                 .parameters("FRED") //
                 .dependsOn(a) //
@@ -1056,6 +1054,24 @@ public class DatabaseTest {
                 .test() //
                 .assertNoValues() //
                 .assertError(PoolClosedException.class);
+    }
+
+    @Test
+    public void testFewerColumnsMappedThanAvailable() {
+        db().select("select name, score from person where name='FRED'") //
+                .getAs(String.class) //
+                .test() //
+                .assertValues("FRED") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testMoreColumnsMappedThanAvailable() {
+        db().select("select name, score from person where name='FRED'") //
+                .getAs(String.class, Integer.class, String.class) //
+                .test() //
+                .assertNoValues() //
+                .assertError(MoreColumnsRequestedThanExistException.class);
     }
 
     interface Person {
