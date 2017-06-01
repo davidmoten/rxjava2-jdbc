@@ -24,6 +24,7 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -386,6 +387,8 @@ public enum Util {
                     return d.getTime();
                 else if (cls.isAssignableFrom(BigInteger.class))
                     return BigInteger.valueOf(d.getTime());
+                else if (cls.isAssignableFrom(Instant.class))
+                    return Instant.ofEpochMilli(d.getTime());
                 else
                     return o;
             } else if (o instanceof java.sql.Timestamp) {
@@ -394,6 +397,8 @@ public enum Util {
                     return t.getTime();
                 else if (cls.isAssignableFrom(BigInteger.class))
                     return BigInteger.valueOf(t.getTime());
+                else if (cls.isAssignableFrom(Instant.class))
+                    return Instant.ofEpochMilli(t.getTime());
                 else
                     return o;
             } else if (o instanceof java.sql.Time) {
@@ -402,6 +407,8 @@ public enum Util {
                     return t.getTime();
                 else if (cls.isAssignableFrom(BigInteger.class))
                     return BigInteger.valueOf(t.getTime());
+                else if (cls.isAssignableFrom(Instant.class))
+                    return Instant.ofEpochMilli(t.getTime());
                 else
                     return o;
             } else if (o instanceof Blob && cls.isAssignableFrom(byte[].class)) {

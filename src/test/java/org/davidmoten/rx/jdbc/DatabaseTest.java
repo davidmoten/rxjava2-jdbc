@@ -10,7 +10,9 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.sql.Connection;
 import java.sql.SQLSyntaxErrorException;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -56,6 +58,7 @@ import io.reactivex.subscribers.TestSubscriber;
 
 public class DatabaseTest {
 
+    private static final long FRED_REGISTERED_TIME = 1442515672690L;
     private static final int NAMES_COUNT_BIG = 5163;
     private static final Logger log = LoggerFactory.getLogger(DatabaseTest.class);
 
@@ -1072,6 +1075,35 @@ public class DatabaseTest {
                 .test() //
                 .assertNoValues() //
                 .assertError(MoreColumnsRequestedThanExistException.class);
+    }
+
+    @Test
+    public void testSelectTimestamp() {
+        db().select("select registered from person where name='FRED'") //
+                .getAs(Long.class) //
+                .test() //
+                .assertValue(FRED_REGISTERED_TIME) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSelectTimestampAsDate() {
+        db().select("select registered from person where name='FRED'") //
+                .getAs(Date.class) //
+                .map(d -> d.getTime()) //
+                .test() //
+                .assertValue(FRED_REGISTERED_TIME) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSelectTimestampAsInstant() {
+        db().select("select registered from person where name='FRED'") //
+                .getAs(Instant.class) //
+                .map(d -> d.toEpochMilli()) //
+                .test() //
+                .assertValue(FRED_REGISTERED_TIME) //
+                .assertComplete();
     }
 
     interface Person {

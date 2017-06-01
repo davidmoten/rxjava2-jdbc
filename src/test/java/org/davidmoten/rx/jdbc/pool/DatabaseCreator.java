@@ -112,7 +112,7 @@ public class DatabaseCreator {
         try {
             c.setAutoCommit(true);
             c.prepareStatement(
-                    "create table person (name varchar(50) primary key, score int not null,dob date, registered timestamp)")
+                    "create table person (name varchar(50) primary key, score int not null, date_of_birth date, registered timestamp)")
                     .execute();
             if (big) {
                 List<String> lines = IOUtils.readLines(
@@ -127,7 +127,7 @@ public class DatabaseCreator {
                     }
                 });
             } else {
-                exec(c, "insert into person(name,score) values('FRED',21)");
+                exec(c, "insert into person(name,score,registered) values('FRED',21, {ts '2015-09-17 18:47:52.69Z'})");
                 exec(c, "insert into person(name,score) values('JOSEPH',34)");
                 exec(c, "insert into person(name,score) values('MARMADUKE',25)");
             }
