@@ -25,6 +25,10 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -136,6 +140,20 @@ public enum Util {
                         Calendar cal = Calendar.getInstance();
                         java.util.Date date = (java.util.Date) o;
                         ps.setTimestamp(i, new java.sql.Timestamp(date.getTime()), cal);
+                    } else if (Instant.class.isAssignableFrom(cls)) {
+                        Calendar cal = Calendar.getInstance();
+                        Instant instant = (Instant) o;
+                        ps.setTimestamp(i, new java.sql.Timestamp(instant.toEpochMilli()), cal);
+                    } else if (LocalDateTime.class.isAssignableFrom(cls)) {
+                        Calendar cal = Calendar.getInstance();
+                        LocalDateTime d = (LocalDateTime) o;
+                        ps.setTimestamp(i, new java.sql.Timestamp(
+                                d.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()), cal);
+                    } else if (ZonedDateTime.class.isAssignableFrom(cls)) {
+                        Calendar cal = Calendar.getInstance();
+                        ZonedDateTime d = (ZonedDateTime) o;
+                        ps.setTimestamp(i, new java.sql.Timestamp(d.toInstant().toEpochMilli()),
+                                cal);
                     } else
                         ps.setObject(i, o);
                 }
