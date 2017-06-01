@@ -1,11 +1,11 @@
 # rxjava2-jdbc
-[![Travis CI](https:travis-ci.org/davidmoten/rxjava2-jdbc.svg)](https:travis-ci.org/davidmoten/rxjava2-jdbc)<br/>
-[![codecov](https:codecov.io/gh/davidmoten/rxjava2-jdbc/branch/master/graph/badge.svg)](https:codecov.io/gh/davidmoten/rxjava2-jdbc)
-<!--[![Maven Central](https:maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc/badge.svg?style=flat)](https:maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc)<br/>-->
+[![Travis CI](https://travis-ci.org/davidmoten/rxjava2-jdbc.svg)](https://travis-ci.org/davidmoten/rxjava2-jdbc)<br/>
+[![codecov](https://codecov.io/gh/davidmoten/rxjava2-jdbc/branch/master/graph/badge.svg)](https://codecov.io/gh/davidmoten/rxjava2-jdbc)
+<!--[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc)<br/>-->
 
-With the release of RxJava 2 now is a good time for a rewrite of [rxjava-jdbc](https:github.com/davidmoten/rxjava-jdbc). 
+With the release of RxJava 2 now is a good time for a rewrite of [rxjava-jdbc](https://github.com/davidmoten/rxjava-jdbc). 
 
-See [wiki](https:github.com/davidmoten/rxjava2-jdbc/wiki)
+See [wiki](https://github.com/davidmoten/rxjava2-jdbc/wiki)
 
 Status: *in development*
 
@@ -557,6 +557,6 @@ Output:
 Logging
 -----------------
 Logging is handled by slf4j which bridges to the logging framework of your choice. Add
-the dependency for your logging framework as a maven dependency and you are sorted. See the test scoped log4j example in [rxjava2-jdbc/pom.xml](https:github.com/davidmoten/rxjava2-jdbc/blob/master/pom.xml).
+the dependency for your logging framework as a maven dependency and you are sorted. See the test scoped log4j example in [rxjava2-jdbc/pom.xml](https://github.com/davidmoten/rxjava2-jdbc/blob/master/pom.xml).
 
 
