@@ -27,7 +27,6 @@ import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -144,11 +143,6 @@ public enum Util {
                         Calendar cal = Calendar.getInstance();
                         Instant instant = (Instant) o;
                         ps.setTimestamp(i, new java.sql.Timestamp(instant.toEpochMilli()), cal);
-                    } else if (LocalDateTime.class.isAssignableFrom(cls)) {
-                        Calendar cal = Calendar.getInstance();
-                        LocalDateTime d = (LocalDateTime) o;
-                        ps.setTimestamp(i, new java.sql.Timestamp(
-                                d.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()), cal);
                     } else if (ZonedDateTime.class.isAssignableFrom(cls)) {
                         Calendar cal = Calendar.getInstance();
                         ZonedDateTime d = (ZonedDateTime) o;
@@ -406,7 +400,7 @@ public enum Util {
                 else if (cls.isAssignableFrom(BigInteger.class))
                     return BigInteger.valueOf(d.getTime());
                 else if (cls.isAssignableFrom(Instant.class))
-                    return Instant.ofEpochMilli(d.getTime());
+                    return d.toInstant();
                 else
                     return o;
             } else if (o instanceof java.sql.Timestamp) {
@@ -416,7 +410,7 @@ public enum Util {
                 else if (cls.isAssignableFrom(BigInteger.class))
                     return BigInteger.valueOf(t.getTime());
                 else if (cls.isAssignableFrom(Instant.class))
-                    return Instant.ofEpochMilli(t.getTime());
+                    return t.toInstant();
                 else
                     return o;
             } else if (o instanceof java.sql.Time) {
@@ -426,7 +420,7 @@ public enum Util {
                 else if (cls.isAssignableFrom(BigInteger.class))
                     return BigInteger.valueOf(t.getTime());
                 else if (cls.isAssignableFrom(Instant.class))
-                    return Instant.ofEpochMilli(t.getTime());
+                    return t.toInstant();
                 else
                     return o;
             } else if (o instanceof Blob && cls.isAssignableFrom(byte[].class)) {

@@ -1130,17 +1130,6 @@ public class DatabaseTest {
         // TODO read and check
     }
     
-    @Test
-    public void testUpdateTimestampAsLocalDateTime() {
-        db().update("update person set registered=? where name='FRED'") //
-                .parameters(LocalDateTime.now()) //
-                .counts() //
-                .test() //
-                .assertValueCount(1) //
-                .assertComplete();
-        // TODO read and check
-    }
-
     interface Person {
         @Column
         String name();
