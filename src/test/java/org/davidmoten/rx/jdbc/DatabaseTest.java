@@ -1160,13 +1160,37 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testCountsOnlyInTransaction() {
+        db().update("update person set score = -3") //
+                .transacted() //
+                .countsOnly() //
+                .test() //
+                .assertValues(3) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testCountsInTransaction() {
+        db().update("update person set score = -3") //
+                .transacted() //
+                .counts() //
+                .doOnNext(System.out::println) //
+                .toList() //
+                .test() //
+                .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3
+                        && list.get(1).isComplete() && list.size() == 2) //
+                .assertComplete();
+    }
+
+    @Test
     public void testTx() throws InterruptedException {
         Database db = db(3);
         Single<Tx<?>> transaction = db //
                 .update("update person set score=-3 where name='FRED'") //
                 .transaction();
 
-        transaction
+        transaction //
+                .doOnSuccess(System.out::println) //
                 .flatMapPublisher(tx -> tx //
                         .update("update person set score = -4 where score = -3") //
                         .countsOnly()) //

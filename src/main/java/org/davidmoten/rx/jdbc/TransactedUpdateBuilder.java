@@ -2,6 +2,7 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -134,7 +135,7 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
             return o;
         }
     }
-    
+
     public Flowable<Integer> countsOnly() {
         return valuesOnly().counts();
     }
@@ -147,18 +148,22 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
     private static Flowable<Tx<Integer>> createFlowable(UpdateBuilder ub, Database db) {
         return Flowable.defer(() -> {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
-            return ub.startWithDependency(Update
-                    .create(ub.connections //
-                            .firstOrError() //
-                            .map(c -> Util.toTransactedConnection(connection, c)), //
-                    ub.parameterGroupsToFlowable(), ub.sql, ub.batchSize).materialize() //
-                    .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
-                    .doOnNext(tx -> {
-                if (tx.isComplete()) {
-                    ((TxImpl<Integer>) tx).connection().commit();
-                }
-            }));
+            return ub.startWithDependency( //
+                    Update.create(
+                            ub.connections //
+                                    .firstOrError() //
+                                    .map(c -> Util.toTransactedConnection(connection, c)), //
+                            ub.parameterGroupsToFlowable(), ub.sql, ub.batchSize) //
+                            .materialize() //
+                            .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
+                            .doOnNext(tx -> commitOnComplete(tx)));
         });
+    }
+
+    private static void commitOnComplete(Tx<Integer> tx) throws SQLException {
+        if (tx.isComplete()) {
+            ((TxImpl<Integer>) tx).connection().commit();
+        }
     }
 
     public Flowable<List<Object>> parameterGroupsToFlowable() {
