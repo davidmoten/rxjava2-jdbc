@@ -56,7 +56,7 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder>
 
     public Flowable<Integer> counts() {
         return startWithDependency(Update.create(connections.firstOrError(),
-                super.parameterGroupsToFlowable(), sql, batchSize));
+                super.parameterGroupsToFlowable(), sql, batchSize, true));
     }
 
     <T> Flowable<T> startWithDependency(Flowable<T> f) {
@@ -70,7 +70,7 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder>
     public TransactedUpdateBuilder transacted() {
         return new TransactedUpdateBuilder(this, db);
     }
-    
+
     public Single<Tx<?>> transaction() {
         return transacted().tx();
     }

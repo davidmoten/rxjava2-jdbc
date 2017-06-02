@@ -103,7 +103,8 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
                             sb.parameterGroupsToFlowable(), //
                             sb.sql, //
                             sb.fetchSize, //
-                            rs -> Util.mapObject(rs, cls, 1)) //
+                            rs -> Util.mapObject(rs, cls, 1), //
+                            false) //
                     .materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                     .doOnNext(tx -> {

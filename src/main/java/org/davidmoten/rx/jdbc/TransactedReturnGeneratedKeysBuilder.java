@@ -28,7 +28,7 @@ public final class TransactedReturnGeneratedKeysBuilder {
                     update.updateBuilder.connections //
                             .firstOrError() //
                             .map(c -> Util.toTransactedConnection(connection, c)),
-                    update.parameterGroupsToFlowable(), update.updateBuilder.sql, function);
+                    update.parameterGroupsToFlowable(), update.updateBuilder.sql, function, false);
             return o.materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                     .doOnNext(tx -> {

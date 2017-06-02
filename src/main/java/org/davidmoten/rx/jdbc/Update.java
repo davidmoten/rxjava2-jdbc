@@ -27,14 +27,14 @@ final class Update {
     }
 
     public static Flowable<Integer> create(Single<Connection> connection,
-            Flowable<List<Object>> parameterGroups, String sql, int batchSize) {
+            Flowable<List<Object>> parameterGroups, String sql, int batchSize, boolean eagerDispose) {
         return connection //
                 .toFlowable() //
-                .flatMap(con -> create(con, sql, parameterGroups, batchSize), true, 1);
+                .flatMap(con -> create(con, sql, parameterGroups, batchSize, eagerDispose), true, 1);
     }
 
     private static Flowable<Integer> create(Connection con, String sql,
-            Flowable<List<Object>> parameterGroups, int batchSize) {
+            Flowable<List<Object>> parameterGroups, int batchSize, boolean eagerDispose) {
         Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql);
         final Function<NamedPreparedStatement, Flowable<Integer>> flowableFactory;
         if (batchSize == 0) {
@@ -64,7 +64,7 @@ final class Update {
             };
         }
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
-        return Flowable.using(resourceFactory, flowableFactory, disposer, true);
+        return Flowable.using(resourceFactory, flowableFactory, disposer, eagerDispose);
     }
 
     private static Flowable<Notification<Integer>> executeFinalBatch(NamedPreparedStatement ps,
@@ -120,16 +120,16 @@ final class Update {
 
     public static <T> Flowable<T> createReturnGeneratedKeys(Single<Connection> connection,
             Flowable<List<Object>> parameterGroups, String sql,
-            Function<? super ResultSet, ? extends T> mapper) {
+            Function<? super ResultSet, ? extends T> mapper, boolean eagerDispose) {
         return connection //
                 .toFlowable() //
-                .flatMap(con -> createReturnGeneratedKeys(con, parameterGroups, sql, mapper), true,
+                .flatMap(con -> createReturnGeneratedKeys(con, parameterGroups, sql, mapper, eagerDispose), true,
                         1);
     }
 
     private static <T> Flowable<T> createReturnGeneratedKeys(Connection con,
             Flowable<List<Object>> parameterGroups, String sql,
-            Function<? super ResultSet, T> mapper) {
+            Function<? super ResultSet, T> mapper, boolean eagerDispose) {
         Callable<NamedPreparedStatement> resourceFactory = () -> Util
                 .prepareReturnGeneratedKeys(con, sql);
         Function<NamedPreparedStatement, Flowable<T>> obsFactory = ps -> parameterGroups
@@ -137,7 +137,7 @@ final class Update {
                 .doOnComplete(() -> Util.commit(ps.ps)) //
                 .doOnError(e -> Util.rollback(ps.ps));
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
-        return Flowable.using(resourceFactory, obsFactory, disposer);
+        return Flowable.using(resourceFactory, obsFactory, disposer, eagerDispose);
     }
 
     private static <T> Flowable<T> create(NamedPreparedStatement ps, List<Object> parameters,

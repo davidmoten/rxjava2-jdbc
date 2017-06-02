@@ -42,7 +42,7 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder> implem
     @Override
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
         Flowable<List<Object>> pg = super.parameterGroupsToFlowable();
-        Flowable<T> f = Select.<T>create(connections.firstOrError(), pg, sql, fetchSize, function);
+        Flowable<T> f = Select.<T>create(connections.firstOrError(), pg, sql, fetchSize, function, true);
         if (dependsOn != null) {
             return dependsOn.ignoreElements().andThen(f);
         } else {

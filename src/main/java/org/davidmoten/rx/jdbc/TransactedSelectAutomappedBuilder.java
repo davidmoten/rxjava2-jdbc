@@ -91,7 +91,8 @@ public final class TransactedSelectAutomappedBuilder<T> {
                             sb.selectBuilder.parameterGroupsToFlowable(), //
                             sb.selectBuilder.sql, //
                             sb.selectBuilder.fetchSize, //
-                            rs -> Util.mapObject(rs, sb.cls, 1)) //
+                            rs -> Util.mapObject(rs, sb.cls, 1), //
+                            false) //
                     .materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                     .doOnNext(tx -> {

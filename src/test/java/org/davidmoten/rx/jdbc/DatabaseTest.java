@@ -1193,7 +1193,9 @@ public class DatabaseTest {
                 .doOnSuccess(System.out::println) //
                 .flatMapPublisher(tx -> tx //
                         .update("update person set score = -4 where score = -3") //
-                        .countsOnly()) //
+                        .countsOnly() //
+                        .doOnSubscribe(s -> System.out.println("subscribed")) //
+                        .doOnNext(num -> System.out.println("num=" + num))) //
                 .test() //
                 .assertValue(1) //
                 .assertComplete();

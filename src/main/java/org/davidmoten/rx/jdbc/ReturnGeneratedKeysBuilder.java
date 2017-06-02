@@ -20,7 +20,7 @@ public final class ReturnGeneratedKeysBuilder implements Getter {
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
         return update.startWithDependency(
                 Update.<T> createReturnGeneratedKeys(update.connections.firstOrError(),
-                        update.parameterGroupsToFlowable(), update.sql, function));
+                        update.parameterGroupsToFlowable(), update.sql, function, true));
 
     }
 

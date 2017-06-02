@@ -115,12 +115,10 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
     public static final class TransactedUpdateBuilderValuesOnly {
         private final TransactedUpdateBuilder b;
         private final Database db;
-        private final UpdateBuilder updateBuilder;
 
         TransactedUpdateBuilderValuesOnly(TransactedUpdateBuilder b, Database db) {
             this.b = b;
             this.db = db;
-            this.updateBuilder = b.updateBuilder;
         }
 
         // TODO add other methods e.g. parameter setting methods? Lots of
@@ -159,7 +157,10 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
                             ub.connections //
                                     .firstOrError() //
                                     .map(c -> Util.toTransactedConnection(connection, c)), //
-                            ub.parameterGroupsToFlowable(), ub.sql, ub.batchSize) //
+                            ub.parameterGroupsToFlowable(), //
+                            ub.sql, //
+                            ub.batchSize, //
+                            false) //
                             .materialize() //
                             .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                             .doOnNext(tx -> commitOnComplete(tx)));
