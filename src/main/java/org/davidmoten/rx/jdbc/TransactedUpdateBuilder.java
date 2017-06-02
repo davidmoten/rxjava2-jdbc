@@ -115,11 +115,17 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
     public static final class TransactedUpdateBuilderValuesOnly {
         private final TransactedUpdateBuilder b;
         private final Database db;
+        private final UpdateBuilder updateBuilder;
 
         TransactedUpdateBuilderValuesOnly(TransactedUpdateBuilder b, Database db) {
             this.b = b;
             this.db = db;
+            this.updateBuilder = b.updateBuilder;
         }
+
+        // TODO add other methods e.g. parameter setting methods? Lots of
+        // copy-and-paste not attractive here so may accept restricting
+        // functionality once valuesOnly() called
 
         public Flowable<Integer> counts() {
             return createFlowable(b.updateBuilder, db) //
