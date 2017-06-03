@@ -56,7 +56,7 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder>
 
     public Flowable<Integer> counts() {
         return startWithDependency(Update.create(connections.firstOrError(),
-                super.parameterGroupsToFlowable(), sql, batchSize, true));
+                super.parameterGroupsToFlowable(), sql, batchSize, true).dematerialize());
     }
 
     <T> Flowable<T> startWithDependency(Flowable<T> f) {

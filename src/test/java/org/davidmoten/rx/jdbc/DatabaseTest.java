@@ -133,8 +133,7 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(
-                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
@@ -537,8 +536,7 @@ public class DatabaseTest {
     public void testTuple6() {
         db() //
                 .select("select name, score, name, score, name, score from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
                 .firstOrError() //
                 .test() //
                 .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
@@ -548,12 +546,11 @@ public class DatabaseTest {
     public void testTuple7() {
         db() //
                 .select("select name, score, name, score, name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class, String.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
+                        String.class) //
                 .firstOrError() //
                 .test() //
-                .assertComplete()
-                .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+                .assertComplete().assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
 
     @Test
@@ -1177,8 +1174,8 @@ public class DatabaseTest {
                 .doOnNext(System.out::println) //
                 .toList() //
                 .test() //
-                .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3
-                        && list.get(1).isComplete() && list.size() == 2) //
+                .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3 && list.get(1).isComplete()
+                        && list.size() == 2) //
                 .assertComplete();
     }
 
@@ -1190,15 +1187,25 @@ public class DatabaseTest {
                 .transaction();
 
         transaction //
+                .doOnDispose(() -> System.out.println("disposing")) //
                 .doOnSuccess(System.out::println) //
-                .flatMapPublisher(tx -> tx //
-                        .update("update person set score = -4 where score = -3") //
-                        .countsOnly() //
-                        .doOnSubscribe(s -> System.out.println("subscribed")) //
-                        .doOnNext(num -> System.out.println("num=" + num))) //
+                .flatMapPublisher(tx -> {
+                    System.out.println("flatmapping");
+                    return tx //
+                            .update("update person set score = -4 where score = -3") //
+                            .countsOnly() //
+                            .doOnSubscribe(s -> System.out.println("subscribed")) //
+                            .doOnNext(num -> System.out.println("num=" + num));
+                }) //
                 .test() //
+                .assertNoErrors() //
                 .assertValue(1) //
                 .assertComplete();
+    }
+
+    @Test
+    public void testSingleFlatMap() {
+        Single.just(1).flatMapPublisher(n -> Flowable.just(1)).test(1).assertValue(1).assertComplete();
     }
 
     interface Person {

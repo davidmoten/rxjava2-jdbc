@@ -26,19 +26,21 @@ final class Update {
         // prevent instantiation
     }
 
-    public static Flowable<Integer> create(Single<Connection> connection, Flowable<List<Object>> parameterGroups,
-            String sql, int batchSize, boolean eagerDispose) {
+    public static Flowable<Notification<Integer>> create(Single<Connection> connection,
+            Flowable<List<Object>> parameterGroups, String sql, int batchSize, boolean eagerDispose) {
         return connection //
                 .toFlowable() //
                 .flatMap(con -> create(con, sql, parameterGroups, batchSize, eagerDispose), true, 1);
     }
 
-    private static Flowable<Integer> create(Connection con, String sql, Flowable<List<Object>> parameterGroups,
-            int batchSize, boolean eagerDispose) {
+    private static Flowable<Notification<Integer>> create(Connection con, String sql,
+            Flowable<List<Object>> parameterGroups, int batchSize, boolean eagerDispose) {
+        log.debug("Update.create {}", sql);
         Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql);
-        final Function<NamedPreparedStatement, Flowable<Integer>> flowableFactory;
+        final Function<NamedPreparedStatement, Flowable<Notification<Integer>>> flowableFactory;
         if (batchSize == 0) {
             flowableFactory = ps -> parameterGroups.flatMap(parameters -> create(ps, parameters).toFlowable()) //
+                    .materialize() //
                     .doOnComplete(() -> Util.commit(ps.ps)) //
                     .doOnError(e -> Util.rollback(ps.ps));
         } else {
@@ -56,9 +58,9 @@ final class Update {
                     }
                     return result;
 
-                }).materialize() //
+                }) //
+                        .materialize() //
                         .flatMap(n -> executeFinalBatch(ps, n, count[0] > 0)) //
-                        .<Integer>dematerialize() //
                         .doOnComplete(() -> Util.commit(ps.ps)) //
                         .doOnError(e -> Util.rollback(ps.ps));
             };

@@ -6,10 +6,15 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 
 public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdateBuilder> {
+
+    private static final Logger log = LoggerFactory.getLogger(TransactedUpdateBuilder.class);
 
     final UpdateBuilder updateBuilder;
     private final Database db;
@@ -151,7 +156,9 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
 
     private static Flowable<Tx<Integer>> createFlowable(UpdateBuilder ub, Database db) {
         return Flowable.defer(() -> {
+            log.debug("creating deferred flowable");
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
+            AtomicReference<Tx<Integer>> t = new AtomicReference<>();
             return ub.startWithDependency( //
                     Update.create(
                             ub.connections //
@@ -161,9 +168,13 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
                             ub.sql, //
                             ub.batchSize, //
                             false) //
-                            .materialize() //
                             .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
-                            .doOnNext(tx -> commitOnComplete(tx)));
+                            .doOnNext(tx -> {
+                                if (tx.isComplete()) {
+                                    t.set(tx);
+                                }
+                            }) //
+                            .doOnComplete(() -> commitOnComplete(t.get())));
         });
     }
 
