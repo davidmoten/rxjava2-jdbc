@@ -26,20 +26,19 @@ final class Update {
         // prevent instantiation
     }
 
-    public static Flowable<Integer> create(Single<Connection> connection,
-            Flowable<List<Object>> parameterGroups, String sql, int batchSize, boolean eagerDispose) {
+    public static Flowable<Integer> create(Single<Connection> connection, Flowable<List<Object>> parameterGroups,
+            String sql, int batchSize, boolean eagerDispose) {
         return connection //
                 .toFlowable() //
                 .flatMap(con -> create(con, sql, parameterGroups, batchSize, eagerDispose), true, 1);
     }
 
-    private static Flowable<Integer> create(Connection con, String sql,
-            Flowable<List<Object>> parameterGroups, int batchSize, boolean eagerDispose) {
+    private static Flowable<Integer> create(Connection con, String sql, Flowable<List<Object>> parameterGroups,
+            int batchSize, boolean eagerDispose) {
         Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql);
         final Function<NamedPreparedStatement, Flowable<Integer>> flowableFactory;
         if (batchSize == 0) {
-            flowableFactory = ps -> parameterGroups
-                    .flatMap(parameters -> create(ps, parameters).toFlowable()) //
+            flowableFactory = ps -> parameterGroups.flatMap(parameters -> create(ps, parameters).toFlowable()) //
                     .doOnComplete(() -> Util.commit(ps.ps)) //
                     .doOnError(e -> Util.rollback(ps.ps));
         } else {
@@ -55,20 +54,21 @@ final class Update {
                     } else {
                         result = createAddBatch(ps, parameters).toFlowable();
                     }
-                    return result //
-                            .doOnComplete(() -> Util.commit(ps.ps)) //
-                            .doOnError(e -> Util.rollback(ps.ps));
+                    return result;
+
                 }).materialize() //
                         .flatMap(n -> executeFinalBatch(ps, n, count[0] > 0)) //
-                        .dematerialize();
+                        .<Integer>dematerialize() //
+                        .doOnComplete(() -> Util.commit(ps.ps)) //
+                        .doOnError(e -> Util.rollback(ps.ps));
             };
         }
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(resourceFactory, flowableFactory, disposer, eagerDispose);
     }
 
-    private static Flowable<Notification<Integer>> executeFinalBatch(NamedPreparedStatement ps,
-            Notification<Integer> n, boolean outstandingBatch) throws SQLException {
+    private static Flowable<Notification<Integer>> executeFinalBatch(NamedPreparedStatement ps, Notification<Integer> n,
+            boolean outstandingBatch) throws SQLException {
         if (n.isOnComplete() && outstandingBatch) {
             log.debug("executing final batch");
             return toFlowable(ps.ps.executeBatch()) //
@@ -87,12 +87,11 @@ final class Update {
         });
     }
 
-    private static Flowable<Integer> createExecuteBatch(NamedPreparedStatement ps,
-            List<Object> parameters) {
+    private static Flowable<Integer> createExecuteBatch(NamedPreparedStatement ps, List<Object> parameters) {
         return Flowable.defer(() -> {
             Util.setParameters(ps.ps, parameters, ps.names);
             ps.ps.addBatch();
-            log.debug("batch added with {}",parameters);
+            log.debug("batch added with {}", parameters);
             Flowable<Integer> o = toFlowable(ps.ps.executeBatch());
             log.debug("batch executed");
             return o;
@@ -114,24 +113,21 @@ final class Update {
         return Completable.fromAction(() -> {
             Util.setParameters(ps.ps, parameters, ps.names);
             ps.ps.addBatch();
-            log.debug("batch added with {}",parameters);
+            log.debug("batch added with {}", parameters);
         });
     }
 
     public static <T> Flowable<T> createReturnGeneratedKeys(Single<Connection> connection,
-            Flowable<List<Object>> parameterGroups, String sql,
-            Function<? super ResultSet, ? extends T> mapper, boolean eagerDispose) {
+            Flowable<List<Object>> parameterGroups, String sql, Function<? super ResultSet, ? extends T> mapper,
+            boolean eagerDispose) {
         return connection //
                 .toFlowable() //
-                .flatMap(con -> createReturnGeneratedKeys(con, parameterGroups, sql, mapper, eagerDispose), true,
-                        1);
+                .flatMap(con -> createReturnGeneratedKeys(con, parameterGroups, sql, mapper, eagerDispose), true, 1);
     }
 
-    private static <T> Flowable<T> createReturnGeneratedKeys(Connection con,
-            Flowable<List<Object>> parameterGroups, String sql,
-            Function<? super ResultSet, T> mapper, boolean eagerDispose) {
-        Callable<NamedPreparedStatement> resourceFactory = () -> Util
-                .prepareReturnGeneratedKeys(con, sql);
+    private static <T> Flowable<T> createReturnGeneratedKeys(Connection con, Flowable<List<Object>> parameterGroups,
+            String sql, Function<? super ResultSet, T> mapper, boolean eagerDispose) {
+        Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepareReturnGeneratedKeys(con, sql);
         Function<NamedPreparedStatement, Flowable<T>> obsFactory = ps -> parameterGroups
                 .flatMap(parameters -> create(ps, parameters, mapper), true, 1) //
                 .doOnComplete(() -> Util.commit(ps.ps)) //
