@@ -3,11 +3,9 @@
 [![codecov](https://codecov.io/gh/davidmoten/rxjava2-jdbc/branch/master/graph/badge.svg)](https://codecov.io/gh/davidmoten/rxjava2-jdbc)
 <!--[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc)<br/>-->
 
-With the release of RxJava 2 now is a good time for a rewrite of [rxjava-jdbc](https://github.com/davidmoten/rxjava-jdbc). 
+JDBC is so much simpler with *rxjava2-jdbc*.
 
 Status: *in development*
-
-JDBC is so much simpler with *rxjava2-jdbc*.
 
 How to build
 -------------
