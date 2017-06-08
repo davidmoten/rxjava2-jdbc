@@ -618,15 +618,6 @@ public enum Util {
         };
     }
 
-    static <T> String getSqlFromQueryAnnotation(Class<T> cls) {
-        Query query = cls.getAnnotation(Query.class);
-        if (query != null && query.value() != null) {
-            return query.value();
-        } else
-            throw new RuntimeException("Class " + cls
-                    + " must be annotated with @Query(sql) or sql must be specified to the builder.select() call");
-    }
-
     /**
      * Returns a function that converts the ResultSet column values into
      * parameters to the constructor (with number of parameters equals the
