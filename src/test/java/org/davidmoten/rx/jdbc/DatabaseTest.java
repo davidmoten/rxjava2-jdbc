@@ -1243,6 +1243,8 @@ public class DatabaseTest {
     public void testSingleFlatMap() {
         Single.just(1).flatMapPublisher(n -> Flowable.just(1)).test(1).assertValue(1).assertComplete();
     }
+    
+    
 
     interface Person {
         @Column
