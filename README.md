@@ -359,10 +359,10 @@ If you want more control over the behaviour of the non-blocking connection pool:
 NonBlockingConnectionPool pool = Pools
     .nonBlocking()
     .url(url)
-     an unused connection will be closed after thirty minutes
+    // an unused connection will be closed after thirty minutes
     .maxIdleTime(30, TimeUnit.MINUTES)
-     connections are checked for healthiness on checkout if the connection 
-     has been idle for at least `idleTimeBeforeHealthCheckMs`
+    // connections are checked for healthiness on checkout if the connection 
+    // has been idle for at least `idleTimeBeforeHealthCheckMs`
     .healthy(c -> c.prepareStatement("select 1").execute())
     .idleTimeBeforeHealthCheckMs(1, TimeUnit.MINUTES)
     .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) 
@@ -388,20 +388,20 @@ so you can copy and paste this code to your ide and it will run (in a main metho
  of size 1
 Database db = Database.test(1); 
 
-start a slow query
+// start a slow query
 db.select("select score from person where name=?") 
   .parameters("FRED") 
   .getAs(Integer.class) 
-   slow things down by sleeping
+   // slow things down by sleeping
   .doOnNext(x -> Thread.sleep(1000)) 
-   run in background thread
+   // run in background thread
   .subscribeOn(Schedulers.io()) 
   .subscribe();
 
-ensure that query starts
+// ensure that query starts
 Thread.sleep(100);
 
-query again while first query running
+// query again while first query running
 db.select("select score from person where name=?") 
   .parameters("FRED") 
   .getAs(Integer.class) 
@@ -410,7 +410,7 @@ db.select("select score from person where name=?")
 
 System.out.println("second query submitted");
 
-wait for stuff to happen asynchronously
+// wait for stuff to happen asynchronously
 Thread.sleep(5000);
 ```
 
@@ -436,83 +436,92 @@ Blob and Clobs are straightforward to handle.
 Here's how to insert a String value into a Clob (*document* column below is of type ```CLOB```):
 ```java
 String document = ...
-Observable<Integer> count = db
-		.update("insert into person_clob(name,document) values(?,?)")
-		.parameter("FRED")
-		.parameter(Database.toSentinelIfNull(document)).count();
+Flowable<Integer> count = db
+  .update("insert into person_clob(name,document) values(?,?)")
+  .parameters("FRED", Database.toSentinelIfNull(document))
+  .count();
 ```
 (Note the use of the ```Database.toSentinelIfNull(String)``` method to handle the null case correctly)
 
 or using a ```java.io.Reader```:
 ```java
 Reader reader = ...;
-Observable<Integer> count = db
-		.update("insert into person_clob(name,document) values(?,?)")
-		.parameter("FRED")
-		.parameter(reader).count();
+Flowable<Integer> count = db
+  .update("insert into person_clob(name,document) values(?,?)")
+  .parameters("FRED", reader)
+  .count();
 ```
 ### Insert a Null Clob
 This requires *either* a special call (```parameterClob(String)```) to identify the parameter as a CLOB:
 ```java
-Observable<Integer> count = db
-		.update("insert into person_clob(name,document) values(?,?)")
-		.parameter("FRED")
-		.parameterClob(null).count();
+Flowable<Integer> count = db
+  .update("insert into person_clob(name,document) values(?,?)")
+  .parameters("FRED")
+  .parameterClob(null)
+  .count();
 ```
 or use the null Sentinel object for Clobs:
 ```java
-Observable<Integer> count = db
-		.update("insert into person_clob(name,document) values(?,?)")
-		.parameter("FRED")
-		.parameter(Database.NULL_CLOB).count();
+Flowable<Integer> count = db
+  .update("insert into person_clob(name,document) values(?,?)")
+  .parameters("FRED")
+  .parameters(Database.NULL_CLOB)
+  .count();
 ```
 or wrap the String parameter with ```Database.toSentinelIfNull(String)``` as above in the Insert a Clob section.
 
 ### Read a Clob
 ```java
-Observable<String> document = db.select("select document from person_clob")
-				.getAs(String.class);
+Flowable<String> document = 
+  db.select("select document from person_clob")
+    .getAs(String.class);
 ```
 or
 ```java
-Observable<Reader> document = db.select("select document from person_clob")
-				.getAs(Reader.class);
+Flowable<Reader> document = 
+  db.select("select document from person_clob")
+    .getAs(Reader.class);
 ```
 ### Insert a Blob
 Similarly for Blobs (*document* column below is of type ```BLOB```):
 ```java
 byte[] bytes = ...
-Observable<Integer> count = db
-		.update("insert into person_blob(name,document) values(?,?)")
-		.parameter("FRED")
-		.parameter(Database.toSentinelIfNull(bytes)).count();
+Flowable<Integer> count = db
+  .update("insert into person_blob(name,document) values(?,?)")
+  .parameters("FRED")
+  .parameters(Database.toSentinelIfNull(bytes))
+  .count();
 ```
 ### Insert a Null Blob
 This requires *either* a special call (```parameterBlob(String)``` to identify the parameter as a CLOB:
 ```java
-Observable<Integer> count = db
-		.update("insert into person_blob(name,document) values(?,?)")
-		.parameter("FRED")
-		.parameterBlob(null).count();
+Flowable<Integer> count = db
+  .update("insert into person_blob(name,document) values(?,?)")
+  .parameters("FRED")
+  .parameterBlob(null)
+  .count();
 ```
 or use the null Sentinel object for Blobs:
 ```java
-Observable<Integer> count = db
-		.update("insert into person_clob(name,document) values(?,?)")
-		.parameter("FRED")
-		.parameter(Database.NULL_BLOB).count();
+Flowable<Integer> count = db
+  .update("insert into person_clob(name,document) values(?,?)")
+  .parameters("FRED")
+  .parameters(Database.NULL_BLOB)
+  .count();
 ```
 or wrap the byte[] parameter with ```Database.toSentinelIfNull(byte[])``` as above in the Insert a Blob section.
 
 ### Read a Blob
 ```java
-Observable<byte[]> document = db.select("select document from person_clob")
-				.getAs(byte[].class);
+Flowable<byte[]> document = 
+  db.select("select document from person_clob")
+    .getAs(byte[].class);
 ```
 or
 ```java
-Observable<InputStream> document = db.select("select document from person_clob")
-				.getAs(InputStream.class);
+Flowable<InputStream> document = 
+  db.select("select document from person_clob")
+    .getAs(InputStream.class);
 ```
 
 Returning generated keys
