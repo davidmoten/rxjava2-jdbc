@@ -60,7 +60,7 @@ To use the built-in test database you will need the Apache Derby dependency:
 </dependency>
 ```
 
-The test database has a few tables (see [script](src/main/resources/database-test.sql) including `Person` and `Address` with three rows in `Person` and two rows in `Address`:
+The test database has a few tables (see [script](src/main/resources/database-test.sql)) including `Person` and `Address` with three rows in `Person` and two rows in `Address`:
 
 <img src="src/docs/tables.png?raw=true"/>
 
