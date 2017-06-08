@@ -50,8 +50,17 @@ If you want to have a play with a built-in test database then do this:
 ```java
 Database db = Database.test(maxPoolSize);
 ```
+To use the built-in test database you will need the Apache Derby dependency:
 
-The test database has a couple of tables `Person` and `Address` with three rows in `Person` and two rows in `Address`:
+```xml
+<dependency>
+  <groupId>org.apache.derby</groupId>
+  <artifactId>derby</artifactId>
+  <version>10.13.1.1</version>
+</dependency>
+```
+
+The test database has a few tables (see [script](src/main/resources/database-test.sql) including `Person` and `Address` with three rows in `Person` and two rows in `Address`:
 
 <img src="src/docs/tables.png?raw=true"/>
 
