@@ -162,6 +162,40 @@ If you don't configure things correctly these exceptions may be emitted and incl
 * `ColumnNotFoundException`
 * `ClassCastException`
 
+Automap with annotated query
+-----------------------------
+The automapped interface can be annotated with the select query:
+
+```java
+@Query("select name, score from person order by name")
+interface Person {
+   @Column
+   String name();
+
+   @Column
+   int score();
+}
+```
+
+To use the annotated interface:
+
+```java
+Database
+  .test()
+  .select(Person.class)
+  .get()
+  .map(Person::name)
+  .blockingForEach(System.out::println);
+```
+
+Output:
+
+```
+FRED
+JOSEPH
+MARMADUKE
+```
+
 Auto mappings
 ------------------
 The automatic mappings below of objects are used in the ```autoMap()``` method and for typed ```getAs()``` calls.
