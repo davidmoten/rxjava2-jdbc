@@ -1204,6 +1204,33 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testTxAfterSelect() {
+        Database db = db(3);
+        Single<Tx<Integer>> transaction = db //
+                .select("select score from person where name='FRED'") //
+                .transactedValuesOnly() //
+                .getAs(Integer.class) //
+                .firstOrError();
+
+        transaction //
+                .doOnDispose(() -> System.out.println("disposing")) //
+                .doOnSuccess(System.out::println) //
+                .flatMapPublisher(tx -> {
+                    System.out.println("flatmapping");
+                    return tx //
+                            .update("update person set score = -4 where score = ?") //
+                            .parameters(tx.value()) //
+                            .countsOnly() //
+                            .doOnSubscribe(s -> System.out.println("subscribed")) //
+                            .doOnNext(num -> System.out.println("num=" + num));
+                }) //
+                .test() //
+                .assertNoErrors() //
+                .assertValue(1) //
+                .assertComplete();
+    }
+
+    @Test
     public void testSingleFlatMap() {
         Single.just(1).flatMapPublisher(n -> Flowable.just(1)).test(1).assertValue(1).assertComplete();
     }

@@ -151,7 +151,8 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
 
     @SuppressWarnings("unchecked")
     public Single<Tx<?>> tx() {
-        return (Single<Tx<?>>) (Single<?>) createFlowable(updateBuilder, db).lastOrError();
+        return (Single<Tx<?>>) (Single<?>) createFlowable(updateBuilder, db) //
+                .lastOrError();
     }
 
     private static Flowable<Tx<Integer>> createFlowable(UpdateBuilder ub, Database db) {
@@ -174,12 +175,14 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
                                     t.set(tx);
                                 }
                             }) //
-                            .doOnComplete(() -> commitOnComplete(t.get())));
+                            //.doOnComplete(() -> commitOnComplete(t.get()))
+                            );
         });
     }
 
     private static void commitOnComplete(Tx<Integer> tx) throws SQLException {
         if (tx.isComplete()) {
+            System.out.println("committing");
             ((TxImpl<Integer>) tx).connection().commit();
         }
     }
