@@ -487,6 +487,15 @@ public class DatabaseTest {
                 .assertComplete();
     }
 
+    @Test
+    public void testAutoMapForReadMe() {
+        Database //
+                .test() //
+                .select(Person10.class) //
+                .map(Person10::name) //
+                .blockingForEach(System.out::println);
+    }
+
     @Test(expected = QueryAnnotationMissingException.class)
     public void testAutoMapWithoutQueryInAnnotation() {
         db().select(Person.class);

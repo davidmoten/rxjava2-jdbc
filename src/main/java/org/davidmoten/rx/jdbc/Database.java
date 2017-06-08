@@ -60,13 +60,16 @@ public final class Database implements AutoCloseable {
 
     private static void createDatabase(Connection c) {
         try {
-            Sql.statements(Database.class.getResourceAsStream("/database-test.sql")).stream().forEach(x -> {
-                try {
-                    c.prepareStatement(x).execute();
-                } catch (SQLException e) {
-                    throw new SQLRuntimeException(e);
-                }
-            });
+            Sql //
+                    .statements(Database.class.getResourceAsStream("/database-test.sql")) //
+                    .stream() //
+                    .forEach(x -> {
+                        try {
+                            c.prepareStatement(x).execute();
+                        } catch (SQLException e) {
+                            throw new SQLRuntimeException(e);
+                        }
+                    });
             c.commit();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);

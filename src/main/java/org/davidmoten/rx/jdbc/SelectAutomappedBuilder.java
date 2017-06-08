@@ -8,6 +8,7 @@ import org.davidmoten.rx.jdbc.exceptions.QueryAnnotationMissingException;
 
 import io.reactivex.Flowable;
 import io.reactivex.Single;
+import io.reactivex.functions.Function;
 
 public final class SelectAutomappedBuilder<T> {
 
@@ -42,6 +43,10 @@ public final class SelectAutomappedBuilder<T> {
 
     public Flowable<T> get() {
         return selectBuilder.autoMap(cls);
+    }
+    
+    public <R> Flowable<R> map(Function<? super T, ? extends R> function) {
+        return get().map(function);
     }
 
     public SelectAutomappedBuilder<T> parameterStream(Flowable<?> values) {

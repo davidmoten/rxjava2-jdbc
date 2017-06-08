@@ -196,6 +196,16 @@ JOSEPH
 MARMADUKE
 ```
 
+In fact the `.get()` is not required if followed by a `map`:
+
+```java
+Database
+  .test()
+  .select(Person.class)
+  .map(Person::name)
+  .blockingForEach(System.out::println);
+```
+
 Auto mappings
 ------------------
 The automatic mappings below of objects are used in the ```autoMap()``` method and for typed ```getAs()``` calls.

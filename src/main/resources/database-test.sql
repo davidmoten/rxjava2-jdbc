@@ -15,5 +15,5 @@ create table person_document (name varchar(50) not null,  document clob);
 create table person_image (name varchar(50) not null, document blob);
 
 -- test auto pk
-create table note(id bigint auto_increment primary key, text varchar(255);
+create table note(id bigint GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), text varchar(255));
 
