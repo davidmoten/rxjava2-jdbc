@@ -156,6 +156,34 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testSelectWithFetchSize() {
+        db().select("select score from person order by name") //
+                .fetchSize(2) //
+                .getAs(Integer.class) //
+                .test() //
+                .assertNoErrors() //
+                .assertValues(21, 34, 25) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSelectWithFetchSizeZero() {
+        db().select("select score from person order by name") //
+                .fetchSize(0) //
+                .getAs(Integer.class) //
+                .test() //
+                .assertNoErrors() //
+                .assertValues(21, 34, 25) //
+                .assertComplete();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSelectWithFetchSizeNegative() {
+        db().select("select score from person order by name") //
+                .fetchSize(-1);
+    }
+
+    @Test
     public void testSelectUsingNonBlockingBuilder() {
         NonBlockingConnectionPool pool = Pools //
                 .nonBlocking() //

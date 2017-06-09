@@ -5,10 +5,10 @@ import java.util.List;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
-import io.reactivex.Completable;
 import io.reactivex.Flowable;
 
-public final class SelectBuilder extends ParametersBuilder<SelectBuilder> implements Getter, DependsOn<SelectBuilder> {
+public final class SelectBuilder extends ParametersBuilder<SelectBuilder>
+        implements Getter, DependsOn<SelectBuilder> {
 
     final String sql;
     final Flowable<Connection> connections;
@@ -26,6 +26,13 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder> implem
         this.db = db;
     }
 
+    /**
+     * Sets the fetchSize for the JDBC statement. If 0 then fetchSize is not set
+     * and the default fetchSize for the JDBC driver you are using will be used.
+     * 
+     * @param size sets the fetchSize or chooses default value if 0
+     * @return this
+     */
     public SelectBuilder fetchSize(int size) {
         Preconditions.checkArgument(size >= 0);
         this.fetchSize = size;
@@ -43,7 +50,8 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder> implem
     @Override
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
         Flowable<List<Object>> pg = super.parameterGroupsToFlowable();
-        Flowable<T> f = Select.<T>create(connections.firstOrError(), pg, sql, fetchSize, function, true);
+        Flowable<T> f = Select.<T> create(connections.firstOrError(), pg, sql, fetchSize, function,
+                true);
         if (dependsOn != null) {
             return dependsOn.ignoreElements().andThen(f);
         } else {
