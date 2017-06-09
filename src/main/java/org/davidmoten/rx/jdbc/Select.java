@@ -24,7 +24,7 @@ final class Select {
 
     private static final Logger log = LoggerFactory.getLogger(Select.class);
 
-    public static <T> Flowable<T> create(Single<Connection> connections,
+    static <T> Flowable<T> create(Single<Connection> connections,
             Flowable<List<Object>> parameterGroups, String sql, int fetchSize,
             Function<? super ResultSet, ? extends T> mapper, boolean eagerDispose) {
         return connections //

@@ -2,6 +2,10 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
 
+import javax.annotation.Nonnull;
+
+import com.github.davidmoten.guavamini.Preconditions;
+
 /**
  * Provides JDBC Connections as required. It is advisable generally to use a
  * Connection pool.
@@ -14,6 +18,7 @@ public interface ConnectionProvider {
      * 
      * @return a new Connection to a database
      */
+    @Nonnull 
     Connection get();
 
     /**
@@ -24,12 +29,13 @@ public interface ConnectionProvider {
      */
     void close();
 
-    public static ConnectionProvider from(Connection con) {
+    public static ConnectionProvider from(@Nonnull Connection connection) {
+        Preconditions.checkNotNull(connection, "connection cannot be null");
         return new ConnectionProvider() {
 
             @Override
             public Connection get() {
-                return con;
+                return connection;
             }
 
             @Override

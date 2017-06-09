@@ -15,6 +15,8 @@ import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.davidmoten.rx.jdbc.pool.Pools;
 import org.davidmoten.rx.pool.Pool;
 
+import com.github.davidmoten.guavamini.Preconditions;
+
 import io.reactivex.Flowable;
 import io.reactivex.functions.Action;
 
@@ -24,16 +26,21 @@ public final class Database implements AutoCloseable {
 
     private final Action onClose;
 
-    private Database(Flowable<Connection> connections, Action onClose) {
+    private Database(@Nonnull Flowable<Connection> connections, @Nonnull Action onClose) {
         this.connections = connections;
         this.onClose = onClose;
     }
 
-    public static Database from(Flowable<Connection> connections, Action onClose) {
+    public static Database from(@Nonnull Flowable<Connection> connections,
+            @Nonnull Action onClose) {
+        Preconditions.checkNotNull(connections, "connections cannot be null");
+        Preconditions.checkNotNull(onClose, "onClose cannot be null");
         return new Database(connections, onClose);
     }
 
-    public static Database from(String url, int maxPoolSize) {
+    public static Database from(@Nonnull String url, int maxPoolSize) {
+        Preconditions.checkNotNull(url, "url cannot be null");
+        Preconditions.checkArgument(maxPoolSize > 0, "maxPoolSize must be greater than 0");
         return Database.from( //
                 Pools.nonBlocking() //
                         .url(url) //
@@ -41,11 +48,13 @@ public final class Database implements AutoCloseable {
                         .build());
     }
 
-    public static Database from(Pool<Connection> pool) {
+    public static Database from(@Nonnull Pool<Connection> pool) {
+        Preconditions.checkNotNull(pool, "pool canot be null");
         return new Database(pool.members().cast(Connection.class), () -> pool.close());
     }
 
     public static Database test(int maxPoolSize) {
+        Preconditions.checkArgument(maxPoolSize > 0, "maxPoolSize must be greater than 0");
         return Database.from( //
                 Pools.nonBlocking() //
                         .connectionProvider(testConnectionProvider()) //
@@ -61,7 +70,7 @@ public final class Database implements AutoCloseable {
         return test(3);
     }
 
-    private static void createDatabase(Connection c) {
+    private static void createDatabase(@Nonnull Connection c) {
         try {
             Sql //
                     .statements(Database.class.getResourceAsStream("/database-test.sql")) //
@@ -79,7 +88,7 @@ public final class Database implements AutoCloseable {
         }
     }
 
-    private static ConnectionProvider connectionProvider(String url) {
+    private static ConnectionProvider connectionProvider(@Nonnull String url) {
         return new ConnectionProvider() {
 
             private final AtomicBoolean once = new AtomicBoolean(false);
@@ -125,19 +134,23 @@ public final class Database implements AutoCloseable {
         }
     }
 
-    public <T> SelectAutomappedBuilder<T> select(Class<T> cls) {
+    public <T> SelectAutomappedBuilder<T> select(@Nonnull Class<T> cls) {
+        Preconditions.checkNotNull(cls, "cls cannot be null");
         return new SelectAutomappedBuilder<T>(cls, connections, this);
     }
 
-    public SelectBuilder select(String sql) {
+    public SelectBuilder select(@Nonnull String sql) {
+        Preconditions.checkNotNull(sql, "sql cannot be null");
         return new SelectBuilder(sql, connections(), this);
     }
 
-    public UpdateBuilder update(String sql) {
+    public UpdateBuilder update(@Nonnull String sql) {
+        Preconditions.checkNotNull(sql, "sql cannot be null");
         return new UpdateBuilder(sql, connections(), this);
     }
 
     public TransactedBuilder tx(@Nonnull Tx<?> tx) {
+        Preconditions.checkNotNull(tx, "tx cannot be null");
         TxImpl<?> t = (TxImpl<?>) tx;
         TransactedConnection c = t.connection().fork();
         return new TransactedBuilder(c, this);

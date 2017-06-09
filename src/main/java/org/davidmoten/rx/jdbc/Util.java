@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import io.reactivex.functions.Consumer;
 
-public enum Util {
+ public enum Util {
     ;
 
     private static final Logger log = LoggerFactory.getLogger(Util.class);

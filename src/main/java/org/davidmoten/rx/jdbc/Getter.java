@@ -3,6 +3,8 @@ package org.davidmoten.rx.jdbc;
 import java.sql.ResultSet;
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
 import org.davidmoten.rx.jdbc.tuple.Tuple4;
@@ -11,6 +13,8 @@ import org.davidmoten.rx.jdbc.tuple.Tuple6;
 import org.davidmoten.rx.jdbc.tuple.Tuple7;
 import org.davidmoten.rx.jdbc.tuple.TupleN;
 import org.davidmoten.rx.jdbc.tuple.Tuples;
+
+import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
 import io.reactivex.Single;
@@ -23,13 +27,15 @@ public interface Getter {
      * @param function
      * @return the results of the query as an Observable
      */
-    <T> Flowable<T> get(ResultSetMapper<? extends T> function);
+    <T> Flowable<T> get(@Nonnull ResultSetMapper<? extends T> function);
 
-    default <T> Flowable<T> getAs(Class<T> cls) {
+    default <T> Flowable<T> getAs(@Nonnull Class<T> cls) {
+        Preconditions.checkNotNull(cls, "cls cannot be null");
         return get(rs -> Util.mapObject(rs, cls, 1));
     }
-    
-    default <T> Flowable<Optional<T>> getAsOptional(Class<T> cls) {
+
+    default <T> Flowable<Optional<T>> getAsOptional(@Nonnull Class<T> cls) {
+        Preconditions.checkNotNull(cls, "cls cannot be null");
         return get(rs -> Optional.ofNullable(Util.mapObject(rs, cls, 1)));
     }
 
@@ -67,11 +73,8 @@ public interface Getter {
      * @return Flowable of T
      * 
      */
-    default <T> Flowable<T> autoMap(Class<T> cls) {
-//        if (sql == null) {
-//            // TODO get sql from query annotation
-//            // sql = Util.getSqlFromQueryAnnotation(cls);
-//        }
+    default <T> Flowable<T> autoMap(@Nonnull Class<T> cls) {
+        Preconditions.checkNotNull(cls, "cls cannot be null");
         return get(Util.autoMap(cls));
     }
 
@@ -85,7 +88,8 @@ public interface Getter {
      *            generic type of returned stream emissions
      * @return a stream of TupleN
      */
-    default <T> Flowable<TupleN<T>> getTupleN(Class<T> cls) {
+    default <T> Flowable<TupleN<T>> getTupleN(@Nonnull Class<T> cls) {
+        Preconditions.checkNotNull(cls, "cls cannot be null");
         return get(Tuples.tupleN(cls));
     }
 
@@ -108,7 +112,10 @@ public interface Getter {
      * @param cls2
      * @return
      */
-    default <T1, T2> Flowable<Tuple2<T1, T2>> getAs(Class<T1> cls1, Class<T2> cls2) {
+    default <T1, T2> Flowable<Tuple2<T1, T2>> getAs(@Nonnull Class<T1> cls1,
+            @Nonnull Class<T2> cls2) {
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         return get(Tuples.tuple(cls1, cls2));
     }
 
@@ -121,7 +128,11 @@ public interface Getter {
      * @param cls3
      * @return
      */
-    default <T1, T2, T3> Flowable<Tuple3<T1, T2, T3>> getAs(Class<T1> cls1, Class<T2> cls2, Class<T3> cls3) {
+    default <T1, T2, T3> Flowable<Tuple3<T1, T2, T3>> getAs(@Nonnull Class<T1> cls1,
+            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3) {
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
+        Preconditions.checkNotNull(cls3, "cls3 cannot be null");
         return get(Tuples.tuple(cls1, cls2, cls3));
     }
 
@@ -135,8 +146,12 @@ public interface Getter {
      * @param cls4
      * @return
      */
-    default <T1, T2, T3, T4> Flowable<Tuple4<T1, T2, T3, T4>> getAs(Class<T1> cls1, Class<T2> cls2, Class<T3> cls3,
-            Class<T4> cls4) {
+    default <T1, T2, T3, T4> Flowable<Tuple4<T1, T2, T3, T4>> getAs(@Nonnull Class<T1> cls1,
+            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4) {
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
+        Preconditions.checkNotNull(cls3, "cls3 cannot be null");
+        Preconditions.checkNotNull(cls4, "cls4 cannot be null");
         return get(Tuples.tuple(cls1, cls2, cls3, cls4));
     }
 
@@ -151,8 +166,14 @@ public interface Getter {
      * @param cls5
      * @return
      */
-    default <T1, T2, T3, T4, T5> Flowable<Tuple5<T1, T2, T3, T4, T5>> getAs(Class<T1> cls1, Class<T2> cls2,
-            Class<T3> cls3, Class<T4> cls4, Class<T5> cls5) {
+    default <T1, T2, T3, T4, T5> Flowable<Tuple5<T1, T2, T3, T4, T5>> getAs(@Nonnull Class<T1> cls1,
+            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4,
+            @Nonnull Class<T5> cls5) {
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
+        Preconditions.checkNotNull(cls3, "cls3 cannot be null");
+        Preconditions.checkNotNull(cls4, "cls4 cannot be null");
+        Preconditions.checkNotNull(cls5, "cls5 cannot be null");
         return get(Tuples.tuple(cls1, cls2, cls3, cls4, cls5));
     }
 
@@ -168,8 +189,15 @@ public interface Getter {
      * @param cls6
      * @return
      */
-    default <T1, T2, T3, T4, T5, T6> Flowable<Tuple6<T1, T2, T3, T4, T5, T6>> getAs(Class<T1> cls1, Class<T2> cls2,
-            Class<T3> cls3, Class<T4> cls4, Class<T5> cls5, Class<T6> cls6) {
+    default <T1, T2, T3, T4, T5, T6> Flowable<Tuple6<T1, T2, T3, T4, T5, T6>> getAs(
+            @Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3,
+            @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5, @Nonnull Class<T6> cls6) {
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
+        Preconditions.checkNotNull(cls3, "cls3 cannot be null");
+        Preconditions.checkNotNull(cls4, "cls4 cannot be null");
+        Preconditions.checkNotNull(cls5, "cls5 cannot be null");
+        Preconditions.checkNotNull(cls6, "cls6 cannot be null");
         return get(Tuples.tuple(cls1, cls2, cls3, cls4, cls5, cls6));
     }
 
@@ -186,8 +214,17 @@ public interface Getter {
      * @param cls7
      * @return
      */
-    default <T1, T2, T3, T4, T5, T6, T7> Flowable<Tuple7<T1, T2, T3, T4, T5, T6, T7>> getAs(Class<T1> cls1,
-            Class<T2> cls2, Class<T3> cls3, Class<T4> cls4, Class<T5> cls5, Class<T6> cls6, Class<T7> cls7) {
+    default <T1, T2, T3, T4, T5, T6, T7> Flowable<Tuple7<T1, T2, T3, T4, T5, T6, T7>> getAs(
+            @Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3,
+            @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5, @Nonnull Class<T6> cls6,
+            @Nonnull Class<T7> cls7) {
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
+        Preconditions.checkNotNull(cls3, "cls3 cannot be null");
+        Preconditions.checkNotNull(cls4, "cls4 cannot be null");
+        Preconditions.checkNotNull(cls5, "cls5 cannot be null");
+        Preconditions.checkNotNull(cls6, "cls6 cannot be null");
+        Preconditions.checkNotNull(cls7, "cls7 cannot be null");
         return get(Tuples.tuple(cls1, cls2, cls3, cls4, cls5, cls6, cls7));
     }
 

@@ -26,7 +26,7 @@ final class Update {
         // prevent instantiation
     }
 
-    public static Flowable<Notification<Integer>> create(Single<Connection> connection,
+    static Flowable<Notification<Integer>> create(Single<Connection> connection,
             Flowable<List<Object>> parameterGroups, String sql, int batchSize, boolean eagerDispose) {
         return connection //
                 .toFlowable() //
@@ -119,7 +119,7 @@ final class Update {
         });
     }
 
-    public static <T> Flowable<T> createReturnGeneratedKeys(Single<Connection> connection,
+    static <T> Flowable<T> createReturnGeneratedKeys(Single<Connection> connection,
             Flowable<List<Object>> parameterGroups, String sql, Function<? super ResultSet, ? extends T> mapper,
             boolean eagerDispose) {
         return connection //

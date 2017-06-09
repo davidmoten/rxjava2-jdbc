@@ -6,6 +6,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 
 final class ResultSetCache {
@@ -13,7 +15,7 @@ final class ResultSetCache {
     final ResultSet rs;
     final Map<String, Integer> colIndexes;
 
-    ResultSetCache(ResultSet rs) {
+    ResultSetCache(@Nonnull ResultSet rs) {
         this.rs = rs;
 
         this.colIndexes = collectColIndexes(rs);

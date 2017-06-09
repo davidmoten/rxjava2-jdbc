@@ -6,6 +6,8 @@ import java.util.List;
 import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.QueryAnnotationMissingException;
 
+import com.github.davidmoten.guavamini.Preconditions;
+
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
