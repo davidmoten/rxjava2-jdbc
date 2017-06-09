@@ -34,6 +34,7 @@ import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.MoreColumnsRequestedThanExistException;
+import org.davidmoten.rx.jdbc.exceptions.NamedParameterFoundButSqlDoesNotHaveNamesException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.exceptions.QueryAnnotationMissingException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
@@ -146,8 +147,7 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(
-                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -224,8 +224,7 @@ public class DatabaseTest {
     }
 
     @Test(timeout = 20000)
-    public void testSelectUsingNonBlockingBuilderConcurrencyTest()
-            throws InterruptedException, TimeoutException {
+    public void testSelectUsingNonBlockingBuilderConcurrencyTest() throws InterruptedException, TimeoutException {
         info();
         try {
             try (Database db = db(3)) {
@@ -297,7 +296,20 @@ public class DatabaseTest {
                 .getAs(Integer.class) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertError(NamedParameterMissingException.class).assertNoValues();
+                .assertError(NamedParameterMissingException.class) //
+                .assertNoValues();
+    }
+    
+    @Test
+    public void testSelectUsingParameterNameNullNameWhenSqlHasNoNames() {
+        db() //
+                .select("select score from person where name=?") //
+                .parameter(Parameter.create("name", "FRED")) //
+                .getAs(Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertError(NamedParameterFoundButSqlDoesNotHaveNamesException.class) //
+                .assertNoValues();
     }
 
     @Test(expected = NullPointerException.class)
@@ -645,8 +657,7 @@ public class DatabaseTest {
     public void testTuple6() {
         db() //
                 .select("select name, score, name, score, name, score from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
                 .firstOrError() //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
@@ -656,12 +667,11 @@ public class DatabaseTest {
     public void testTuple7() {
         db() //
                 .select("select name, score, name, score, name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class, String.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
+                        String.class) //
                 .firstOrError() //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertComplete()
-                .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+                .assertComplete().assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
 
     @Test
@@ -1035,7 +1045,7 @@ public class DatabaseTest {
         db.select("select document from person_clob where name='FRED'") //
                 .getAsOptional(String.class) //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(Optional.<String> empty()) //
+                .assertValue(Optional.<String>empty()) //
                 .assertComplete();
     }
 
@@ -1181,7 +1191,7 @@ public class DatabaseTest {
                     .assertNotComplete();
             scheduler.advanceTimeBy(1, TimeUnit.MINUTES);
             ts0.assertValueCount(1) //
-            .assertComplete();
+                    .assertComplete();
             TestSubscriber<Integer> ts = db
                     .select( //
                             "select score from person where name=?") //
@@ -1333,8 +1343,8 @@ public class DatabaseTest {
                 .doOnNext(System.out::println) //
                 .toList() //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3
-                        && list.get(1).isComplete() && list.size() == 2) //
+                .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3 && list.get(1).isComplete()
+                        && list.size() == 2) //
                 .assertComplete();
     }
 
@@ -1391,8 +1401,7 @@ public class DatabaseTest {
 
     @Test
     public void testSingleFlatMap() {
-        Single.just(1).flatMapPublisher(n -> Flowable.just(1)).test(1).assertValue(1)
-                .assertComplete();
+        Single.just(1).flatMapPublisher(n -> Flowable.just(1)).test(1).assertValue(1).assertComplete();
     }
 
     interface Person {

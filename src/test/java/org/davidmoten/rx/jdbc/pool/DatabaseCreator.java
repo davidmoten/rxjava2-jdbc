@@ -34,6 +34,7 @@ public class DatabaseCreator {
         return Database.from(Pools.nonBlocking() //
                 .connectionProvider(connectionProviderDerby(nextUrlDerby())) //
                 .maxPoolSize(maxSize) //
+                .scheduler(Schedulers.from(Executors.newFixedThreadPool(maxSize))) //
                 .build());
     }
 

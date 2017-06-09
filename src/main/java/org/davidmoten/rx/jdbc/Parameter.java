@@ -84,4 +84,8 @@ public final class Parameter {
         return builder.toString();
     }
 
+    public static Parameter create(String name, Object value) {
+        return new Parameter(name, value);
+    }
+
 }

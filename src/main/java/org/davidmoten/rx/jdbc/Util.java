@@ -7,8 +7,6 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -34,6 +32,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import javax.annotation.RegEx;
+
 import org.apache.commons.io.IOUtils;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
@@ -41,6 +41,7 @@ import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.MoreColumnsRequestedThanExistException;
+import org.davidmoten.rx.jdbc.exceptions.NamedParameterFoundButSqlDoesNotHaveNamesException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.exceptions.ParameterMissingNameException;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
@@ -49,49 +50,10 @@ import org.slf4j.LoggerFactory;
 
 import io.reactivex.functions.Consumer;
 
- public enum Util {
+public enum Util {
     ;
 
     private static final Logger log = LoggerFactory.getLogger(Util.class);
-
-    public static void closeAll(ResultSet rs) {
-        Statement stmt = null;
-        try {
-            stmt = rs.getStatement();
-        } catch (SQLException e) {
-            // ignore
-        }
-        try {
-            rs.close();
-        } catch (SQLException e) {
-            // ignore
-        }
-        if (stmt != null) {
-            closeAll(stmt);
-        }
-
-    }
-
-    public static void closeAll(Statement stmt) {
-        try {
-            stmt.close();
-        } catch (SQLException e) {
-            // ignore
-        }
-        Connection con = null;
-        try {
-            con = stmt.getConnection();
-        } catch (SQLException e1) {
-            // ignore
-        }
-        if (con != null) {
-            try {
-                con.close();
-            } catch (SQLException e) {
-                // ignore
-            }
-        }
-    }
 
     /**
      * Sets parameters for the {@link PreparedStatement}.
@@ -100,11 +62,11 @@ import io.reactivex.functions.Consumer;
      * @param params
      * @throws SQLException
      */
-    static void setParameters(PreparedStatement ps, List<Parameter> params, boolean namesAllowed)
-            throws SQLException {
+    static void setParameters(PreparedStatement ps, List<Parameter> params, boolean namesAllowed) throws SQLException {
         for (int i = 1; i <= params.size(); i++) {
             if (params.get(i - 1).hasName() && !namesAllowed)
-                throw new SQLException("named parameter found but sql does not contain names");
+                throw new NamedParameterFoundButSqlDoesNotHaveNamesException(
+                        "named parameter found but sql does not contain names ps=" + ps);
             Object o = params.get(i - 1).value();
             try {
                 if (o == null)
@@ -143,8 +105,7 @@ import io.reactivex.functions.Consumer;
                     } else if (ZonedDateTime.class.isAssignableFrom(cls)) {
                         Calendar cal = Calendar.getInstance();
                         ZonedDateTime d = (ZonedDateTime) o;
-                        ps.setTimestamp(i, new java.sql.Timestamp(d.toInstant().toEpochMilli()),
-                                cal);
+                        ps.setTimestamp(i, new java.sql.Timestamp(d.toInstant().toEpochMilli()), cal);
                     } else
                         ps.setObject(i, o);
                 }
@@ -164,16 +125,14 @@ import io.reactivex.functions.Consumer;
      * @param cls
      * @throws SQLException
      */
-    private static void setBlob(PreparedStatement ps, int i, Object o, Class<?> cls)
-            throws SQLException {
+    private static void setBlob(PreparedStatement ps, int i, Object o, Class<?> cls) throws SQLException {
         final InputStream is;
         if (o instanceof byte[]) {
             is = new ByteArrayInputStream((byte[]) o);
         } else if (o instanceof InputStream)
             is = (InputStream) o;
         else
-            throw new RuntimeException(
-                    "cannot insert parameter of type " + cls + " into blob column " + i);
+            throw new RuntimeException("cannot insert parameter of type " + cls + " into blob column " + i);
         Blob c = ps.getConnection().createBlob();
         OutputStream os = c.setBinaryStream(1);
         copy(is, os);
@@ -189,16 +148,14 @@ import io.reactivex.functions.Consumer;
      * @param cls
      * @throws SQLException
      */
-    private static void setClob(PreparedStatement ps, int i, Object o, Class<?> cls)
-            throws SQLException {
+    private static void setClob(PreparedStatement ps, int i, Object o, Class<?> cls) throws SQLException {
         final Reader r;
         if (o instanceof String)
             r = new StringReader((String) o);
         else if (o instanceof Reader)
             r = (Reader) o;
         else
-            throw new RuntimeException(
-                    "cannot insert parameter of type " + cls + " into clob column " + i);
+            throw new RuntimeException("cannot insert parameter of type " + cls + " into clob column " + i);
         Clob c = ps.getConnection().createClob();
         Writer w = c.setCharacterStream(1);
         copy(r, w);
@@ -235,31 +192,29 @@ import io.reactivex.functions.Consumer;
         }
     }
 
-    private static void setNamedParameters(PreparedStatement ps, List<Parameter> parameters,
-            List<String> names) throws SQLException {
+    private static void setNamedParameters(PreparedStatement ps, List<Parameter> parameters, List<String> names)
+            throws SQLException {
         Map<String, Parameter> map = new HashMap<String, Parameter>();
         for (Parameter p : parameters) {
             if (p.hasName()) {
                 map.put(p.name(), p);
             } else {
                 throw new ParameterMissingNameException(
-                        "named parameters were expected but this parameter did not have a name: "
-                                + p);
+                        "named parameters were expected but this parameter did not have a name: " + p);
             }
         }
         List<Parameter> list = new ArrayList<Parameter>();
         for (String name : names) {
             if (!map.containsKey(name))
-                throw new NamedParameterMissingException(
-                        "named parameter is missing for '" + name + "'");
+                throw new NamedParameterMissingException("named parameter is missing for '" + name + "'");
             Parameter p = map.get(name);
             list.add(p);
         }
         Util.setParameters(ps, list, true);
     }
 
-    static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters,
-            List<String> names) throws SQLException {
+    static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters, List<String> names)
+            throws SQLException {
         List<Parameter> params = parameters.stream().map(o -> {
             if (o instanceof Parameter) {
                 return (Parameter) o;
@@ -306,25 +261,21 @@ import io.reactivex.functions.Consumer;
         return prepare(con, 0, sql);
     }
 
-    static NamedPreparedStatement prepare(Connection con, int fetchSize, String sql)
-            throws SQLException {
+    static NamedPreparedStatement prepare(Connection con, int fetchSize, String sql) throws SQLException {
         // TODO can we parse SqlInfo through because already calculated by
         // builder?
         SqlInfo s = SqlInfo.parse(sql);
         log.debug("preparing statement: {}", sql);
-        PreparedStatement ps = con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY,
-                ResultSet.CONCUR_READ_ONLY);
+        PreparedStatement ps = con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
         if (fetchSize > 0) {
             ps.setFetchSize(fetchSize);
         }
         return new NamedPreparedStatement(ps, s.names());
     }
 
-    static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql)
-            throws SQLException {
+    static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql) throws SQLException {
         SqlInfo s = SqlInfo.parse(sql);
-        return new NamedPreparedStatement(
-                con.prepareStatement(s.sql(), Statement.RETURN_GENERATED_KEYS), s.names());
+        return new NamedPreparedStatement(con.prepareStatement(s.sql(), Statement.RETURN_GENERATED_KEYS), s.names());
     }
 
     // Visible for testing
@@ -479,8 +430,8 @@ import io.reactivex.functions.Consumer;
         try {
             int colCount = rs.getMetaData().getColumnCount();
             if (i > colCount) {
-                throw new MoreColumnsRequestedThanExistException("only " + colCount
-                        + " columns exist in ResultSet and column " + i + " was requested");
+                throw new MoreColumnsRequestedThanExistException(
+                        "only " + colCount + " columns exist in ResultSet and column " + i + " was requested");
             }
             if (rs.getObject(i) == null) {
                 return null;
@@ -636,9 +587,9 @@ import io.reactivex.functions.Consumer;
             public T apply(ResultSet rs) {
                 // access to this method will be serialized
                 if (firstTime) {
-                    if (cls.isInterface()) {
-                        proxyService = new ProxyService<T>(rs, cls);
-                    }
+                    // if (cls.isInterface()) {
+                    proxyService = new ProxyService<T>(rs, cls);
+                    // }
                     firstTime = false;
                 }
                 return autoMap(rs, cls, proxyService);
@@ -660,116 +611,122 @@ import io.reactivex.functions.Consumer;
      */
     @SuppressWarnings("unchecked")
     static <T> T autoMap(ResultSet rs, Class<T> cls, ProxyService<T> proxyService) {
-        try {
-            if (proxyService != null) {
-                return proxyService.newInstance();
-            } else {
-                int n = rs.getMetaData().getColumnCount();
-                for (Constructor<?> c : cls.getDeclaredConstructors()) {
-                    if (n == c.getParameterTypes().length) {
-                        return autoMap(rs, (Constructor<T>) c);
-                    }
-                }
-                throw new RuntimeException(
-                        "constructor with number of parameters=" + n + "  not found in " + cls);
-            }
-        } catch (SQLException e) {
-            throw new SQLRuntimeException(e);
-        }
+        return proxyService.newInstance();
+        // try {
+        // if (proxyService != null) {
+        // return proxyService.newInstance();
+        // } else {
+        // int n = rs.getMetaData().getColumnCount();
+        // for (Constructor<?> c : cls.getDeclaredConstructors()) {
+        // if (n == c.getParameterTypes().length) {
+        // return autoMap(rs, (Constructor<T>) c);
+        // }
+        // }
+        // throw new RuntimeException(
+        // "constructor with number of parameters=" + n + " not found in " +
+        // cls);
+        // }
+        // } catch (SQLException e) {
+        // throw new SQLRuntimeException(e);
+        // }
     }
 
-    /**
-     * Converts the ResultSet column values into parameters to the given
-     * constructor (with number of parameters equals the number of columns) of
-     * type <code>T</code> then returns an instance of type <code>T</code>. See
-     * See {@link SelectBuilder#autoMap(Class)}.
-     * 
-     * @param rs
-     *            the result set row
-     * @param c
-     *            constructor to use for instantiation
-     * @return automapped instance
-     */
-    private static <T> T autoMap(ResultSet rs, Constructor<T> c) {
-        Class<?>[] types = c.getParameterTypes();
-        List<Object> list = new ArrayList<Object>();
-        for (int i = 0; i < types.length; i++) {
-            list.add(autoMap(getObject(rs, types[i], i + 1), types[i]));
-        }
-        try {
-            return newInstance(c, list);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(
-                    "problem with parameters=" + getTypeInfo(list) + ", rs types=" + getRowInfo(rs)
-                            + ". Be sure not to use primitives in a constructor when calling autoMap().",
-                    e);
-        }
-    }
-
-    /**
-     * 
-     * @param c
-     *            constructor to use
-     * @param parameters
-     *            constructor parameters
-     * @return
-     */
-    @SuppressWarnings("unchecked")
-    private static <T> T newInstance(Constructor<?> c, List<Object> parameters) {
-        try {
-            return (T) c.newInstance(parameters.toArray());
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Returns debugging info about the types of a list of objects.
-     * 
-     * @param list
-     * @return
-     */
-    private static String getTypeInfo(List<Object> list) {
-
-        StringBuilder s = new StringBuilder();
-        for (Object o : list) {
-            if (s.length() > 0)
-                s.append(", ");
-            if (o == null)
-                s.append("null");
-            else {
-                s.append(o.getClass().getName());
-                s.append("=");
-                s.append(o);
-            }
-        }
-        return s.toString();
-    }
-
-    private static String getRowInfo(ResultSet rs) {
-        StringBuilder s = new StringBuilder();
-        try {
-            ResultSetMetaData md = rs.getMetaData();
-            for (int i = 1; i <= md.getColumnCount(); i++) {
-                String name = md.getColumnName(i);
-                String type = md.getColumnClassName(i);
-                if (s.length() > 0)
-                    s.append(", ");
-                s.append(name);
-                s.append("=");
-                s.append(type);
-            }
-        } catch (SQLException e1) {
-            throw new SQLRuntimeException(e1);
-        }
-        return s.toString();
-    }
+    // /**
+    // * Converts the ResultSet column values into parameters to the given
+    // * constructor (with number of parameters equals the number of columns) of
+    // * type <code>T</code> then returns an instance of type <code>T</code>.
+    // See
+    // * See {@link SelectBuilder#autoMap(Class)}.
+    // *
+    // * @param rs
+    // * the result set row
+    // * @param c
+    // * constructor to use for instantiation
+    // * @return automapped instance
+    // */
+    // private static <T> T autoMap(ResultSet rs, Constructor<T> c) {
+    // Class<?>[] types = c.getParameterTypes();
+    // List<Object> list = new ArrayList<Object>();
+    // for (int i = 0; i < types.length; i++) {
+    // list.add(autoMap(getObject(rs, types[i], i + 1), types[i]));
+    // }
+    // try {
+    // return newInstance(c, list);
+    // } catch (RuntimeException e) {
+    // throw new RuntimeException(
+    // "problem with parameters=" + getTypeInfo(list) + ", rs types=" +
+    // getRowInfo(rs)
+    // + ". Be sure not to use primitives in a constructor when calling
+    // autoMap().",
+    // e);
+    // }
+    // }
+    //
+    // /**
+    // *
+    // * @param c
+    // * constructor to use
+    // * @param parameters
+    // * constructor parameters
+    // * @return
+    // */
+    // @SuppressWarnings("unchecked")
+    // private static <T> T newInstance(Constructor<?> c, List<Object>
+    // parameters) {
+    // try {
+    // return (T) c.newInstance(parameters.toArray());
+    // } catch (InstantiationException e) {
+    // throw new RuntimeException(e);
+    // } catch (IllegalAccessException e) {
+    // throw new RuntimeException(e);
+    // } catch (IllegalArgumentException e) {
+    // throw new RuntimeException(e);
+    // } catch (InvocationTargetException e) {
+    // throw new RuntimeException(e);
+    // }
+    // }
+    //
+    // /**
+    // * Returns debugging info about the types of a list of objects.
+    // *
+    // * @param list
+    // * @return
+    // */
+    // private static String getTypeInfo(List<Object> list) {
+    //
+    // StringBuilder s = new StringBuilder();
+    // for (Object o : list) {
+    // if (s.length() > 0)
+    // s.append(", ");
+    // if (o == null)
+    // s.append("null");
+    // else {
+    // s.append(o.getClass().getName());
+    // s.append("=");
+    // s.append(o);
+    // }
+    // }
+    // return s.toString();
+    // }
+    //
+    // private static String getRowInfo(ResultSet rs) {
+    // StringBuilder s = new StringBuilder();
+    // try {
+    // ResultSetMetaData md = rs.getMetaData();
+    // for (int i = 1; i <= md.getColumnCount(); i++) {
+    // String name = md.getColumnName(i);
+    // String type = md.getColumnClassName(i);
+    // if (s.length() > 0)
+    // s.append(", ");
+    // s.append(name);
+    // s.append("=");
+    // s.append(type);
+    // }
+    // } catch (SQLException e1) {
+    // throw new SQLRuntimeException(e1);
+    // }
+    // return s.toString();
+    // }
 
     static interface Col {
         Class<?> returnType();
@@ -829,8 +786,7 @@ import io.reactivex.functions.Consumer;
             this(rs, collectColIndexes(rs), getMethodCols(cls), cls);
         }
 
-        public ProxyService(ResultSet rs, Map<String, Integer> colIndexes,
-                Map<String, Col> methodCols, Class<T> cls) {
+        public ProxyService(ResultSet rs, Map<String, Integer> colIndexes, Map<String, Col> methodCols, Class<T> cls) {
             this.rs = rs;
             this.colIndexes = colIndexes;
             this.methodCols = methodCols;
@@ -850,46 +806,41 @@ import io.reactivex.functions.Consumer;
                         String name = ((NamedCol) column).name;
                         index = colIndexes.get(name.toUpperCase());
                         if (index == null) {
-                            throw new ColumnNotFoundException(
-                                    "query column names do not include '" + name
-                                            + "' which is a named column in the automapped interface "
-                                            + cls.getName());
+                            throw new ColumnNotFoundException("query column names do not include '" + name
+                                    + "' which is a named column in the automapped interface " + cls.getName());
                         }
                     } else {
                         IndexedCol col = ((IndexedCol) column);
                         index = col.index;
                         if (index < 1) {
                             throw new ColumnIndexOutOfRangeException(
-                                    "value for Index annotation (on autoMapped interface "
-                                            + cls.getName() + ") must be > 0");
+                                    "value for Index annotation (on autoMapped interface " + cls.getName()
+                                            + ") must be > 0");
                         } else {
                             int count = getColumnCount(rs);
                             if (index > count) {
                                 throw new ColumnIndexOutOfRangeException("value " + index
-                                        + " for Index annotation (on autoMapped interface "
-                                        + cls.getName()
-                                        + ") must be between 1 and the number of columns in the result set ("
-                                        + count + ")");
+                                        + " for Index annotation (on autoMapped interface " + cls.getName()
+                                        + ") must be between 1 and the number of columns in the result set (" + count
+                                        + ")");
                             }
                         }
                     }
-                    Object value = autoMap(getObject(rs, column.returnType(), index),
-                            column.returnType());
+                    Object value = autoMap(getObject(rs, column.returnType(), index), column.returnType());
                     values.put(methodName, value);
                 }
             }
             if (values.isEmpty()) {
                 throw new AnnotationsNotFoundException(
-                        "Did you forget to add @Column or @Index annotations to " + cls.getName()
-                                + "?");
+                        "Did you forget to add @Column or @Index annotations to " + cls.getName() + "?");
             }
             return values;
         }
 
         @SuppressWarnings("unchecked")
         public T newInstance() {
-            return (T) java.lang.reflect.Proxy.newProxyInstance(cls.getClassLoader(),
-                    new Class[] { cls }, new ProxyInstance<T>(values()));
+            return (T) java.lang.reflect.Proxy.newProxyInstance(cls.getClassLoader(), new Class[] { cls },
+                    new ProxyInstance<T>(values()));
         }
 
     }
@@ -963,7 +914,7 @@ import io.reactivex.functions.Consumer;
     static String camelCaseToUnderscore(String camelCased) {
         // guava has best solution for this with CaseFormat class
         // but don't want to add dependency just for this method
-        final String regex = "([a-z])([A-Z]+)";
+        final @RegEx String regex = "([a-z])([A-Z]+)";
         final String replacement = "$1_$2";
         return camelCased.replaceAll(regex, replacement);
     }
@@ -987,8 +938,7 @@ import io.reactivex.functions.Consumer;
         };
     }
 
-    static Connection toTransactedConnection(AtomicReference<Connection> connection, Connection c)
-            throws SQLException {
+    static Connection toTransactedConnection(AtomicReference<Connection> connection, Connection c) throws SQLException {
         if (c instanceof TransactedConnection) {
             connection.set(c);
             return c;
