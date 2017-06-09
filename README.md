@@ -573,8 +573,7 @@ Flowable<Integer> keys =
     db.update("insert into note(text) values(?)")
       .parameters("hello", "there")
       .returnGeneratedKeys()
-      .getAs(Integer.class)
-      .blockingSubscribe();
+      .getAs(Integer.class);
 ```
 
 The `returnGeneratedKeys` method also supports returning multiple keys per row so the builder offers methods just like `select` to do explicit mapping or auto mapping.
