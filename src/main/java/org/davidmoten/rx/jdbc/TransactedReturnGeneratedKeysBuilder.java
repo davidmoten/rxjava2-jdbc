@@ -42,5 +42,26 @@ public final class TransactedReturnGeneratedKeysBuilder {
     public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
         return get(rs -> Util.mapObject(rs, cls, 1));
     }
+    
+    public ValuesOnly valuesOnly() {
+        return new ValuesOnly(this);
+    }
+    
+    public static final class ValuesOnly {
+
+        private final TransactedReturnGeneratedKeysBuilder builder;
+
+        public ValuesOnly(TransactedReturnGeneratedKeysBuilder builder) {
+            this.builder = builder;
+        }
+        public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
+            return builder.get(function).flatMap(Tx.flattenToValuesOnly());
+        }
+        
+        public <T> Flowable<T> getAs(Class<T> cls) {
+            return builder.getAs(cls).flatMap(Tx.flattenToValuesOnly());
+        }
+        
+    }
 
 }

@@ -48,7 +48,7 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
         updateBuilder.parameter(name, value);
         return this;
     }
-    
+
     public TransactedUpdateBuilder parameter(Object value) {
         return parameters(value);
     }
@@ -78,8 +78,8 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
      * @return a builder used to specify how to process the generated keys
      *         ResultSet
      */
-    public ReturnGeneratedKeysBuilder returnGeneratedKeys() {
-        return updateBuilder.returnGeneratedKeys();
+    public TransactedReturnGeneratedKeysBuilder returnGeneratedKeys() {
+        return new TransactedReturnGeneratedKeysBuilder(this, db);
     }
 
     public TransactedUpdateBuilder transactedValuesOnly() {
@@ -145,10 +145,10 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
                             false) //
                             .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                             .doOnNext(tx -> {
-                if (tx.isComplete()) {
-                    t.set(tx);
-                }
-            }) //
+                                if (tx.isComplete()) {
+                                    t.set(tx);
+                                }
+                            }) //
             );
         });
     }

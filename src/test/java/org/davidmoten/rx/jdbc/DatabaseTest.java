@@ -866,6 +866,7 @@ public class DatabaseTest {
                 .parameters("HI", "THERE") //
                 .transacted() //
                 .returnGeneratedKeys() //
+                .valuesOnly() //
                 .getAs(Integer.class)//
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(1, 2) //
@@ -875,6 +876,7 @@ public class DatabaseTest {
                 .parameters("ME", "TOO") //
                 .transacted() //
                 .returnGeneratedKeys() //
+                .valuesOnly() //
                 .getAs(Integer.class)//
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(3, 4) //
@@ -889,12 +891,14 @@ public class DatabaseTest {
                 .parameters("HI", "THERE") //
                 .transacted() //
                 .returnGeneratedKeys() //
+                .valuesOnly() //
                 .getAs(Integer.class);
 
         db.update("insert into note(text) values(?)") //
                 .parameters("ME", "TOO") //
                 .transacted() //
                 .returnGeneratedKeys() //
+                .valuesOnly() //
                 .getAs(Integer.class)//
                 .startWith(a) //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
