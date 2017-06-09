@@ -126,17 +126,21 @@ public enum Util {
      * @throws SQLException
      */
     private static void setBlob(PreparedStatement ps, int i, Object o, Class<?> cls) throws SQLException {
-        final InputStream is;
-        if (o instanceof byte[]) {
-            is = new ByteArrayInputStream((byte[]) o);
-        } else if (o instanceof InputStream)
-            is = (InputStream) o;
-        else
-            throw new RuntimeException("cannot insert parameter of type " + cls + " into blob column " + i);
-        Blob c = ps.getConnection().createBlob();
-        OutputStream os = c.setBinaryStream(1);
-        copy(is, os);
-        ps.setBlob(i, c);
+        if (o instanceof Blob) {
+            ps.setBlob(i, (Blob) o);
+        } else {
+            final InputStream is;
+            if (o instanceof byte[]) {
+                is = new ByteArrayInputStream((byte[]) o);
+            } else if (o instanceof InputStream)
+                is = (InputStream) o;
+            else
+                throw new RuntimeException("cannot insert parameter of type " + cls + " into blob column " + i);
+            Blob c = ps.getConnection().createBlob();
+            OutputStream os = c.setBinaryStream(1);
+            copy(is, os);
+            ps.setBlob(i, c);
+        }
     }
 
     /**
@@ -149,17 +153,21 @@ public enum Util {
      * @throws SQLException
      */
     private static void setClob(PreparedStatement ps, int i, Object o, Class<?> cls) throws SQLException {
-        final Reader r;
-        if (o instanceof String)
-            r = new StringReader((String) o);
-        else if (o instanceof Reader)
-            r = (Reader) o;
-        else
-            throw new RuntimeException("cannot insert parameter of type " + cls + " into clob column " + i);
-        Clob c = ps.getConnection().createClob();
-        Writer w = c.setCharacterStream(1);
-        copy(r, w);
-        ps.setClob(i, c);
+        if (o instanceof Clob) {
+            ps.setClob(i, (Clob) o);
+        } else {
+            final Reader r;
+            if (o instanceof String)
+                r = new StringReader((String) o);
+            else if (o instanceof Reader)
+                r = (Reader) o;
+            else
+                throw new RuntimeException("cannot insert parameter of type " + cls + " into clob column " + i);
+            Clob c = ps.getConnection().createClob();
+            Writer w = c.setCharacterStream(1);
+            copy(r, w);
+            ps.setClob(i, c);
+        }
     }
 
     /**

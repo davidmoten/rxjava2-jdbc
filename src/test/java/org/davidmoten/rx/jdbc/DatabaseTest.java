@@ -5,10 +5,17 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -49,6 +56,8 @@ import org.davidmoten.rx.jdbc.tuple.Tuple6;
 import org.davidmoten.rx.jdbc.tuple.Tuple7;
 import org.davidmoten.rx.jdbc.tuple.TupleN;
 import org.h2.jdbc.JdbcSQLException;
+import org.hsqldb.jdbc.JDBCBlobFile;
+import org.hsqldb.jdbc.JDBCClobFile;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -311,6 +320,91 @@ public class DatabaseTest {
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertError(NamedParameterFoundButSqlDoesNotHaveNamesException.class) //
                 .assertNoValues();
+    }
+
+    @Test
+    public void testUpdateWithNull() {
+        db() //
+                .update("update person set date_of_birth = :dob") //
+                .parameter(Parameter.create("dob", null)) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(3) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateClobWithNull() {
+        Database db = db();
+        insertNullClob(db);
+        db //
+                .update("update person_clob set document = :doc") //
+                .parameter("doc", Database.NULL_CLOB) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(1) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateClobWithClob() throws SQLException {
+        Database db = db();
+        Clob clob = new JDBCClobFile(new File("src/test/resources/big.txt"));
+        insertNullClob(db);
+        db //
+                .update("update person_clob set document = :doc") //
+                .parameter("doc", clob) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(1) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateClobWithReader() throws FileNotFoundException {
+        Database db = db();
+        Reader reader = new FileReader(new File("src/test/resources/big.txt"));
+        insertNullClob(db);
+        db //
+                .update("update person_clob set document = :doc") //
+                .parameter("doc", reader) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(1) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateBlobWithBlob() throws SQLException {
+        Database db = db();
+        Blob blob = new JDBCBlobFile(new File("src/test/resources/big.txt"));
+        insertPersonBlob(db);
+        db //
+                .update("update person_blob set document = :doc") //
+                .parameter("doc", blob) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(1) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateBlobWithNull() {
+        Database db = db();
+        insertPersonBlob(db);
+        db //
+                .update("update person_blob set document = :doc") //
+                .parameter("doc", Database.NULL_BLOB) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(1) //
+                .assertComplete();
     }
 
     @Test(expected = NullPointerException.class)
@@ -1064,16 +1158,20 @@ public class DatabaseTest {
     @Test
     public void testInsertNullClobAndReadClobAsString() {
         Database db = db();
+        insertNullClob(db);
+        db.select("select document from person_clob where name='FRED'") //
+                .getAsOptional(String.class) //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(Optional.<String>empty()) //
+                .assertComplete();
+    }
+
+    private static void insertNullClob(Database db) {
         db.update("insert into person_clob(name,document) values(?,?)") //
                 .parameters("FRED", Database.NULL_CLOB) //
                 .counts() //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
-                .assertComplete();
-        db.select("select document from person_clob where name='FRED'") //
-                .getAsOptional(String.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(Optional.<String>empty()) //
                 .assertComplete();
     }
 
@@ -1109,12 +1207,7 @@ public class DatabaseTest {
     @Test
     public void testInsertNullClobAndReadClobAsTuple2() {
         Database db = db();
-        db.update("insert into person_clob(name,document) values(?,?)") //
-                .parameters("FRED", Database.NULL_CLOB) //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
+        insertNullClob(db);
         db.select("select document, document from person_clob where name='FRED'") //
                 .getAs(String.class, String.class) //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -1159,18 +1252,22 @@ public class DatabaseTest {
     @Test
     public void testInsertBlobAndReadBlobAsByteArray() {
         Database db = db();
+        insertPersonBlob(db);
+        db.select("select document from person_blob where name='FRED'") //
+                .getAs(byte[].class) //
+                .map(b -> new String(b)) //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue("some text here") //
+                .assertComplete();
+    }
+
+    private static void insertPersonBlob(Database db) {
         byte[] bytes = "some text here".getBytes();
         db.update("insert into person_blob(name,document) values(?,?)") //
                 .parameters("FRED", bytes) //
                 .counts() //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
-                .assertComplete();
-        db.select("select document from person_blob where name='FRED'") //
-                .getAs(byte[].class) //
-                .map(b -> new String(b)) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue("some text here") //
                 .assertComplete();
     }
 
