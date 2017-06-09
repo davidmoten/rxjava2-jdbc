@@ -165,6 +165,7 @@ public final class NonBlockingMember<T> implements Member<T> {
             if (s.value == INITIALIZED_NOT_IN_USE && state.compareAndSet(s,
                     new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED, s.enabled))) {
                 T v = value;
+                //TODO race condition with checkout?
                 value = null;
                 if (v != null) {
                     try {
