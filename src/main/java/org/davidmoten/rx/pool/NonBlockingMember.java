@@ -20,6 +20,7 @@ public final class NonBlockingMember<T> implements Member<T> {
     private static final int NOT_INITIALIZED_NOT_IN_USE = 0;
     private static final int INITIALIZED_IN_USE = 1;
     private static final int INITIALIZED_NOT_IN_USE = 2;
+    private static final int DISPOSING = 3;
 
     private final AtomicReference<State> state = new AtomicReference<>(
             new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED, true));
@@ -43,10 +44,11 @@ public final class NonBlockingMember<T> implements Member<T> {
             // CAS loop for modifications to state of this member
             while (true) {
                 State s = state.get();
-                if (s.value == NOT_INITIALIZED_NOT_IN_USE) {
+                if (s.name == NOT_INITIALIZED_NOT_IN_USE) {
                     log.debug("checking out member not initialized={}", this);
                     if (s.enabled) {
-                        if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, s.idleTimeoutClose, s.enabled))) {
+                        if (state.compareAndSet(s,
+                                new State(INITIALIZED_IN_USE, s.idleTimeoutClose, s.enabled))) {
                             try {
                                 // this action might block (it does in the JDBC
                                 // 4 Connection case)
@@ -66,9 +68,10 @@ public final class NonBlockingMember<T> implements Member<T> {
                             return Maybe.empty();
                         }
                     }
-                } else if (s.value == INITIALIZED_NOT_IN_USE) {
+                } else if (s.name == INITIALIZED_NOT_IN_USE) {
                     log.debug("checking out member not in use={}", this);
-                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, DisposableHelper.DISPOSED, s.enabled))) {
+                    if (state.compareAndSet(s,
+                            new State(INITIALIZED_IN_USE, DisposableHelper.DISPOSED, s.enabled))) {
                         // cancel the idle timeout
                         s.idleTimeoutClose.dispose();
                         long now = pool.scheduler.now(TimeUnit.MILLISECONDS);
@@ -91,10 +94,16 @@ public final class NonBlockingMember<T> implements Member<T> {
                         }
 
                     }
-                } else if (s.value == INITIALIZED_IN_USE) {
-                    log.debug("checking out member={}", this);
-                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, s.idleTimeoutClose, s.enabled))) {
+                } else if (s.name == INITIALIZED_IN_USE) {
+                    log.debug("checking out member in use={}", this);
+                    if (state.compareAndSet(s, s.copy())) {
                         log.debug("already in use, member={}", this);
+                        return Maybe.empty();
+                    }
+                } else if (s.name == DISPOSING) {
+                    log.debug("checking out member disposed={}", this);
+                    if (state.compareAndSet(s, s.copy())) {
+                        log.debug("disposing, member={}", this);
                         return Maybe.empty();
                     }
                 }
@@ -106,8 +115,8 @@ public final class NonBlockingMember<T> implements Member<T> {
 
         while (true) {
             State s = state.get();
-            if (s.value == INITIALIZED_IN_USE && state.compareAndSet(s,
-                    new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED, s.enabled))) {
+            if (s.name == INITIALIZED_IN_USE && state.compareAndSet(s,
+                    new State(DISPOSING, DisposableHelper.DISPOSED, s.enabled))) {
                 T v = value;
                 value = null;
                 if (v != null) {
@@ -118,6 +127,8 @@ public final class NonBlockingMember<T> implements Member<T> {
                     }
                 }
                 s.idleTimeoutClose.dispose();
+                state.set(new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED,
+                        s.enabled));
                 // schedule reconsideration of this member in retryDelayMs
                 worker.schedule(() -> pool.subject.onNext(NonBlockingMember.this), //
                         pool.returnToPoolDelayAfterHealthCheckFailureMs, TimeUnit.MILLISECONDS);
@@ -134,7 +145,7 @@ public final class NonBlockingMember<T> implements Member<T> {
         log.debug("checking in member {}", this);
         while (true) {
             State s = state.get();
-            if (s.value == INITIALIZED_IN_USE) {
+            if (s.name == INITIALIZED_IN_USE) {
                 if (s.enabled) {
                     Resetter<T> resetter = new Resetter<>(this);
                     Disposable sub = worker.schedule(resetter, //
@@ -147,7 +158,8 @@ public final class NonBlockingMember<T> implements Member<T> {
                         sub.dispose();
                     }
                 } else {
-                    if (state.compareAndSet(s, new State(INITIALIZED_NOT_IN_USE, null, s.enabled))) {
+                    if (state.compareAndSet(s,
+                            new State(INITIALIZED_NOT_IN_USE, null, s.enabled))) {
                         dispose();
                     }
                     break;
@@ -162,10 +174,10 @@ public final class NonBlockingMember<T> implements Member<T> {
 
         while (true) {
             State s = state.get();
-            if (s.value == INITIALIZED_NOT_IN_USE && state.compareAndSet(s,
+            if (s.name == INITIALIZED_NOT_IN_USE && state.compareAndSet(s,
                     new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED, s.enabled))) {
                 T v = value;
-                //TODO race condition with checkout?
+                // TODO race condition with checkout?
                 value = null;
                 if (v != null) {
                     try {
@@ -210,8 +222,9 @@ public final class NonBlockingMember<T> implements Member<T> {
         log.debug("resetting member {}", this);
         while (true) {
             State s = state.get();
-            if (s.value == INITIALIZED_NOT_IN_USE) {
-                if (state.compareAndSet(s, new State(NOT_INITIALIZED_NOT_IN_USE, s.idleTimeoutClose, s.enabled))) {
+            if (s.name == INITIALIZED_NOT_IN_USE) {
+                if (state.compareAndSet(s,
+                        new State(NOT_INITIALIZED_NOT_IN_USE, s.idleTimeoutClose, s.enabled))) {
                     pool.subject.onNext(this);
                     break;
                 }
@@ -227,18 +240,18 @@ public final class NonBlockingMember<T> implements Member<T> {
     }
 
     private static final class State {
-        final int value;
+        final int name;
         final Disposable idleTimeoutClose;
         final boolean enabled;
 
-        State(int value, Disposable idleTimeoutClose, boolean enabled) {
-            this.value = value;
+        State(int name, Disposable idleTimeoutClose, boolean enabled) {
+            this.name = name;
             this.idleTimeoutClose = idleTimeoutClose;
             this.enabled = enabled;
         }
-        
+
         State copy() {
-            return new State(value, idleTimeoutClose, enabled);
+            return new State(name, idleTimeoutClose, enabled);
         }
     }
 
@@ -246,13 +259,12 @@ public final class NonBlockingMember<T> implements Member<T> {
     public void shutdown() {
         while (true) {
             State s = state.get();
-            if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose, false))) {
+            if (state.compareAndSet(s, new State(s.name, s.idleTimeoutClose, false))) {
                 worker.dispose();
                 return;
             }
         }
     }
-    
 
     private static <T> Member<T> ifNull(Member<T> proxy, Member<T> other) {
         if (proxy == null) {
