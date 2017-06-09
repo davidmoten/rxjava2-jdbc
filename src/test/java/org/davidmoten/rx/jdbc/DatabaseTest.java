@@ -224,7 +224,7 @@ public class DatabaseTest {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test(timeout = 40000)
     public void testSelectUsingNonBlockingBuilderConcurrencyTest() throws InterruptedException, TimeoutException {
         info();
         try {
