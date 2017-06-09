@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
@@ -14,10 +15,12 @@ import org.davidmoten.rx.pool.MemberFactory;
 import org.davidmoten.rx.pool.NonBlockingMember;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
 
 public class PoolTest {
@@ -25,8 +28,8 @@ public class PoolTest {
     @Test
     public void testSimplePool() throws InterruptedException {
         AtomicInteger count = new AtomicInteger();
-        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(pool,
-                null);
+        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(
+                pool, null);
         Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet()) //
                 .healthy(n -> true) //
                 .disposer(n -> {
@@ -34,7 +37,7 @@ public class PoolTest {
                 .maxSize(3)//
                 .returnToPoolDelayAfterHealthCheckFailureMs(1000)//
                 .memberFactory(memberFactory)//
-                .scheduler(Schedulers.computation())//
+                .scheduler(Schedulers.trampoline())//
                 .build();
         pool.members() //
                 .doOnNext(m -> m.checkin()) //
@@ -43,8 +46,9 @@ public class PoolTest {
     }
 
     @Test
-    public void testConnectionPoolRecylesFirst() {
-        Database db = DatabaseCreator.create(2);
+    public void testConnectionPoolRecylesAlternating() {
+        TestScheduler s = new TestScheduler();
+        Database db = DatabaseCreator.create(2, s);
         TestSubscriber<Connection> ts = db.connections() //
                 .doOnNext(System.out::println) //
                 .doOnNext(c -> {
@@ -52,13 +56,15 @@ public class PoolTest {
                     c.close();
                 }) //
                 .test(4); //
+        s.advanceTimeBy(1, TimeUnit.SECONDS);
         ts.assertValueCount(4) //
                 .assertNotTerminated();
         List<Object> list = ts.getEvents().get(0);
         // all 4 connections released were the same
-        assertTrue(list.get(0) == list.get(1));
+        System.out.println(list);
         assertTrue(list.get(0) == list.get(2));
-        assertTrue(list.get(0) == list.get(3));
+        assertTrue(list.get(1) == list.get(3));
+        assertTrue(list.get(0) != list.get(1));
     }
 
     @Test
@@ -66,9 +72,9 @@ public class PoolTest {
         Flowable.fromIterable(Arrays.asList(1, 2)).test(4).assertValues(1, 2);
     }
 
-    @Test
+    @Test(timeout=3000)
     public void testConnectionPoolRecylesMany() throws SQLException {
-        Database db = DatabaseCreator.create(2);
+        Database db = DatabaseCreator.create(2, Schedulers.trampoline());
         TestSubscriber<Connection> ts = db.connections() //
                 .test(4); //
         ts.assertNoErrors() //

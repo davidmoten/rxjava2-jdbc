@@ -94,16 +94,8 @@ public final class NonBlockingMember<T> implements Member<T> {
                         }
 
                     }
-                } else if (s.name == INITIALIZED_IN_USE) {
-                    log.debug("checking out member in use={}", this);
+                } else if (s.name == INITIALIZED_IN_USE || s.name == DISPOSING) {
                     if (state.compareAndSet(s, s.copy())) {
-                        log.debug("already in use, member={}", this);
-                        return Maybe.empty();
-                    }
-                } else if (s.name == DISPOSING) {
-                    log.debug("checking out member disposed={}", this);
-                    if (state.compareAndSet(s, s.copy())) {
-                        log.debug("disposing, member={}", this);
                         return Maybe.empty();
                     }
                 }
@@ -123,7 +115,7 @@ public final class NonBlockingMember<T> implements Member<T> {
                     try {
                         pool.disposer.accept(v);
                     } catch (Throwable t) {
-                        // ignore
+                        RxJavaPlugins.onError(t);
                     }
                 }
                 s.idleTimeoutClose.dispose();
@@ -175,18 +167,19 @@ public final class NonBlockingMember<T> implements Member<T> {
         while (true) {
             State s = state.get();
             if (s.name == INITIALIZED_NOT_IN_USE && state.compareAndSet(s,
-                    new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED, s.enabled))) {
+                    new State(DISPOSING, DisposableHelper.DISPOSED, s.enabled))) {
                 T v = value;
-                // TODO race condition with checkout?
                 value = null;
                 if (v != null) {
                     try {
                         pool.disposer.accept(v);
                     } catch (Throwable t) {
-                        // ignore
+                        RxJavaPlugins.onError(t);
                     }
                 }
                 s.idleTimeoutClose.dispose();
+                state.set(new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED,
+                        s.enabled));
                 break;
             } else if (state.compareAndSet(s, s.copy())) {
                 break;
@@ -287,6 +280,7 @@ public final class NonBlockingMember<T> implements Member<T> {
 
     @Override
     public void close() throws Exception {
+        //TODO is close needed (not covered)?
         shutdown();
     }
 

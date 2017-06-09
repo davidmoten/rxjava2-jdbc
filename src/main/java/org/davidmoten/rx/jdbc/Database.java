@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,6 +20,7 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
 import io.reactivex.functions.Action;
+import io.reactivex.schedulers.Schedulers;
 
 public final class Database implements AutoCloseable {
 
@@ -58,6 +60,7 @@ public final class Database implements AutoCloseable {
         return Database.from( //
                 Pools.nonBlocking() //
                         .connectionProvider(testConnectionProvider()) //
+                        .scheduler(Schedulers.from(Executors.newFixedThreadPool(10))) //
                         .maxPoolSize(maxPoolSize) //
                         .build());
     }

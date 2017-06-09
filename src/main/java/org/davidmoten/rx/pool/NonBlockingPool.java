@@ -60,7 +60,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         this.idleTimeBeforeHealthCheckMs = idleTimeBeforeHealthCheckMs;
         this.maxIdleTimeMs = maxIdleTimeMs;
         this.memberFactory = memberFactory;
-        this.scheduler = scheduler;
+        this.scheduler = scheduler;//schedules retries
         this.subject = PublishSubject.create();
     }
 
@@ -87,7 +87,9 @@ public final class NonBlockingPool<T> implements Pool<T> {
                         .mergeWith(baseMembers) //
                         .doOnNext(x -> log.debug("member={}", x)) //
                         .<Member<T>> flatMap(member -> member.checkout().toFlowable(), false, 1) //
-                        .doOnNext(x -> log.debug("checked out member={}", x));
+                        .doOnNext(x -> log.debug("checked out member={}", x))
+                        //reduce stack
+                        .observeOn(scheduler);
             }
         }
     }

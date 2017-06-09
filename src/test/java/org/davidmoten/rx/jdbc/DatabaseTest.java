@@ -19,8 +19,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -45,14 +48,18 @@ import org.davidmoten.rx.jdbc.tuple.Tuple6;
 import org.davidmoten.rx.jdbc.tuple.Tuple7;
 import org.davidmoten.rx.jdbc.tuple.TupleN;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.davidmoten.guavamini.Lists;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
@@ -64,6 +71,7 @@ public class DatabaseTest {
     private static final long FRED_REGISTERED_TIME = 1442515672690L;
     private static final int NAMES_COUNT_BIG = 5163;
     private static final Logger log = LoggerFactory.getLogger(DatabaseTest.class);
+    private static final int TIMEOUT_SECONDS = 3;
 
     private static Database db() {
         return DatabaseCreator.create(1);
@@ -74,7 +82,7 @@ public class DatabaseTest {
     }
 
     private static Database big(int poolSize) {
-        return DatabaseCreator.create(poolSize, true);
+        return DatabaseCreator.create(poolSize, true, Schedulers.computation());
     }
 
     @Test
@@ -82,7 +90,8 @@ public class DatabaseTest {
         db().select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
                 .getAs(Integer.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues(21, 34) //
                 .assertComplete();
@@ -93,7 +102,8 @@ public class DatabaseTest {
         db().select("select score from person where name=?") //
                 .parameterStream(Flowable.just("FRED", "JOSEPH")) //
                 .getAs(Integer.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues(21, 34) //
                 .assertComplete();
@@ -104,7 +114,8 @@ public class DatabaseTest {
         db().select("select score from person where name=?") //
                 .parameterListStream(Flowable.just(Arrays.asList("FRED"), Arrays.asList("JOSEPH"))) //
                 .getAs(Integer.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues(21, 34) //
                 .assertComplete();
@@ -115,7 +126,8 @@ public class DatabaseTest {
         db().select("select count(*) from person") //
                 .parameters(1, 2, 3) //
                 .getAs(Integer.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(3, 3, 3) //
                 .assertComplete();
     }
@@ -125,7 +137,8 @@ public class DatabaseTest {
         db().select("select score from person where name=? and score = ?") //
                 .parameterStream(Flowable.just("FRED", 21, "JOSEPH", 34)) //
                 .getAs(Integer.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues(21, 34) //
                 .assertComplete();
@@ -137,7 +150,8 @@ public class DatabaseTest {
                 .parameterListStream(
                         Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues(21, 34) //
                 .assertComplete();
@@ -150,6 +164,7 @@ public class DatabaseTest {
                 .parameters("FRED", "JOSEPH") //
                 .getAs(Integer.class) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues(21, 34) //
                 .assertComplete();
@@ -161,6 +176,7 @@ public class DatabaseTest {
                 .fetchSize(2) //
                 .getAs(Integer.class) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues(21, 34, 25) //
                 .assertComplete();
@@ -172,6 +188,7 @@ public class DatabaseTest {
                 .fetchSize(0) //
                 .getAs(Integer.class) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues(21, 34, 25) //
                 .assertComplete();
@@ -200,9 +217,49 @@ public class DatabaseTest {
                     .parameters("FRED", "JOSEPH") //
                     .getAs(Integer.class) //
                     .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                     .assertNoErrors() //
                     .assertValues(21, 34) //
                     .assertComplete();
+        }
+    }
+
+    @Test(timeout = 20000)
+    @Ignore
+    public void testSelectUsingNonBlockingBuilderConcurrencyTest()
+            throws InterruptedException, TimeoutException {
+        info();
+        try {
+            try (Database db = db(3)) {
+                Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(50));
+                int n = 1000;
+                CountDownLatch latch = new CountDownLatch(n);
+                AtomicInteger count = new AtomicInteger();
+                for (int i = 0; i < n; i++) {
+                    db.select("select score from person where name=?") //
+                            .parameters("FRED", "JOSEPH") //
+                            .getAs(Integer.class) //
+                            .subscribeOn(scheduler) //
+                            .toList() //
+                            .doOnSuccess(x -> {
+                                if (!x.equals(Lists.newArrayList(21, 34))) {
+                                    throw new RuntimeException("run broken");
+                                }
+                            }) //
+                            .doOnSuccess(x -> {
+                                count.incrementAndGet();
+                                latch.countDown();
+                            }) //
+                            .doOnError(x -> latch.countDown()) //
+                            .subscribe();
+                }
+                if (!latch.await(20, TimeUnit.SECONDS)) {
+                    throw new TimeoutException("timeout");
+                }
+                assertEquals(n, count.get());
+            }
+        } finally {
+            debug();
         }
     }
 
@@ -213,6 +270,7 @@ public class DatabaseTest {
                     .parameters("FRED", "JOSEPH") //
                     .getAs(Integer.class) //
                     .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                     .assertNoErrors() //
                     .assertValues(21, 34) //
                     .assertComplete();
@@ -227,6 +285,7 @@ public class DatabaseTest {
                 .parameter("name", "JOSEPH") //
                 .getAs(Integer.class) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(21, 34) //
                 .assertComplete();
     }
@@ -239,6 +298,7 @@ public class DatabaseTest {
                 .parameter("name", "JOSEPH") //
                 .getAs(Integer.class) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertError(NamedParameterMissingException.class).assertNoValues();
     }
 
@@ -273,6 +333,7 @@ public class DatabaseTest {
                 .getAs(Integer.class) //
                 .doOnNext(tx -> System.out.println(tx.isComplete() ? "complete" : tx.value())) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValueCount(3) //
                 .assertComplete();
     }
@@ -293,6 +354,7 @@ public class DatabaseTest {
                         .valuesOnly() //
                         .getAs(String.class)) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues("FRED", "JOSEPH") //
                 .assertComplete();
@@ -323,6 +385,7 @@ public class DatabaseTest {
                             .doOnComplete(() -> log.info("completed select where score=" + score));
                 }) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues("FRED", "JOSEPH") //
                 .assertComplete(); //
@@ -343,6 +406,7 @@ public class DatabaseTest {
         db.select("select nam from person") //
                 .getAs(String.class) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoValues() //
                 .assertError(SQLSyntaxErrorException.class);
     }
@@ -353,6 +417,7 @@ public class DatabaseTest {
         db.select("select 'a' from sysibm.sysdummy1") //
                 .getAs(String.class) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue("a") //
                 .assertComplete();
     }
@@ -396,6 +461,7 @@ public class DatabaseTest {
                 .autoMap(Person.class) //
                 .map(p -> p.name()) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValueCount(3) //
                 .assertComplete();
     }
@@ -407,6 +473,7 @@ public class DatabaseTest {
                 .autoMap(PersonNoAnnotation.class) //
                 .map(p -> p.name()) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoValues() //
                 .assertError(AnnotationsNotFoundException.class);
     }
@@ -419,6 +486,7 @@ public class DatabaseTest {
                 .firstOrError() //
                 .map(Person2::score) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(21) //
                 .assertComplete();
     }
@@ -431,6 +499,7 @@ public class DatabaseTest {
                 .firstOrError() //
                 .map(Person3::examScore) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(21) //
                 .assertComplete();
     }
@@ -443,6 +512,7 @@ public class DatabaseTest {
                 .firstOrError() //
                 .map(Person4::examScore) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoValues() //
                 .assertError(ColumnNotFoundException.class);
     }
@@ -455,6 +525,7 @@ public class DatabaseTest {
                 .firstOrError() //
                 .map(Person5::examScore) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(21) //
                 .assertComplete();
     }
@@ -467,6 +538,7 @@ public class DatabaseTest {
                 .firstOrError() //
                 .map(Person6::examScore) //
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoValues() //
                 .assertError(ColumnIndexOutOfRangeException.class);
     }
@@ -478,7 +550,7 @@ public class DatabaseTest {
                 .autoMap(Person7.class) //
                 .firstOrError() //
                 .map(Person7::examScore) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoValues() //
                 .assertError(ColumnIndexOutOfRangeException.class);
     }
@@ -489,7 +561,7 @@ public class DatabaseTest {
                 .select("select name from person order by name") //
                 .autoMap(Person8.class) //
                 .map(p -> p.name()) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoValues() //
                 .assertError(ClassCastException.class);
     }
@@ -501,7 +573,7 @@ public class DatabaseTest {
                 .autoMap(Person9.class) //
                 .firstOrError() //
                 .map(Person9::score) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(21) //
                 .assertComplete();
     }
@@ -512,7 +584,7 @@ public class DatabaseTest {
                 .get() //
                 .firstOrError() //
                 .map(Person10::score) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(21) //
                 .assertComplete();
     }
@@ -545,7 +617,7 @@ public class DatabaseTest {
                 .select("select name, score, name from person order by name") //
                 .getAs(String.class, Integer.class, String.class) //
                 .firstOrError() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertComplete() //
                 .assertValue(Tuple3.create("FRED", 21, "FRED")); //
     }
@@ -556,7 +628,7 @@ public class DatabaseTest {
                 .select("select name, score, name, score from person order by name") //
                 .getAs(String.class, Integer.class, String.class, Integer.class) //
                 .firstOrError() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertComplete() //
                 .assertValue(Tuple4.create("FRED", 21, "FRED", 21)); //
     }
@@ -567,7 +639,7 @@ public class DatabaseTest {
                 .select("select name, score, name, score, name from person order by name") //
                 .getAs(String.class, Integer.class, String.class, Integer.class, String.class) //
                 .firstOrError() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertComplete().assertValue(Tuple5.create("FRED", 21, "FRED", 21, "FRED")); //
     }
 
@@ -578,7 +650,7 @@ public class DatabaseTest {
                 .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
                         Integer.class) //
                 .firstOrError() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
     }
 
@@ -589,7 +661,7 @@ public class DatabaseTest {
                 .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
                         Integer.class, String.class) //
                 .firstOrError() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertComplete()
                 .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
@@ -599,7 +671,7 @@ public class DatabaseTest {
         db() //
                 .select("select name, score, name from person order by name") //
                 .getTupleN() //
-                .firstOrError().test() //
+                .firstOrError().test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertComplete() //
                 .assertValue(TupleN.create("FRED", 21, "FRED")); //
     }
@@ -629,7 +701,7 @@ public class DatabaseTest {
     public void testUpdateOneRow() {
         db().update("update person set score=20 where name='FRED'") //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
     }
@@ -638,7 +710,7 @@ public class DatabaseTest {
     public void testUpdateThreeRows() {
         db().update("update person set score=20") //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(3) //
                 .assertComplete();
     }
@@ -647,7 +719,7 @@ public class DatabaseTest {
     public void testUpdateWithParameter() {
         db().update("update person set score=20 where name=?") //
                 .parameter("FRED").counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
     }
@@ -656,7 +728,7 @@ public class DatabaseTest {
     public void testUpdateWithParameterTwoRuns() {
         db().update("update person set score=20 where name=?") //
                 .parameters("FRED", "JOSEPH").counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(1, 1) //
                 .assertComplete();
     }
@@ -666,7 +738,7 @@ public class DatabaseTest {
         db().update("update person set score=?") //
                 .parameters(1, 2, 3, 4) //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(3, 3, 3, 3) //
                 .assertComplete();
     }
@@ -677,7 +749,7 @@ public class DatabaseTest {
                 .batchSize(2) //
                 .parameters(1, 2, 3, 4) //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(3, 3, 3, 3) //
                 .assertComplete();
     }
@@ -688,7 +760,7 @@ public class DatabaseTest {
                 .batchSize(3) //
                 .parameters(1, 2, 3, 4) //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(3, 3, 3, 3) //
                 .assertComplete();
     }
@@ -699,7 +771,7 @@ public class DatabaseTest {
         db.update("insert into person(name, score) values(?,?)") //
                 .parameters("DAVE", 12, "ANNE", 18) //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(1, 1) //
                 .assertComplete();
         List<Tuple2<String, Integer>> list = db.select("select name, score from person") //
@@ -719,6 +791,7 @@ public class DatabaseTest {
                 .returnGeneratedKeys() //
                 .getAs(Integer.class)//
                 .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(1, 2) //
                 .assertComplete();
 
@@ -726,7 +799,7 @@ public class DatabaseTest {
                 .parameters("ME", "TOO") //
                 .returnGeneratedKeys() //
                 .getAs(Integer.class)//
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(3, 4) //
                 .assertComplete();
     }
@@ -740,7 +813,7 @@ public class DatabaseTest {
                 .parameters("HI", "THERE") //
                 .returnGeneratedKeys() //
                 .getAs(Integer.class)//
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors().assertValues(1, 3) //
                 .assertComplete();
 
@@ -748,7 +821,7 @@ public class DatabaseTest {
                 .parameters("ME", "TOO") //
                 .returnGeneratedKeys() //
                 .getAs(Integer.class)//
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(5, 7) //
                 .assertComplete();
     }
@@ -762,7 +835,7 @@ public class DatabaseTest {
                 .transacted() //
                 .returnGeneratedKeys() //
                 .getAs(Integer.class)//
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(1, 2) //
                 .assertComplete();
 
@@ -771,7 +844,7 @@ public class DatabaseTest {
                 .transacted() //
                 .returnGeneratedKeys() //
                 .getAs(Integer.class)//
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(3, 4) //
                 .assertComplete();
     }
@@ -792,7 +865,7 @@ public class DatabaseTest {
                 .returnGeneratedKeys() //
                 .getAs(Integer.class)//
                 .startWith(a) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(1, 2, 3, 4) //
                 .assertComplete();
     }
@@ -810,7 +883,7 @@ public class DatabaseTest {
                         .parameter("name", tx.value()) //
                         .valuesOnly() //
                         .counts()) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(1, 1, 1) //
                 .assertComplete();
     }
@@ -825,7 +898,7 @@ public class DatabaseTest {
                 .parameter("FRED") //
                 .dependsOn(a) //
                 .getAs(Integer.class)//
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(100) //
                 .assertComplete();
     }
@@ -840,7 +913,7 @@ public class DatabaseTest {
                 .parameter("FRED") //
                 .dependsOn(a) //
                 .getAs(Integer.class)//
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(100) //
                 .assertComplete();
     }
@@ -855,7 +928,7 @@ public class DatabaseTest {
                 .parameter("FRED") //
                 .dependsOn(a) //
                 .getAs(Integer.class)//
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(100) //
                 .assertComplete();
     }
@@ -870,7 +943,7 @@ public class DatabaseTest {
                 .parameter("FRED") //
                 .dependsOn(a) //
                 .getAs(Integer.class)//
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(100) //
                 .assertComplete();
     }
@@ -888,7 +961,7 @@ public class DatabaseTest {
                         .parameter("name", tx.value()) //
                         .valuesOnly() //
                         .counts()) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(1, 1, 1) //
                 .assertComplete();
     }
@@ -906,7 +979,7 @@ public class DatabaseTest {
         info();
         big(5).select("select count(*) from person") //
                 .getAs(Integer.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(5163) //
                 .assertComplete();
         debug();
@@ -926,7 +999,7 @@ public class DatabaseTest {
                         .valuesOnly() //
                         .counts()) //
                 .count() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue((long) NAMES_COUNT_BIG) //
                 .assertComplete();
         debug();
@@ -946,7 +1019,7 @@ public class DatabaseTest {
                         .valuesOnly() //
                         .counts()) //
                 .count() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue((long) NAMES_COUNT_BIG) //
                 .assertComplete();
         debug();
@@ -958,12 +1031,12 @@ public class DatabaseTest {
         db.update("insert into person_clob(name,document) values(?,?)") //
                 .parameters("FRED", Database.NULL_CLOB) //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
         db.select("select document from person_clob where name='FRED'") //
                 .getAsOptional(String.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(Optional.<String> empty()) //
                 .assertComplete();
     }
@@ -982,12 +1055,12 @@ public class DatabaseTest {
         db.update("insert into person_clob(name,document) values(?,?)") //
                 .parameters("FRED", Database.NULL_CLOB) //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
         db.select("select document, document from person_clob where name='FRED'") //
                 .getAs(String.class, String.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(Tuple2.create(null, null)) //
                 .assertComplete();
     }
@@ -998,13 +1071,15 @@ public class DatabaseTest {
         db.update("insert into person_clob(name,document) values(?,?)") //
                 .parameters("FRED", "some text here") //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
         db.select("select document from person_clob where name='FRED'") //
                 .getAs(String.class) //
-                .test() //
-                .assertValue("some text here") //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) // .assertValue("some
+                                                                     // text
+                                                                     // here")
+                                                                     // //
                 .assertComplete();
     }
 
@@ -1014,12 +1089,12 @@ public class DatabaseTest {
         db.update("insert into person_clob(name,document) values(?,?)") //
                 .parameters("FRED", "some text here") //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
         db.select("select document from person_clob where name='FRED'") //
                 .getAs(Reader.class) //
-                .map(r -> read(r)).test() //
+                .map(r -> read(r)).test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue("some text here") //
                 .assertComplete();
     }
@@ -1031,13 +1106,13 @@ public class DatabaseTest {
         db.update("insert into person_blob(name,document) values(?,?)") //
                 .parameters("FRED", bytes) //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
         db.select("select document from person_blob where name='FRED'") //
                 .getAs(byte[].class) //
                 .map(b -> new String(b)) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue("some text here") //
                 .assertComplete();
     }
@@ -1049,14 +1124,14 @@ public class DatabaseTest {
         db.update("insert into person_blob(name,document) values(?,?)") //
                 .parameters("FRED", new ByteArrayInputStream(bytes)) //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
         db.select("select document from person_blob where name='FRED'") //
                 .getAs(InputStream.class) //
                 .map(is -> read(is)) //
                 .map(b -> new String(b)) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue("some text here") //
                 .assertComplete();
     }
@@ -1098,20 +1173,25 @@ public class DatabaseTest {
                 .build();
 
         try (Database db = Database.from(pool)) {
-            db.select( //
-                    "select score from person where name=?") //
-                    .parameters("FRED") //
+            TestSubscriber<Integer> ts0 = db
+                    .select( //
+                            "select score from person where name=?") //
+                    .parameter("FRED") //
                     .getAs(Integer.class) //
-                    .test() //
-                    .assertValueCount(1) //
-                    .assertComplete();
+                    .test();
+            ts0.assertValueCount(0) //
+                    .assertNotComplete();
+            scheduler.advanceTimeBy(1, TimeUnit.MINUTES);
+            ts0.assertValueCount(1) //
+            .assertComplete();
             TestSubscriber<Integer> ts = db
                     .select( //
                             "select score from person where name=?") //
-                    .parameters("FRED") //
+                    .parameter("FRED") //
                     .getAs(Integer.class) //
                     .test() //
                     .assertValueCount(0);
+            System.out.println("done2");
             scheduler.advanceTimeBy(1, TimeUnit.MINUTES);
             Thread.sleep(200);
             ts.assertValueCount(1);
@@ -1134,7 +1214,7 @@ public class DatabaseTest {
                 .select("select score from person where name=?") //
                 .parameter("FRED") //
                 .getAs(Integer.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoValues() //
                 .assertError(PoolClosedException.class);
     }
@@ -1143,7 +1223,7 @@ public class DatabaseTest {
     public void testFewerColumnsMappedThanAvailable() {
         db().select("select name, score from person where name='FRED'") //
                 .getAs(String.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues("FRED") //
                 .assertComplete();
     }
@@ -1153,7 +1233,7 @@ public class DatabaseTest {
         db() //
                 .select("select name, score from person where name='FRED'") //
                 .getAs(String.class, Integer.class, String.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoValues() //
                 .assertError(MoreColumnsRequestedThanExistException.class);
     }
@@ -1163,7 +1243,7 @@ public class DatabaseTest {
         db() //
                 .select("select registered from person where name='FRED'") //
                 .getAs(Long.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(FRED_REGISTERED_TIME) //
                 .assertComplete();
     }
@@ -1174,7 +1254,7 @@ public class DatabaseTest {
                 .select("select registered from person where name='FRED'") //
                 .getAs(Date.class) //
                 .map(d -> d.getTime()) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(FRED_REGISTERED_TIME) //
                 .assertComplete();
     }
@@ -1185,7 +1265,7 @@ public class DatabaseTest {
                 .select("select registered from person where name='FRED'") //
                 .getAs(Instant.class) //
                 .map(d -> d.toEpochMilli()) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(FRED_REGISTERED_TIME) //
                 .assertComplete();
     }
@@ -1196,12 +1276,12 @@ public class DatabaseTest {
         db.update("update person set registered=? where name='FRED'") //
                 .parameter(Instant.ofEpochMilli(FRED_REGISTERED_TIME)) //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
         db.select("select registered from person where name='FRED'") //
                 .getAs(Long.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(FRED_REGISTERED_TIME) //
                 .assertComplete();
     }
@@ -1213,12 +1293,12 @@ public class DatabaseTest {
                 .parameter(ZonedDateTime.ofInstant(Instant.ofEpochMilli(FRED_REGISTERED_TIME),
                         ZoneOffset.UTC.normalized())) //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
         db.select("select registered from person where name='FRED'") //
                 .getAs(Long.class) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(FRED_REGISTERED_TIME) //
                 .assertComplete();
     }
@@ -1232,7 +1312,7 @@ public class DatabaseTest {
         db.update("update person set score=-4 where score = -3") //
                 .dependsOn(a) //
                 .counts() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
     }
@@ -1242,7 +1322,7 @@ public class DatabaseTest {
         db().update("update person set score = -3") //
                 .transacted() //
                 .countsOnly() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(3) //
                 .assertComplete();
     }
@@ -1254,7 +1334,7 @@ public class DatabaseTest {
                 .counts() //
                 .doOnNext(System.out::println) //
                 .toList() //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3
                         && list.get(1).isComplete() && list.size() == 2) //
                 .assertComplete();
@@ -1278,7 +1358,7 @@ public class DatabaseTest {
                             .doOnSubscribe(s -> System.out.println("subscribed")) //
                             .doOnNext(num -> System.out.println("num=" + num));
                 }) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValue(1) //
                 .assertComplete();
@@ -1305,7 +1385,7 @@ public class DatabaseTest {
                             .doOnSubscribe(s -> System.out.println("subscribed")) //
                             .doOnNext(num -> System.out.println("num=" + num));
                 }) //
-                .test() //
+                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValue(1) //
                 .assertComplete();

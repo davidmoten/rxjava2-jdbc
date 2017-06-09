@@ -14,12 +14,19 @@ import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 
+import io.reactivex.Scheduler;
+import io.reactivex.schedulers.Schedulers;
+
 public class DatabaseCreator {
 
     private static AtomicInteger dbNumber = new AtomicInteger();
 
     public static Database create(int maxSize) {
-        return create(maxSize, false);
+        return create(maxSize, false, Schedulers.computation());
+    }
+    
+    public static Database create(int maxSize, Scheduler scheduler) {
+        return create(maxSize, false, scheduler);
     }
 
     public static Database createDerby(int maxSize) {
@@ -30,20 +37,19 @@ public class DatabaseCreator {
     }
 
     private static ConnectionProvider connectionProviderDerby(String url) {
+        Connection c;
+        try {
+            c = DriverManager.getConnection(url);
+            createDatabaseDerby(c);
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
         return new ConnectionProvider() {
-
-            private final AtomicBoolean once = new AtomicBoolean(false);
 
             @Override
             public Connection get() {
                 try {
-                    Connection c = DriverManager.getConnection(url);
-                    synchronized (this) {
-                        if (once.compareAndSet(false, true)) {
-                            createDatabaseDerby(c);
-                        }
-                    }
-                    return c;
+                    return DriverManager.getConnection(url);
                 } catch (SQLException e) {
                     throw new SQLRuntimeException(e);
                 }
@@ -63,10 +69,13 @@ public class DatabaseCreator {
                 + "text varchar(255) not null," + "constraint primary_key primary key (id)" + ")");
     }
 
-    public static Database create(int maxSize, boolean big) {
+    public static Database create(int maxSize, boolean big, Scheduler scheduler) {
         return Database
-                .from(Pools.nonBlocking().connectionProvider(connectionProvider(nextUrl(), big))
-                        .maxPoolSize(maxSize).build());
+                .from(Pools.nonBlocking() //
+                        .connectionProvider(connectionProvider(nextUrl(), big))
+                        .maxPoolSize(maxSize) //
+                        .scheduler(scheduler) //
+                        .build());
     }
 
     public static ConnectionProvider connectionProvider() {
