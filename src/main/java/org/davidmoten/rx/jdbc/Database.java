@@ -5,7 +5,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -60,8 +62,8 @@ public final class Database implements AutoCloseable {
         return Database.from( //
                 Pools.nonBlocking() //
                         .connectionProvider(testConnectionProvider()) //
-                        .scheduler(Schedulers.from(Executors.newFixedThreadPool(10))) //
                         .maxPoolSize(maxPoolSize) //
+                        .scheduler(Schedulers.from(Executors.newFixedThreadPool(maxPoolSize))) //
                         .build());
     }
 
@@ -94,20 +96,24 @@ public final class Database implements AutoCloseable {
     private static ConnectionProvider connectionProvider(@Nonnull String url) {
         return new ConnectionProvider() {
 
-            private final AtomicBoolean once = new AtomicBoolean(false);
+            private final AtomicBoolean once = new AtomicBoolean();
+            private final CountDownLatch latch = new CountDownLatch(1);
 
             @Override
             public Connection get() {
                 try {
                     Connection c = DriverManager.getConnection(url);
-                    synchronized (this) {
-                        if (once.compareAndSet(false, true)) {
-                            createDatabase(c);
-                        }
+                    if (once.compareAndSet(false, true)) {
+                        createDatabase(c);
+                        latch.countDown();
+                    } else {
+                        latch.await(1, TimeUnit.MINUTES);
                     }
                     return c;
                 } catch (SQLException e) {
                     throw new SQLRuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
             }
 
