@@ -33,8 +33,7 @@ public final class Database implements AutoCloseable {
         this.onClose = onClose;
     }
 
-    public static Database from(@Nonnull Flowable<Connection> connections,
-            @Nonnull Action onClose) {
+    public static Database from(@Nonnull Flowable<Connection> connections, @Nonnull Action onClose) {
         Preconditions.checkNotNull(connections, "connections cannot be null");
         Preconditions.checkNotNull(onClose, "onClose cannot be null");
         return new Database(connections, onClose);
@@ -47,6 +46,7 @@ public final class Database implements AutoCloseable {
                 Pools.nonBlocking() //
                         .url(url) //
                         .maxPoolSize(maxPoolSize) //
+                        .scheduler(Schedulers.from(Executors.newFixedThreadPool(maxPoolSize))) //
                         .build());
     }
 
