@@ -93,6 +93,24 @@ db.select("select nam from person")
   .blockingForEach(System.out::println);
 ```
 
+Nulls
+---------
+RxJava2 does not support streams of nulls. If you want to represent nulls in your stream then use `java.util.Optional`.
+
+In the special case where a single nullable column is being returned and mapped to a class via `getAs` you should instead use `getAsOptional`:
+
+```java
+Database.test() 
+  .select("select date_of_birth from person where name='FRED'")
+  .getAsOptional(Instant.class)
+  .blockingForEach(System.out::println);
+```
+Output:
+```
+Optional.empty
+```
+Nulls will happily map to Tuples (see the next section) when you have two or more columns.
+
 Tuple support
 -----------------
 When you specify more types in the `getAs` method they are matched to the columns in the returned result set from the query and combined into a `Tuple` instance. Here's an example that returns `Tuple2`:
@@ -493,6 +511,13 @@ Flowable<Reader> document =
   db.select("select document from person_clob")
     .getAs(Reader.class);
 ```
+### Read a null Clob
+For the special case where you want to return one value from a select statement and that value is a nullable CLOB then use `getAsOptional`:
+```java
+db.select("select document from person_clob where name='FRED'")
+  .getAsOptional(String.class)
+```
+
 ### Insert a Blob
 Similarly for Blobs (*document* column below is of type ```BLOB```):
 ```java

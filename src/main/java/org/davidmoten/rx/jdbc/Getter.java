@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.ResultSet;
+import java.util.Optional;
 
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
@@ -26,6 +27,10 @@ public interface Getter {
 
     default <T> Flowable<T> getAs(Class<T> cls) {
         return get(rs -> Util.mapObject(rs, cls, 1));
+    }
+    
+    default <T> Flowable<Optional<T>> getAsOptional(Class<T> cls) {
+        return get(rs -> Optional.ofNullable(Util.mapObject(rs, cls, 1)));
     }
 
     /**

@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
-import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;

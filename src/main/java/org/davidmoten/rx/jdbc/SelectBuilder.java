@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 
 public final class SelectBuilder extends ParametersBuilder<SelectBuilder> implements Getter, DependsOn<SelectBuilder> {

@@ -16,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -133,7 +134,8 @@ public class DatabaseTest {
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                .parameterListStream(
+                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoErrors() //
@@ -545,7 +547,8 @@ public class DatabaseTest {
     public void testTuple6() {
         db() //
                 .select("select name, score, name, score, name, score from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                        Integer.class) //
                 .firstOrError() //
                 .test() //
                 .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
@@ -555,11 +558,12 @@ public class DatabaseTest {
     public void testTuple7() {
         db() //
                 .select("select name, score, name, score, name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
-                        String.class) //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                        Integer.class, String.class) //
                 .firstOrError() //
                 .test() //
-                .assertComplete().assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+                .assertComplete()
+                .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
     }
 
     @Test
@@ -921,6 +925,46 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testInsertNullClobAndReadClobAsString() {
+        Database db = db();
+        db.update("insert into person_clob(name,document) values(?,?)") //
+                .parameters("FRED", Database.NULL_CLOB) //
+                .counts() //
+                .test() //
+                .assertValue(1) //
+                .assertComplete();
+        db.select("select document from person_clob where name='FRED'") //
+                .getAsOptional(String.class) //
+                .test() //
+                .assertValue(Optional.<String> empty()) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testDateOfBirthNullableForReadMe() {
+        Database.test() //
+                .select("select date_of_birth from person where name='FRED'") //
+                .getAsOptional(Instant.class) //
+                .blockingForEach(System.out::println);
+    }
+
+    @Test
+    public void testInsertNullClobAndReadClobAsTuple2() {
+        Database db = db();
+        db.update("insert into person_clob(name,document) values(?,?)") //
+                .parameters("FRED", Database.NULL_CLOB) //
+                .counts() //
+                .test() //
+                .assertValue(1) //
+                .assertComplete();
+        db.select("select document, document from person_clob where name='FRED'") //
+                .getAs(String.class, String.class) //
+                .test() //
+                .assertValue(Tuple2.create(null, null)) //
+                .assertComplete();
+    }
+
+    @Test
     public void testInsertClobAndReadClobAsString() {
         Database db = db();
         db.update("insert into person_clob(name,document) values(?,?)") //
@@ -1183,8 +1227,8 @@ public class DatabaseTest {
                 .doOnNext(System.out::println) //
                 .toList() //
                 .test() //
-                .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3 && list.get(1).isComplete()
-                        && list.size() == 2) //
+                .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3
+                        && list.get(1).isComplete() && list.size() == 2) //
                 .assertComplete();
     }
 
@@ -1241,10 +1285,9 @@ public class DatabaseTest {
 
     @Test
     public void testSingleFlatMap() {
-        Single.just(1).flatMapPublisher(n -> Flowable.just(1)).test(1).assertValue(1).assertComplete();
+        Single.just(1).flatMapPublisher(n -> Flowable.just(1)).test(1).assertValue(1)
+                .assertComplete();
     }
-    
-    
 
     interface Person {
         @Column
