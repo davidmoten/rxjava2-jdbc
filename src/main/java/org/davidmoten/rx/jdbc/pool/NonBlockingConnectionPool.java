@@ -104,7 +104,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
                     .factory(() -> cp.get()) //
                     .idleTimeBeforeHealthCheckMs(idleTimeBeforeHealthCheckMs) //
                     .maxIdleTimeMs(maxIdleTimeMs) //
-                    .scheduler(Schedulers.io()) //
+                    .scheduler(scheduler) //
                     .disposer(disposer)//
                     .healthy(healthy) //
                     .scheduler(scheduler) //

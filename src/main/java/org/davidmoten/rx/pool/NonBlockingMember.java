@@ -62,7 +62,7 @@ public final class NonBlockingMember<T> implements Member<T> {
                             return Maybe.just(ifNull(proxy, NonBlockingMember.this));
                         }
                     } else {
-                        if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose, s.enabled))) {
+                        if (state.compareAndSet(s, s.copy())) {
                             return Maybe.empty();
                         }
                     }
@@ -122,7 +122,7 @@ public final class NonBlockingMember<T> implements Member<T> {
                 worker.schedule(() -> pool.subject.onNext(NonBlockingMember.this), //
                         pool.returnToPoolDelayAfterHealthCheckFailureMs, TimeUnit.MILLISECONDS);
                 break;
-            } else if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose, s.enabled))) {
+            } else if (state.compareAndSet(s, s.copy())) {
                 break;
             }
         }
@@ -152,7 +152,7 @@ public final class NonBlockingMember<T> implements Member<T> {
                     }
                     break;
                 }
-            } else if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose, s.enabled))) {
+            } else if (state.compareAndSet(s, s.copy())) {
                 break;
             }
         }
@@ -175,7 +175,7 @@ public final class NonBlockingMember<T> implements Member<T> {
                 }
                 s.idleTimeoutClose.dispose();
                 break;
-            } else if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose, s.enabled))) {
+            } else if (state.compareAndSet(s, s.copy())) {
                 break;
             }
         }
@@ -214,7 +214,7 @@ public final class NonBlockingMember<T> implements Member<T> {
                     pool.subject.onNext(this);
                     break;
                 }
-            } else if (state.compareAndSet(s, new State(s.value, s.idleTimeoutClose, s.enabled))) {
+            } else if (state.compareAndSet(s, s.copy())) {
                 break;
             }
         }
@@ -234,6 +234,10 @@ public final class NonBlockingMember<T> implements Member<T> {
             this.value = value;
             this.idleTimeoutClose = idleTimeoutClose;
             this.enabled = enabled;
+        }
+        
+        State copy() {
+            return new State(value, idleTimeoutClose, enabled);
         }
     }
 
