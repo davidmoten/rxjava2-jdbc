@@ -81,7 +81,7 @@ public class DatabaseTest {
     private static final long FRED_REGISTERED_TIME = 1442515672690L;
     private static final int NAMES_COUNT_BIG = 5163;
     private static final Logger log = LoggerFactory.getLogger(DatabaseTest.class);
-    private static final int TIMEOUT_SECONDS = 3;
+    private static final int TIMEOUT_SECONDS = 10;
 
     private static Database db() {
         return DatabaseCreator.create(1);
