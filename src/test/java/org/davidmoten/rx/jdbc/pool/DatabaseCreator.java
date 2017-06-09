@@ -109,7 +109,7 @@ public class DatabaseCreator {
         };
     }
 
-    private static String nextUrl() {
+    public static String nextUrl() {
         return "jdbc:h2:mem:test" + dbNumber.incrementAndGet() + ";DB_CLOSE_DELAY=-1";
     }
 

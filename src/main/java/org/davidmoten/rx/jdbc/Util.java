@@ -609,7 +609,6 @@ public enum Util {
      * @param proxyService
      * @return an automapped instance
      */
-    @SuppressWarnings("unchecked")
     static <T> T autoMap(ResultSet rs, Class<T> cls, ProxyService<T> proxyService) {
         return proxyService.newInstance();
         // try {

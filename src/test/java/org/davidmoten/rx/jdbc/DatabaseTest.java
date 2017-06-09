@@ -48,6 +48,7 @@ import org.davidmoten.rx.jdbc.tuple.Tuple5;
 import org.davidmoten.rx.jdbc.tuple.Tuple6;
 import org.davidmoten.rx.jdbc.tuple.Tuple7;
 import org.davidmoten.rx.jdbc.tuple.TupleN;
+import org.h2.jdbc.JdbcSQLException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -299,7 +300,7 @@ public class DatabaseTest {
                 .assertError(NamedParameterMissingException.class) //
                 .assertNoValues();
     }
-    
+
     @Test
     public void testSelectUsingParameterNameNullNameWhenSqlHasNoNames() {
         db() //
@@ -346,6 +347,29 @@ public class DatabaseTest {
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValueCount(3) //
                 .assertComplete();
+    }
+
+    @Test
+    public void testSelectAutomappedTransacted() {
+        db() //
+                .select(Person10.class) //
+                .transacted() //
+                .valuesOnly() //
+                .get().test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(3) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testDatabaseFrom() {
+        Database.from(DatabaseCreator.nextUrl(), 3) //
+                .select("select name from person") //
+                .getAs(String.class) //
+                .count() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertError(JdbcSQLException.class);
     }
 
     @Test
@@ -1047,6 +1071,27 @@ public class DatabaseTest {
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(Optional.<String>empty()) //
                 .assertComplete();
+    }
+
+    @Test
+    public void testClobMethod() {
+        assertEquals(Database.NULL_CLOB, Database.clob(null));
+    }
+
+    @Test
+    public void testBlobMethod() {
+        assertEquals(Database.NULL_BLOB, Database.blob(null));
+    }
+
+    @Test
+    public void testClobMethodPresent() {
+        assertEquals("a", Database.clob("a"));
+    }
+
+    @Test
+    public void testBlobMethodPresent() {
+        byte[] b = new byte[1];
+        assertEquals(b, Database.blob(b));
     }
 
     @Test
