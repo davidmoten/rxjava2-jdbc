@@ -45,8 +45,7 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
     }
 
     public TransactedSelectBuilder parameter(Object value) {
-        selectBuilder.parameters(value);
-        return this;
+        return parameters(value);
     }
 
     public TransactedSelectBuilder fetchSize(int size) {
@@ -68,7 +67,6 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
     public TransactedSelectBuilderValuesOnly valuesOnly() {
         return new TransactedSelectBuilderValuesOnly(this, db);
     }
-
 
     public static final class TransactedSelectBuilderValuesOnly {
         private final TransactedSelectBuilder b;
@@ -100,18 +98,18 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
             return Select
                     .create(sb.connections.firstOrError() //
                             .map(c -> Util.toTransactedConnection(connection, c)), //
-                            sb.parameterGroupsToFlowable(), //
-                            sb.sql, //
-                            sb.fetchSize, //
-                            rs -> Util.mapObject(rs, cls, 1), //
-                            false) //
+                    sb.parameterGroupsToFlowable(), //
+                    sb.sql, //
+                    sb.fetchSize, //
+                    rs -> Util.mapObject(rs, cls, 1), //
+                    false) //
                     .materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                     .doOnNext(tx -> {
-                        if (tx.isComplete()) {
-                            ((TxImpl<T>) tx).connection().commit();
-                        }
-                    });
+                if (tx.isComplete()) {
+                    ((TxImpl<T>) tx).connection().commit();
+                }
+            });
         });
     }
 

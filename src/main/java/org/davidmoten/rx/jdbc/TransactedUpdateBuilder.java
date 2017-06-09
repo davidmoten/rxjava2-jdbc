@@ -49,38 +49,13 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
         updateBuilder.parameter(name, value);
         return this;
     }
+    
+    public TransactedUpdateBuilder parameter(Object value) {
+        return parameters(value);
+    }
 
     public TransactedUpdateBuilder parameters(Object... values) {
         updateBuilder.parameters(values);
-        return this;
-    }
-
-    /**
-     * Appends a parameter to the parameter list for the query for a CLOB
-     * parameter and handles null appropriately. If there are more parameters
-     * than required for one execution of the query then more than one execution
-     * of the query will occur.
-     * 
-     * @param value
-     *            the string to insert in the CLOB column
-     * @return this
-     */
-    public TransactedUpdateBuilder parameterClob(String value) {
-        updateBuilder.parameterClob(value);
-        return this;
-    }
-
-    /**
-     * Appends a parameter to the parameter list for the query for a CLOB
-     * parameter and handles null appropriately. If there are more parameters
-     * than required for one execution of the query then more than one execution
-     * of the query will occur.
-     * 
-     * @param value
-     * @return this
-     */
-    public TransactedUpdateBuilder parameterBlob(byte[] bytes) {
-        updateBuilder.parameterBlob(bytes);
         return this;
     }
 
@@ -171,20 +146,12 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
                             false) //
                             .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                             .doOnNext(tx -> {
-                                if (tx.isComplete()) {
-                                    t.set(tx);
-                                }
-                            }) //
-                            //.doOnComplete(() -> commitOnComplete(t.get()))
-                            );
+                if (tx.isComplete()) {
+                    t.set(tx);
+                }
+            }) //
+            );
         });
-    }
-
-    private static void commitOnComplete(Tx<Integer> tx) throws SQLException {
-        if (tx.isComplete()) {
-            System.out.println("committing");
-            ((TxImpl<Integer>) tx).connection().commit();
-        }
     }
 
     public Flowable<List<Object>> parameterGroupsToFlowable() {

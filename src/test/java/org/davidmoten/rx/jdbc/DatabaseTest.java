@@ -259,7 +259,7 @@ public class DatabaseTest {
                 .doOnNext(tx -> System.out.println(tx.isComplete() ? "complete" : tx.value()))//
                 .flatMap(tx -> tx //
                         .select("select name from person where score = ?") //
-                        .parameters(tx.value()) //
+                        .parameter(tx.value()) //
                         .valuesOnly() //
                         .getAs(String.class)) //
                 .test() //
@@ -288,7 +288,7 @@ public class DatabaseTest {
                     log.info("score={}", score);
                     return db //
                             .select("select name from person where score = ?") //
-                            .parameters(score) //
+                            .parameter(score) //
                             .getAs(String.class) //
                             .doOnComplete(() -> log.info("completed select where score=" + score));
                 }) //
@@ -340,7 +340,7 @@ public class DatabaseTest {
         List<String> list = new CopyOnWriteArrayList<String>();
         Database db = db(1); //
         db.select("select score from person where name=?") //
-                .parameters("FRED") //
+                .parameter("FRED") //
                 .getAs(Integer.class) //
                 .doOnNext(x -> Thread.sleep(1000)) //
                 .subscribeOn(Schedulers.io()) //
@@ -348,7 +348,7 @@ public class DatabaseTest {
         Thread.sleep(100);
         CountDownLatch latch = new CountDownLatch(1);
         db.select("select score from person where name=?") //
-                .parameters("FRED") //
+                .parameter("FRED") //
                 .getAs(Integer.class) //
                 .doOnNext(x -> list.add("emitted")) //
                 .doOnNext(x -> System.out.println("emitted on " + Thread.currentThread().getName())) //
@@ -614,7 +614,7 @@ public class DatabaseTest {
     @Test
     public void testUpdateWithParameter() {
         db().update("update person set score=20 where name=?") //
-                .parameters("FRED").counts() //
+                .parameter("FRED").counts() //
                 .test() //
                 .assertValue(1) //
                 .assertComplete();
@@ -787,10 +787,10 @@ public class DatabaseTest {
     public void testSelectDependsOnFlowable() {
         Database db = db();
         Flowable<Integer> a = db.update("update person set score=100 where name=?") //
-                .parameters("FRED") //
+                .parameter("FRED") //
                 .counts();
         db.select("select score from person where name=?") //
-                .parameters("FRED") //
+                .parameter("FRED") //
                 .dependsOn(a) //
                 .getAs(Integer.class)//
                 .test() //
@@ -802,10 +802,10 @@ public class DatabaseTest {
     public void testSelectDependsOnObservable() {
         Database db = db();
         Observable<Integer> a = db.update("update person set score=100 where name=?") //
-                .parameters("FRED") //
+                .parameter("FRED") //
                 .counts().toObservable();
         db.select("select score from person where name=?") //
-                .parameters("FRED") //
+                .parameter("FRED") //
                 .dependsOn(a) //
                 .getAs(Integer.class)//
                 .test() //
@@ -817,10 +817,10 @@ public class DatabaseTest {
     public void testSelectDependsOnOnSingle() {
         Database db = db();
         Single<Long> a = db.update("update person set score=100 where name=?") //
-                .parameters("FRED") //
+                .parameter("FRED") //
                 .counts().count();
         db.select("select score from person where name=?") //
-                .parameters("FRED") //
+                .parameter("FRED") //
                 .dependsOn(a) //
                 .getAs(Integer.class)//
                 .test() //
@@ -832,10 +832,10 @@ public class DatabaseTest {
     public void testSelectDependsOnCompletable() {
         Database db = db();
         Completable a = db.update("update person set score=100 where name=?") //
-                .parameters("FRED") //
+                .parameter("FRED") //
                 .counts().ignoreElements();
         db.select("select score from person where name=?") //
-                .parameters("FRED") //
+                .parameter("FRED") //
                 .dependsOn(a) //
                 .getAs(Integer.class)//
                 .test() //
@@ -1060,7 +1060,7 @@ public class DatabaseTest {
         pool.close();
         Database.from(pool) //
                 .select("select score from person where name=?") //
-                .parameters("FRED") //
+                .parameter("FRED") //
                 .getAs(Integer.class) //
                 .test() //
                 .assertNoValues() //
@@ -1122,7 +1122,7 @@ public class DatabaseTest {
     public void testUpdateTimestampAsInstant() {
         Database db = db();
         db.update("update person set registered=? where name='FRED'") //
-                .parameters(Instant.ofEpochMilli(FRED_REGISTERED_TIME)) //
+                .parameter(Instant.ofEpochMilli(FRED_REGISTERED_TIME)) //
                 .counts() //
                 .test() //
                 .assertValue(1) //
@@ -1138,7 +1138,7 @@ public class DatabaseTest {
     public void testUpdateTimestampAsZonedDateTime() {
         Database db = db();
         db.update("update person set registered=? where name='FRED'") //
-                .parameters(ZonedDateTime.ofInstant(Instant.ofEpochMilli(FRED_REGISTERED_TIME),
+                .parameter(ZonedDateTime.ofInstant(Instant.ofEpochMilli(FRED_REGISTERED_TIME),
                         ZoneOffset.UTC.normalized())) //
                 .counts() //
                 .test() //
@@ -1228,7 +1228,7 @@ public class DatabaseTest {
                     System.out.println("flatmapping");
                     return tx //
                             .update("update person set score = -4 where score = ?") //
-                            .parameters(tx.value()) //
+                            .parameter(tx.value()) //
                             .countsOnly() //
                             .doOnSubscribe(s -> System.out.println("subscribed")) //
                             .doOnNext(num -> System.out.println("num=" + num));

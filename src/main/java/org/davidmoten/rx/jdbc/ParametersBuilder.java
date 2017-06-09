@@ -60,7 +60,11 @@ class ParametersBuilder<T> {
         parameterBuffer.add(new Parameter(name, value));
         return (T) this;
     }
-
+    
+    public final T parameter(Object value) {
+        return parameters(value);
+    }
+    
     @SuppressWarnings("unchecked")
     public final T parameters(Object... values) {
         Preconditions.checkNotNull(values);
@@ -87,37 +91,6 @@ class ParametersBuilder<T> {
             pg = Flowable.concat(parameterGroups);
         }
         return pg;
-    }
-
-    /**
-     * Appends a parameter to the parameter list for the query for a CLOB
-     * parameter and handles null appropriately. If there are more parameters
-     * than required for one execution of the query then more than one execution
-     * of the query will occur.
-     * 
-     * @param value
-     *            the string to insert in the CLOB column
-     * @return this
-     */
-    @SuppressWarnings("unchecked")
-    public final T parameterClob(String value) {
-        parameters(Database.toSentinelIfNull(value));
-        return (T) this;
-    }
-
-    /**
-     * Appends a parameter to the parameter list for the query for a CLOB
-     * parameter and handles null appropriately. If there are more parameters
-     * than required for one execution of the query then more than one execution
-     * of the query will occur.
-     * 
-     * @param value
-     * @return this
-     */
-    @SuppressWarnings("unchecked")
-    public final T parameterBlob(byte[] bytes) {
-        parameters(Database.toSentinelIfNull(bytes));
-        return (T) this;
     }
 
     private void useAndCloseParameterBuffer() {

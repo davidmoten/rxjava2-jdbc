@@ -399,7 +399,7 @@ Database db = Database.test(1);
 
 // start a slow query
 db.select("select score from person where name=?") 
-  .parameters("FRED") 
+  .parameter("FRED") 
   .getAs(Integer.class) 
    // slow things down by sleeping
   .doOnNext(x -> Thread.sleep(1000)) 
@@ -412,7 +412,7 @@ Thread.sleep(100);
 
 // query again while first query running
 db.select("select score from person where name=?") 
-  .parameters("FRED") 
+  .parameter("FRED") 
   .getAs(Integer.class) 
   .doOnNext(x -> System.out.println("emitted on " + Thread.currentThread().getName())) 
   .subscribe();
@@ -447,12 +447,18 @@ Here's how to insert a String value into a Clob (*document* column below is of t
 String document = ...
 Flowable<Integer> count = db
   .update("insert into person_clob(name,document) values(?,?)")
-  .parameters("FRED", Database.toSentinelIfNull(document))
+  .parameters("FRED", document)
   .count();
 ```
-(Note the use of the ```Database.toSentinelIfNull(String)``` method to handle the null case correctly)
-
-or using a ```java.io.Reader```:
+If your document is nullable then you should use `Database.clob(document)`:
+```java
+String document = ...
+Flowable<Integer> count = db
+  .update("insert into person_clob(name,document) values(?,?)")
+  .parameters("FRED", Database.clob(document))
+  .count();
+```
+Using a ```java.io.Reader```:
 ```java
 Reader reader = ...;
 Flowable<Integer> count = db
@@ -461,23 +467,19 @@ Flowable<Integer> count = db
   .count();
 ```
 ### Insert a Null Clob
-This requires *either* a special call (```parameterClob(String)```) to identify the parameter as a CLOB:
 ```java
 Flowable<Integer> count = db
   .update("insert into person_clob(name,document) values(?,?)")
-  .parameters("FRED")
-  .parameterClob(null)
+  .parameters("FRED", Database.NULL_CLOB)
   .count();
 ```
-or use the null Sentinel object for Clobs:
+or 
 ```java
 Flowable<Integer> count = db
   .update("insert into person_clob(name,document) values(?,?)")
-  .parameters("FRED")
-  .parameters(Database.NULL_CLOB)
+  .parameters("FRED", Database.clob(null))
   .count();
 ```
-or wrap the String parameter with ```Database.toSentinelIfNull(String)``` as above in the Insert a Clob section.
 
 ### Read a Clob
 ```java
@@ -497,8 +499,7 @@ Similarly for Blobs (*document* column below is of type ```BLOB```):
 byte[] bytes = ...
 Flowable<Integer> count = db
   .update("insert into person_blob(name,document) values(?,?)")
-  .parameters("FRED")
-  .parameters(Database.toSentinelIfNull(bytes))
+  .parameters("FRED", Database.blob(bytes))
   .count();
 ```
 ### Insert a Null Blob
@@ -506,20 +507,16 @@ This requires *either* a special call (```parameterBlob(String)``` to identify t
 ```java
 Flowable<Integer> count = db
   .update("insert into person_blob(name,document) values(?,?)")
-  .parameters("FRED")
-  .parameterBlob(null)
+  .parameters("FRED", Database.NULL_BLOB)
   .count();
 ```
-or use the null Sentinel object for Blobs:
+or 
 ```java
 Flowable<Integer> count = db
   .update("insert into person_clob(name,document) values(?,?)")
-  .parameters("FRED")
-  .parameters(Database.NULL_BLOB)
+  .parameters("FRED", Database.blob(null))
   .count();
 ```
-or wrap the byte[] parameter with ```Database.toSentinelIfNull(byte[])``` as above in the Insert a Blob section.
-
 ### Read a Blob
 ```java
 Flowable<byte[]> document = 

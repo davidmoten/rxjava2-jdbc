@@ -8,6 +8,9 @@ import java.sql.Types;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.davidmoten.rx.jdbc.pool.Pools;
 import org.davidmoten.rx.pool.Pool;
@@ -134,7 +137,7 @@ public final class Database implements AutoCloseable {
         return new UpdateBuilder(sql, connections(), this);
     }
 
-    public TransactedBuilder tx(Tx<?> tx) {
+    public TransactedBuilder tx(@Nonnull Tx<?> tx) {
         TxImpl<?> t = (TxImpl<?>) tx;
         TransactedConnection c = t.connection().fork();
         return new TransactedBuilder(c, this);
@@ -144,7 +147,7 @@ public final class Database implements AutoCloseable {
 
     public static final Object NULL_NUMBER = new Object();
 
-    public static Object toSentinelIfNull(String s) {
+    public static Object toSentinelIfNull(@Nullable String s) {
         if (s == null)
             return NULL_CLOB;
         else
@@ -160,11 +163,19 @@ public final class Database implements AutoCloseable {
      */
     public static final Object NULL_BLOB = new Object();
 
-    public static Object toSentinelIfNull(byte[] bytes) {
+    public static Object toSentinelIfNull(@Nullable byte[] bytes) {
         if (bytes == null)
             return NULL_BLOB;
         else
             return bytes;
+    }
+
+    public static Object clob(@Nullable String s) {
+        return toSentinelIfNull(s);
+    }
+
+    public static Object blob(@Nullable byte[] bytes) {
+        return toSentinelIfNull(bytes);
     }
 
 }

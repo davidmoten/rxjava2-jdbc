@@ -78,19 +78,13 @@ public final class SelectAutomappedBuilder<T> {
         selectBuilder.parameter(name, value);
         return this;
     }
+    
+    public SelectAutomappedBuilder<T> parameter(Object value) {
+        return parameters(value);
+    }
 
     public SelectAutomappedBuilder<T> parameters(Object... values) {
         selectBuilder.parameters(values);
-        return this;
-    }
-
-    public SelectAutomappedBuilder<T> parameterClob(String value) {
-        selectBuilder.parameterClob(value);
-        return this;
-    }
-
-    public SelectAutomappedBuilder<T> parameterBlob(byte[] bytes) {
-        selectBuilder.parameterBlob(bytes);
         return this;
     }
 
