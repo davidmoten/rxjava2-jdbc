@@ -205,13 +205,13 @@ JOSEPH
 MARMADUKE
 ```
 
-In fact the `.get()` is not required if followed by a `map`:
+In fact the `.map` is not required if you use a different overload of `get`:
 
 ```java
 Database
   .test()
   .select(Person.class)
-  .map(Person::name)
+  .get(Person::name)
   .blockingForEach(System.out::println);
 ```
 

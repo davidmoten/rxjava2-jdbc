@@ -45,7 +45,7 @@ public final class SelectAutomappedBuilder<T> {
         return selectBuilder.autoMap(cls);
     }
     
-    public <R> Flowable<R> map(Function<? super T, ? extends R> function) {
+    public <R> Flowable<R> get(Function<? super T, ? extends R> function) {
         return get().map(function);
     }
 

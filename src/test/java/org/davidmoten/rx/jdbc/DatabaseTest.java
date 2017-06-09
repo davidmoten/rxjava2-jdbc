@@ -492,7 +492,7 @@ public class DatabaseTest {
         Database //
                 .test() //
                 .select(Person10.class) //
-                .map(Person10::name) //
+                .get(Person10::name) //
                 .blockingForEach(System.out::println);
     }
 
