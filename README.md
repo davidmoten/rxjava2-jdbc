@@ -68,13 +68,13 @@ Each time you call `Database.test(maxPoolSize)` you will have a fresh new databa
 
 A query example
 ---------------
-Let's use the `Database` instance to perform a select query on the `Person` table and write the names to the console:
+Let's use a `Database` instance to perform a select query on the `Person` table and write the names to the console:
 
 ```java
 Database db = Database.test();
 db.select("select name from person")
   .getAs(String.class)
-  .forEach(System.out::println);
+  .blockingForEach(System.out::println);
 ```
 
 Output is
@@ -84,14 +84,17 @@ JOSEPH
 MARMADUKE
 ```
 
-That example is very brief but for these simple tests it's preferable to use a different subscribe method to `forEach` because if we had for instance asked for a column that did not exist then an exception stack trace would be written to stderr but no exception would be thrown. This example will throw a `SQLRuntimeException` because the column `nam` does not exist:
+Note the use of `blockingForEach`. This is only for demonstration purposes. When a query is executed it is executed asynchronously on a scheduler that you can specify if desired. The default scheduler is:
 
 ```java
-Database db = Database.test();
-db.select("select nam from person")
-  .getAs(String.class)
-  .blockingForEach(System.out::println);
+Schedulers.from(Executors.newFixedThreadPool(maxPoolSize));
 ```
+While you are processing reactively you should avoid blocking calls but domain boundaries sometimes force this to happen (e.g. accumulate the results and return them as xml over the network from a web service call). Bear in mind also that if you are worried about the complexities of debugging RxJava programs then you might wish to make brief limited forays into reactive code. That's completely fine too. What you lose in efficiency you may gain in simplicity.
+
+Asynchrony
+------------
+The query flowables returned by the `Database` all run asynchronously. This is required because of the use of non-blocking connection pools. When a connection is returned to the pool and then checked-out by another query that checkout must occur on a different thread so that stack overflow does not occur. See the [Non-blocking connection pools](#non-blocking-connection-pools) section for more details.
+
 
 Nulls
 ---------
