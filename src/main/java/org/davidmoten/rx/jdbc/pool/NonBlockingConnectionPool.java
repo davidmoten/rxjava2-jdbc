@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc.pool;
 
 import java.sql.Connection;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -45,7 +46,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         private long idleTimeBeforeHealthCheckMs = 60000;
         private long maxIdleTimeMs = 30 * 60000;
         private Consumer<Connection> disposer = Util::closeSilently;
-        private Scheduler scheduler = Schedulers.io();
+        private Scheduler scheduler = null;
 
         public Builder connectionProvider(ConnectionProvider cp) {
             this.cp = cp;
@@ -80,6 +81,13 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             return this;
         }
 
+        /**
+         * Sets the maximum connection pool size. Default is 5.
+         * 
+         * @param maxPoolSize
+         *            maximum number of connections in the pool
+         * @return this
+         */
         public Builder maxPoolSize(int maxPoolSize) {
             this.maxPoolSize = maxPoolSize;
             return this;
@@ -94,12 +102,35 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             return returnToPoolDelayAfterHealthCheckFailureMs(unit.toMillis(value));
         }
 
+        /**
+         * Sets the scheduler used for emitting connections (must be scheduled
+         * to another thread to break the chain of stack calls otherwise can get
+         * StackOverflowError) and for scheduling timeouts and retries. Defaults
+         * to
+         * {@code Schedulers.from(Executors.newFixedThreadPool(maxPoolSize))}.
+         * Do not set the scheduler to {@code Schedulers.trampoline()} because
+         * queries will block waiting for timeout workers. Also, do not use a
+         * single-threaded {@link Scheduler} because you may encounter
+         * {@link StackOverflowError}.
+         * 
+         * @param scheduler
+         *            scheduler to use for emitting connections and for
+         *            scheduling timeouts and retries. Defaults to
+         *            {@code Schedulers.from(Executors.newFixedThreadPool(maxPoolSize))}.
+         *            Do not use {@code Schedulers.trampoline()}.
+         * @return this
+         */
         public Builder scheduler(Scheduler scheduler) {
+            Preconditions.checkArgument(scheduler != Schedulers.trampoline(),
+                    "do not use trampoline scheduler because of risk of stack overflow");
             this.scheduler = scheduler;
             return this;
         }
 
         public NonBlockingConnectionPool build() {
+            if (scheduler == null) {
+                scheduler = Schedulers.from(Executors.newFixedThreadPool(maxPoolSize));
+            }
             return new NonBlockingConnectionPool(NonBlockingPool //
                     .factory(() -> cp.get()) //
                     .idleTimeBeforeHealthCheckMs(idleTimeBeforeHealthCheckMs) //
