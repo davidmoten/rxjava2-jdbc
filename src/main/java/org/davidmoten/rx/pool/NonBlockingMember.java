@@ -16,20 +16,19 @@ public final class NonBlockingMember<T> implements Member<T> {
 
     private static final Logger log = LoggerFactory.getLogger(NonBlockingMember.class);
 
-    /**
-     * <pre>
-     * checkout:        NOT_INITIALIZED_NOT_IN_USE -> INITIALIZED_IN_USE 
-     * checkin:         INITIALIZED_IN_USE         -> INITIALIZED_NOT_IN_USE
-     * dispose:         INITIALIZED_IN_USE         -> DISPOSING 
-     *                                            -> NOT_INITIALIZED_NOT_IN_USE
-     * disposeAndReset:
-     * </pre>
-     */
     private static final int NOT_INITIALIZED_NOT_IN_USE = 0;
     private static final int INITIALIZED_IN_USE = 1;
     private static final int INITIALIZED_NOT_IN_USE = 2;
     private static final int DISPOSING = 3;
 
+    /**
+     * <pre>
+     * checkout:  NOT_INITIALIZED_NOT_IN_USE -> INITIALIZED_IN_USE 
+     * checkin:   INITIALIZED_IN_USE         -> INITIALIZED_NOT_IN_USE
+     * dispose:   INITIALIZED_IN_USE         -> DISPOSING 
+     *                                       -> NOT_INITIALIZED_NOT_IN_USE
+     * </pre>
+     */
     private final AtomicReference<State> state = new AtomicReference<>(
             new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED, true));
     private final Worker worker;
