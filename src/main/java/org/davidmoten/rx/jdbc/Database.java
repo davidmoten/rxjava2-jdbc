@@ -67,6 +67,12 @@ public final class Database implements AutoCloseable {
         return connectionProvider(nextUrl());
     }
 
+    /**
+     * Returns a new testing apache derby in-memory database with a connection
+     * pool of size 3.
+     * 
+     * @return new testing Database instance
+     */
     public static Database test() {
         return test(3);
     }
