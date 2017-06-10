@@ -1466,7 +1466,7 @@ public class DatabaseTest {
                 .assertValue(1234L) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testUpdateTimestampParameter() {
         Database db = db();
@@ -1487,6 +1487,48 @@ public class DatabaseTest {
                 .assertComplete();
     }
 
+    @Test
+    public void testUpdateSqlDateParameter() {
+        Database db = db();
+        java.sql.Date t = new java.sql.Date(1234);
+
+        db.update("update person set registered=?") //
+                .parameter(t) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(3) //
+                .assertComplete();
+        db.select("select registered from person") //
+                .getAs(Long.class) //
+                .firstOrError() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS * 10000, TimeUnit.SECONDS) //
+                // TODO make a more accurate comparison using the current TZ
+                .assertValue(x -> Math.abs(x - 1234) <= TimeUnit.HOURS.toMillis(24)) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateUtilDateParameter() {
+        Database db = db();
+        Date d = new Date(1234);
+        db.update("update person set registered=?") //
+                .parameter(d) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(3) //
+                .assertComplete();
+        db.select("select registered from person") //
+                .getAs(Long.class) //
+                .firstOrError() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(1234L) //
+                .assertComplete();
+    }
+    
     @Test
     public void testUpdateTimestampAsInstant() {
         Database db = db();

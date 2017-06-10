@@ -92,8 +92,7 @@ public enum Util {
                         Calendar cal = Calendar.getInstance();
                         ps.setTimestamp(i, (Timestamp) o, cal);
                     } else if (java.sql.Date.class.isAssignableFrom(cls)) {
-                        Calendar cal = Calendar.getInstance();
-                        ps.setDate(i, (java.sql.Date) o, cal);
+                        ps.setDate(i, (java.sql.Date) o, Calendar.getInstance());
                     } else if (java.util.Date.class.isAssignableFrom(cls)) {
                         Calendar cal = Calendar.getInstance();
                         java.util.Date date = (java.util.Date) o;
