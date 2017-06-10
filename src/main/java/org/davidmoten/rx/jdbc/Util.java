@@ -84,7 +84,7 @@ public enum Util {
                     } else if (Calendar.class.isAssignableFrom(cls)) {
                         Calendar cal = (Calendar) o;
                         Timestamp t = new java.sql.Timestamp(cal.getTimeInMillis());
-                        ps.setTimestamp(i, t, cal);
+                        ps.setTimestamp(i, t);
                     } else if (Time.class.isAssignableFrom(cls)) {
                         Calendar cal = Calendar.getInstance();
                         ps.setTime(i, (Time) o, cal);

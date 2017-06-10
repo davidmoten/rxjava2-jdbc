@@ -11,17 +11,20 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -1421,6 +1424,66 @@ public class DatabaseTest {
                 .map(d -> d.toEpochMilli()) //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(FRED_REGISTERED_TIME) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateCalendarParameter() {
+        Calendar c = GregorianCalendar.from(ZonedDateTime.parse("2017-03-25T15:37Z"));
+        Database db = db();
+        db.update("update person set registered=?") //
+                .parameter(c) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(3) //
+                .assertComplete();
+        db.select("select registered from person") //
+                .getAs(Long.class) //
+                .firstOrError() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(c.getTimeInMillis()) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUpdateTimeParameter() {
+        Database db = db();
+        Time t = new Time(1234);
+        db.update("update person set registered=?") //
+                .parameter(t) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(3) //
+                .assertComplete();
+        db.select("select registered from person") //
+                .getAs(Long.class) //
+                .firstOrError() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(1234L) //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testUpdateTimestampParameter() {
+        Database db = db();
+        Timestamp t = new Timestamp(1234);
+        db.update("update person set registered=?") //
+                .parameter(t) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(3) //
+                .assertComplete();
+        db.select("select registered from person") //
+                .getAs(Long.class) //
+                .firstOrError() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(1234L) //
                 .assertComplete();
     }
 
