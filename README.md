@@ -93,7 +93,7 @@ While you are processing reactively you should avoid blocking calls but domain b
 
 Asynchrony
 ------------
-The query flowables returned by the `Database` all run asynchronously. This is required because of the use of non-blocking connection pools. When a connection is returned to the pool and then checked-out by another query that checkout must occur on a different thread so that stack overflow does not occur. See the [Non-blocking connection pools](#non-blocking-connection-pools) section for more details.
+The query flowables returned by the `Database` all run asynchronously. This is required because of the use of non-blocking connection pools. When a connection is returned to the pool and then checked-out by another query that checkout must occur on a different thread so that stack overflow does not occur. See the [Non-blocking connection pools](README.md#non-blocking-connection-pools) section for more details.
 
 
 Nulls
