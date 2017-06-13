@@ -5,16 +5,12 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
-import org.davidmoten.rx.jdbc.pool.PoolClosedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
-import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
 import io.reactivex.functions.Consumer;

@@ -1,5 +1,6 @@
 package org.davidmoten.rx.jdbc.pool;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.Connection;
@@ -7,6 +8,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
@@ -33,10 +35,10 @@ public class PoolTest {
                 .healthy(n -> true) //
                 .disposer(n -> {
                 }) //
-                .maxSize(3)//
-                .returnToPoolDelayAfterHealthCheckFailureMs(1000)//
-                .memberFactory(memberFactory)//
-                .scheduler(s)//
+                .maxSize(3) //
+                .returnToPoolDelayAfterHealthCheckFailureMs(1000) //
+                .memberFactory(memberFactory) //
+                .scheduler(s) //
                 .build();
         TestSubscriber<Member<Integer>> ts = pool.members() //
                 .doOnNext(m -> m.checkin()) //
@@ -44,6 +46,37 @@ public class PoolTest {
                 .test(4);
         s.triggerActions();
         ts.assertValueCount(4);
+    }
+
+    @Test
+    public void testMaxIdleTime() throws InterruptedException {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger count = new AtomicInteger();
+        AtomicInteger disposed = new AtomicInteger();
+        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(pool,
+                null);
+        Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet()) //
+                .healthy(n -> true) //
+                .disposer(n -> {
+                }) //
+                .maxSize(3) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) //
+                .disposer(n -> disposed.incrementAndGet()) //
+                .memberFactory(memberFactory) //
+                .scheduler(s) //
+                .build();
+        TestSubscriber<Member<Integer>> ts = pool.members() //
+                .doOnNext(m -> m.checkin()) //
+                .doOnNext(System.out::println) //
+                .doOnRequest(t -> System.out.println("test request="+ t)) //
+                .test(1);
+        s.triggerActions();
+        ts.assertValueCount(1);
+        assertEquals(0, disposed.get());
+        s.advanceTimeBy(1, TimeUnit.MINUTES);
+        s.triggerActions();
+        assertEquals(1, disposed.get());
     }
 
     @Test
@@ -63,9 +96,9 @@ public class PoolTest {
         List<Object> list = ts.getEvents().get(0);
         // all 4 connections released were the same
         System.out.println(list);
-        assertTrue(list.get(0) == list.get(2));
-        assertTrue(list.get(1) == list.get(3));
-        assertTrue(list.get(0) != list.get(1));
+        assertTrue(list.get(0) == list.get(1));
+        assertTrue(list.get(1) == list.get(2));
+        assertTrue(list.get(2) == list.get(3));
     }
 
     @Test

@@ -11,6 +11,7 @@ import org.reactivestreams.Subscription;
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
 import io.reactivex.Scheduler.Worker;
+import io.reactivex.Single;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 
@@ -21,7 +22,6 @@ class MembersFlowable<T> extends Flowable<Member<T>> implements Subscription, Cl
     private final AtomicInteger wip = new AtomicInteger();
     private final Member<T>[] members;
     private final Scheduler scheduler;
-    private final MemberFactory<T, NonBlockingPool2<T>> memberFactory;
     private final int maxSize;
 
     // mutable
@@ -40,7 +40,6 @@ class MembersFlowable<T> extends Flowable<Member<T>> implements Subscription, Cl
         this.count = 0;
         this.scheduler = pool.scheduler;
         this.maxSize = pool.maxSize;
-        this.memberFactory = pool.memberFactory;
     }
 
     private static <T> Member<T>[] createMembersArray(NonBlockingPool2<T> pool) {
