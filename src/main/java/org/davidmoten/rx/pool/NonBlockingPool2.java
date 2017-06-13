@@ -19,11 +19,10 @@ import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 
-public final class NonBlockingPool2<T> implements Pool<T> {
+public final class NonBlockingPool2<T> implements Pool2<T> {
 
-    private static final Logger log = LoggerFactory.getLogger(NonBlockingPool.class);
+    private static final Logger log = LoggerFactory.getLogger(NonBlockingPool2.class);
 
-    final PublishSubject<Member<T>> subject;
     final Callable<T> factory;
     final Predicate<T> healthy;
     final long idleTimeBeforeHealthCheckMs;
@@ -31,15 +30,15 @@ public final class NonBlockingPool2<T> implements Pool<T> {
     final int maxSize;
     final long maxIdleTimeMs;
     final long returnToPoolDelayAfterHealthCheckFailureMs;
-    final MemberFactory<T, NonBlockingPool2<T>> memberFactory;
+    final MemberFactory2<T, NonBlockingPool2<T>> memberFactory;
     final Scheduler scheduler;
 
-    private final AtomicReference<Flowable<Member<T>>> members = new AtomicReference<>();
-    private final AtomicReference<List<Member<T>>> list = new AtomicReference<>(Collections.emptyList());
+    private final AtomicReference<Single<Member2<T>>> member = new AtomicReference<>();
+    private final AtomicReference<List<Member2<T>>> list = new AtomicReference<>(Collections.emptyList());
 
     private NonBlockingPool2(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer, int maxSize,
             long returnToPoolDelayAfterHealthCheckFailureMs, long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs,
-            MemberFactory<T, NonBlockingPool2<T>> memberFactory, Scheduler scheduler) {
+            MemberFactory2<T, NonBlockingPool2<T>> memberFactory, Scheduler scheduler) {
         Preconditions.checkNotNull(factory);
         Preconditions.checkNotNull(healthy);
         Preconditions.checkNotNull(disposer);
@@ -56,22 +55,21 @@ public final class NonBlockingPool2<T> implements Pool<T> {
         this.maxIdleTimeMs = maxIdleTimeMs;
         this.memberFactory = memberFactory;
         this.scheduler = scheduler;// schedules retries
-        this.subject = PublishSubject.create();
     }
 
-    private Single<Member<T>> createMembers() {
+    private Single<Member2<T>> createMembers() {
         return new MembersSingle<T>(this);
     }
 
     @Override
-    public Flowable<Member<T>> members() {
+    public Single<Member2<T>> member() {
         while (true) {
-            Flowable<Member<T>> m = members.get();
+            Single<Member2<T>> m = member.get();
             if (m != null)
                 return m;
             else {
-                m = createMembers().toFlowable();
-                if (members.compareAndSet(null, m)) {
+                m = createMembers();
+                if (member.compareAndSet(null, m)) {
                     return m;
                 }
             }
@@ -80,9 +78,9 @@ public final class NonBlockingPool2<T> implements Pool<T> {
 
     @Override
     public void close() {
-        List<Member<T>> ms = list.getAndSet(null);
+        List<Member2<T>> ms = list.getAndSet(null);
         if (ms != null) {
-            for (Member<T> m : ms) {
+            for (Member2<T> m : ms) {
                 m.shutdown();
             }
         }
@@ -105,7 +103,7 @@ public final class NonBlockingPool2<T> implements Pool<T> {
         };
         private int maxSize = 10;
         private long returnToPoolDelayAfterHealthCheckFailureMs = 30000;
-        private MemberFactory<T, NonBlockingPool2<T>> memberFactory;
+        private MemberFactory2<T, NonBlockingPool2<T>> memberFactory;
         private Scheduler scheduler = Schedulers.computation();
         private long maxIdleTimeMs;
 
@@ -165,7 +163,7 @@ public final class NonBlockingPool2<T> implements Pool<T> {
             return returnToPoolDelayAfterHealthCheckFailureMs(unit.toMillis(value));
         }
 
-        public Builder<T> memberFactory(MemberFactory<T, NonBlockingPool2<T>> memberFactory) {
+        public Builder<T> memberFactory(MemberFactory2<T, NonBlockingPool2<T>> memberFactory) {
             Preconditions.checkNotNull(memberFactory);
             this.memberFactory = memberFactory;
             return this;
