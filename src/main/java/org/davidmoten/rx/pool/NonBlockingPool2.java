@@ -11,13 +11,11 @@ import org.slf4j.LoggerFactory;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
-import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
-import io.reactivex.subjects.PublishSubject;
 
 public final class NonBlockingPool2<T> implements Pool2<T> {
 
