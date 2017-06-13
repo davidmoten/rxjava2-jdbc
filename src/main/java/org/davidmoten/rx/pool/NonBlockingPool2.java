@@ -68,10 +68,6 @@ public final class NonBlockingPool2<T> implements Pool<T> {
         return new MembersFlowable<T>(this);
     }
     
-    public void checkin(Member<T> member) {
-        
-    }
-
     @Override
     public Flowable<Member<T>> members() {
         while (true) {
