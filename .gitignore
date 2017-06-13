@@ -11,3 +11,5 @@ buildNumber.properties
 .project
 .settings
 derby.log
+.idea
+*.iml

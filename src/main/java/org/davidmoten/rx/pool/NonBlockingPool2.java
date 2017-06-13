@@ -13,6 +13,7 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
+import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
@@ -34,12 +35,10 @@ public final class NonBlockingPool2<T> implements Pool<T> {
     final Scheduler scheduler;
 
     private final AtomicReference<Flowable<Member<T>>> members = new AtomicReference<>();
-    private final AtomicReference<List<Member<T>>> list = new AtomicReference<>(
-            Collections.emptyList());
+    private final AtomicReference<List<Member<T>>> list = new AtomicReference<>(Collections.emptyList());
 
-    private NonBlockingPool2(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer,
-            int maxSize, long returnToPoolDelayAfterHealthCheckFailureMs,
-            long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs,
+    private NonBlockingPool2(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer, int maxSize,
+            long returnToPoolDelayAfterHealthCheckFailureMs, long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs,
             MemberFactory<T, NonBlockingPool2<T>> memberFactory, Scheduler scheduler) {
         Preconditions.checkNotNull(factory);
         Preconditions.checkNotNull(healthy);
@@ -56,14 +55,14 @@ public final class NonBlockingPool2<T> implements Pool<T> {
         this.idleTimeBeforeHealthCheckMs = idleTimeBeforeHealthCheckMs;
         this.maxIdleTimeMs = maxIdleTimeMs;
         this.memberFactory = memberFactory;
-        this.scheduler = scheduler;//schedules retries
+        this.scheduler = scheduler;// schedules retries
         this.subject = PublishSubject.create();
     }
 
-    private Flowable<Member<T>> createMembers() {
-        return new MembersFlowable<T>(this);
+    private Single<Member<T>> createMembers() {
+        return new MembersSingle<T>(this);
     }
-    
+
     @Override
     public Flowable<Member<T>> members() {
         while (true) {
@@ -71,7 +70,7 @@ public final class NonBlockingPool2<T> implements Pool<T> {
             if (m != null)
                 return m;
             else {
-                m = createMembers();
+                m = createMembers().toFlowable();
                 if (members.compareAndSet(null, m)) {
                     return m;
                 }
@@ -180,8 +179,8 @@ public final class NonBlockingPool2<T> implements Pool<T> {
 
         public NonBlockingPool2<T> build() {
             return new NonBlockingPool2<T>(factory, healthy, disposer, maxSize,
-                    returnToPoolDelayAfterHealthCheckFailureMs, idleTimeBeforeHealthCheckMs,
-                    maxIdleTimeMs, memberFactory, scheduler);
+                    returnToPoolDelayAfterHealthCheckFailureMs, idleTimeBeforeHealthCheckMs, maxIdleTimeMs,
+                    memberFactory, scheduler);
         }
     }
 
