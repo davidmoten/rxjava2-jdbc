@@ -31,7 +31,7 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
     final MemberFactory2<T, NonBlockingPool2<T>> memberFactory;
     final Scheduler scheduler;
 
-    private final AtomicReference<Single<Member2<T>>> member = new AtomicReference<>();
+    private final AtomicReference<MemberSingle<T>> member = new AtomicReference<>();
     private final AtomicReference<List<Member2<T>>> list = new AtomicReference<>(Collections.emptyList());
 
     private NonBlockingPool2(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer, int maxSize,
@@ -55,23 +55,27 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
         this.scheduler = scheduler;// schedules retries
     }
 
-    private Single<Member2<T>> createMembers() {
-        return new MembersSingle<T>(this);
+    private MemberSingle<T> createMember() {
+        return new MemberSingle<T>(this);
     }
 
     @Override
     public Single<Member2<T>> member() {
         while (true) {
-            Single<Member2<T>> m = member.get();
+            MemberSingle<T> m = member.get();
             if (m != null)
                 return m;
             else {
-                m = createMembers();
+                m = createMember();
                 if (member.compareAndSet(null, m)) {
                     return m;
                 }
             }
         }
+    }
+
+    public void checkin(Member2<T> m) {
+        member.get().checkin(m);
     }
 
     @Override

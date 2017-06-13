@@ -17,7 +17,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 
-class MembersSingle<T> extends Single<Member2<T>> implements Subscription, Closeable {
+class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closeable {
 
     final AtomicReference<SingleDisposable<T>[]> observers;
 
@@ -32,9 +32,6 @@ class MembersSingle<T> extends Single<Member2<T>> implements Subscription, Close
 
     // mutable
 
-    // only set once
-    private Subscriber<? super Member2<T>> child;
-
     private volatile boolean cancelled;
 
     // number of members in the pool at the moment
@@ -44,7 +41,7 @@ class MembersSingle<T> extends Single<Member2<T>> implements Subscription, Close
     private int index;
 
     @SuppressWarnings("unchecked")
-    MembersSingle(NonBlockingPool2<T> pool) {
+    MemberSingle(NonBlockingPool2<T> pool) {
         this.queue = new MpscLinkedQueue<Member2<T>>();
         this.members = createMembersArray(pool);
         this.count = 0;
@@ -221,19 +218,19 @@ class MembersSingle<T> extends Single<Member2<T>> implements Subscription, Close
         }
     }
 
-    static final class SingleDisposable<T> extends AtomicReference<MembersSingle<T>> implements Disposable {
+    static final class SingleDisposable<T> extends AtomicReference<MemberSingle<T>> implements Disposable {
         private static final long serialVersionUID = -7650903191002190468L;
 
         final SingleObserver<? super Member2<T>> actual;
 
-        SingleDisposable(SingleObserver<? super Member2<T>> child, MembersSingle<T> parent) {
+        SingleDisposable(SingleObserver<? super Member2<T>> child, MemberSingle<T> parent) {
             this.actual = child;
             lazySet(parent);
         }
 
         @Override
         public void dispose() {
-            MembersSingle<T> parent = getAndSet(null);
+            MemberSingle<T> parent = getAndSet(null);
             if (parent != null) {
                 parent.remove(this);
             }

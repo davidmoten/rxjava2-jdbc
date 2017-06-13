@@ -2,7 +2,7 @@ package org.davidmoten.rx.pool;
 
 public interface Member2<T> extends AutoCloseable {
 
-    boolean checkout();
+    Member2<T> checkout();
 
     void checkin();
 
