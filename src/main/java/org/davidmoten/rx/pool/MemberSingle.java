@@ -15,6 +15,7 @@ import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
+import io.reactivex.plugins.RxJavaPlugins;
 
 class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closeable {
 
@@ -73,6 +74,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         this.cancelled = true;
     }
 
+    @SuppressWarnings("resource")
     private void drain() {
         if (wip.getAndIncrement() == 0) {
             int missed = 0;
@@ -88,16 +90,20 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
                     }
                     Member2<T> m = queue.poll();
                     if (m == null) {
-                        if (count < maxSize) {
+                        while (count < maxSize) {
                             // haven't used all the members of the pool yet
-                            emit(obs, members[count]);
+                            m = members[count].checkout();
+                            if (m != null) {
+                                emit(obs, m);
+                                break;
+                            }
                             count++;
-                        } else {
-                            // nothing to emit and not done
-                            break;
                         }
+                        break;
                     } else {
-                        emit(obs, m);
+                        if ((m = m.checkout()) != null) {
+                            emit(obs, m);
+                        }
                     }
                 }
                 missed = wip.addAndGet(-missed);
@@ -149,7 +155,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
     }
 
     void add(@NonNull SingleDisposable<T> inner) {
-        for (;;) {
+        while (true) {
             SingleDisposable<T>[] a = observers.get();
             int n = a.length;
             @SuppressWarnings("unchecked")
@@ -164,7 +170,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 
     @SuppressWarnings("unchecked")
     void remove(@NonNull SingleDisposable<T> inner) {
-        for (;;) {
+        while (true) {
             SingleDisposable<T>[] a = observers.get();
             int n = a.length;
             if (n == 0) {
@@ -212,8 +218,12 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 
         @Override
         public void run() {
-            child.onSuccess(m);
             worker.dispose();
+            try {
+                child.onSuccess(m);
+            } catch (Throwable e) {
+                RxJavaPlugins.onError(e);
+            }
         }
     }
 
