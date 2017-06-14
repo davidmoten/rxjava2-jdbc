@@ -6,9 +6,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Scheduler;
@@ -18,8 +15,6 @@ import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
 public final class NonBlockingPool2<T> implements Pool2<T> {
-
-    private static final Logger log = LoggerFactory.getLogger(NonBlockingPool2.class);
 
     final Callable<T> factory;
     final Predicate<T> healthy;
