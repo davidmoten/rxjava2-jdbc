@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.reactivestreams.Subscription;
 
+import com.github.davidmoten.guavamini.Preconditions;
+
 import io.reactivex.Scheduler;
 import io.reactivex.Scheduler.Worker;
 import io.reactivex.Single;
@@ -19,10 +21,10 @@ import io.reactivex.plugins.RxJavaPlugins;
 
 class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closeable {
 
-    final AtomicReference<SingleDisposable<T>[]> observers;
+    final AtomicReference<Observers<T>> observers;
 
-    @SuppressWarnings("rawtypes")
-    static final SingleDisposable[] EMPTY = new SingleDisposable[0];
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    static final Observers EMPTY = new Observers(new MemberSingleObserver[0], 0);
 
     private final SimplePlainQueue<Member2<T>> queue;
     private final AtomicInteger wip = new AtomicInteger();
@@ -37,9 +39,6 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
     // number of members in the pool at the moment
     private int count;
 
-    // index of the current observer
-    private int index;
-
     @SuppressWarnings("unchecked")
     MemberSingle(NonBlockingPool2<T> pool) {
         this.queue = new MpscLinkedQueue<Member2<T>>();
@@ -47,7 +46,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         this.count = 0;
         this.scheduler = pool.scheduler;
         this.maxSize = pool.maxSize;
-        this.observers = new AtomicReference<SingleDisposable<T>[]>(EMPTY);
+        this.observers = new AtomicReference<>(EMPTY);
     }
 
     private static <T> Member2<T>[] createMembersArray(NonBlockingPool2<T> pool) {
@@ -84,8 +83,8 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
                         queue.clear();
                         return;
                     }
-                    SingleDisposable<T>[] obs = observers.get();
-                    if (obs.length == 0) {
+                    Observers<T> obs = observers.get();
+                    if (obs == EMPTY) {
                         break;
                     }
                     Member2<T> m = queue.poll();
@@ -114,7 +113,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         }
     }
 
-    private void emit(SingleDisposable<T>[] obs, Member2<T> m) {
+    private void emit(Observers<T> obs, Member2<T> m) {
         // get a fresh worker each time so we jump threads to
         // break the stack-trace (a long-enough chain of
         // checkout-checkins could otherwise provoke stack
@@ -124,11 +123,22 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         // subscriber in the list receives the next emission (round robin)
 
         // obs.length > 0
-        index = index % obs.length;
-        SingleDisposable<T> o = obs[index];
-        index++;
+        int index = obs.index;
+        MemberSingleObserver<T> o = obs.observers[index];
+        // atomically bump up the index (if that entry has not been deleted in
+        // the meantime by disposal
+        while (true) {
+            Observers<T> x = observers.get();
+            if (x.index == index && x.observers[index] == o) {
+                if (observers.compareAndSet(x, new Observers<T>(x.observers, (x.index + 1) % x.observers.length))) {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
         Worker worker = scheduler.createWorker();
-        worker.schedule(new Emitter<T>(worker, o.actual, m));
+        worker.schedule(new Emitter<T>(worker, o.child, m));
     }
 
     @Override
@@ -145,7 +155,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 
     @Override
     protected void subscribeActual(SingleObserver<? super Member2<T>> observer) {
-        SingleDisposable<T> md = new SingleDisposable<T>(observer, this);
+        MemberSingleObserver<T> md = new MemberSingleObserver<T>(observer, this);
         observer.onSubscribe(md);
         add(md);
         if (md.isDisposed()) {
@@ -154,25 +164,25 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         drain();
     }
 
-    void add(@NonNull SingleDisposable<T> inner) {
+    void add(@NonNull MemberSingleObserver<T> inner) {
         while (true) {
-            SingleDisposable<T>[] a = observers.get();
-            int n = a.length;
+            Observers<T> a = observers.get();
+            int n = a.observers.length;
             @SuppressWarnings("unchecked")
-            SingleDisposable<T>[] b = new SingleDisposable[n + 1];
-            System.arraycopy(a, 0, b, 0, n);
+            MemberSingleObserver<T>[] b = new MemberSingleObserver[n + 1];
+            System.arraycopy(a.observers, 0, b, 0, n);
             b[n] = inner;
-            if (observers.compareAndSet(a, b)) {
+            if (observers.compareAndSet(a, new Observers<T>(b, a.index))) {
                 return;
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    void remove(@NonNull SingleDisposable<T> inner) {
+    void remove(@NonNull MemberSingleObserver<T> inner) {
         while (true) {
-            SingleDisposable<T>[] a = observers.get();
-            int n = a.length;
+            Observers<T> a = observers.get();
+            int n = a.observers.length;
             if (n == 0) {
                 return;
             }
@@ -180,7 +190,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
             int j = -1;
 
             for (int i = 0; i < n; i++) {
-                if (a[i] == inner) {
+                if (a.observers[i] == inner) {
                     j = i;
                     break;
                 }
@@ -189,18 +199,33 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
             if (j < 0) {
                 return;
             }
-            SingleDisposable<T>[] b;
+            Observers<T> next;
             if (n == 1) {
-                b = EMPTY;
+                next = EMPTY;
             } else {
-                b = new SingleDisposable[n - 1];
+                MemberSingleObserver<T>[] b = new MemberSingleObserver[n - 1];
                 System.arraycopy(a, 0, b, 0, j);
                 System.arraycopy(a, j + 1, b, j, n - j - 1);
+                if (a.index > j) {
+                    next = new Observers<T>(b, a.index - 1);
+                } else {
+                    next = new Observers<T>(b, a.index);
+                }
             }
-
-            if (observers.compareAndSet(a, b)) {
+            if (observers.compareAndSet(a, next)) {
                 return;
             }
+        }
+    }
+
+    private static final class Observers<T> {
+        final MemberSingleObserver<T>[] observers;
+        final int index;
+
+        Observers(MemberSingleObserver<T>[] observers, int index) {
+            Preconditions.checkArgument(observers.length > 0 || index == 0, "index must be -1 for zero length array");
+            this.observers = observers;
+            this.index = index;
         }
     }
 
@@ -227,13 +252,13 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         }
     }
 
-    static final class SingleDisposable<T> extends AtomicReference<MemberSingle<T>> implements Disposable {
+    static final class MemberSingleObserver<T> extends AtomicReference<MemberSingle<T>> implements Disposable {
         private static final long serialVersionUID = -7650903191002190468L;
 
-        final SingleObserver<? super Member2<T>> actual;
+        final SingleObserver<? super Member2<T>> child;
 
-        SingleDisposable(SingleObserver<? super Member2<T>> child, MemberSingle<T> parent) {
-            this.actual = child;
+        MemberSingleObserver(SingleObserver<? super Member2<T>> child, MemberSingle<T> parent) {
+            this.child = child;
             lazySet(parent);
         }
 
