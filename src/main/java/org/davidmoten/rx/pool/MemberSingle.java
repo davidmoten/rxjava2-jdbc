@@ -122,11 +122,10 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         // TODO choose an observer to emit to and advance counter so the next
         // subscriber in the list receives the next emission (round robin)
 
-        // obs.length > 0
         int index = obs.index;
         MemberSingleObserver<T> o = obs.observers[index];
         // atomically bump up the index (if that entry has not been deleted in
-        // the meantime by disposal
+        // the meantime by disposal)
         while (true) {
             Observers<T> x = observers.get();
             if (x.index == index && x.observers[index] == o) {
@@ -138,7 +137,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
             }
         }
         Worker worker = scheduler.createWorker();
-        worker.schedule(new Emitter<T>(worker, o.child, m));
+        worker.schedule(new Emitter<T>(worker, o, m));
     }
 
     @Override
@@ -232,12 +231,12 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
     private static final class Emitter<T> implements Runnable {
 
         private final Worker worker;
-        private final SingleObserver<? super Member2<T>> child;
+        private final MemberSingleObserver<T> observer;
         private final Member2<T> m;
 
-        Emitter(Worker worker, SingleObserver<? super Member2<T>> child, Member2<T> m) {
+        Emitter(Worker worker, MemberSingleObserver<T> observer, Member2<T> m) {
             this.worker = worker;
-            this.child = child;
+            this.observer = observer;
             this.m = m;
         }
 
@@ -245,7 +244,8 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         public void run() {
             worker.dispose();
             try {
-                child.onSuccess(m);
+                observer.child.onSuccess(m);
+                observer.dispose();
             } catch (Throwable e) {
                 RxJavaPlugins.onError(e);
             }

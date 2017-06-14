@@ -21,6 +21,8 @@ import org.davidmoten.rx.pool.Pool2;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
+import io.reactivex.observers.TestObserver;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
 
@@ -41,12 +43,12 @@ public class PoolTest {
                 .memberFactory(memberFactory) //
                 .scheduler(s) //
                 .build();
-        TestSubscriber<Member2<Integer>> ts = pool.member().repeat() //
-                .doOnNext(m -> m.checkin()) //
-                .doOnNext(System.out::println) //
-                .test(4);
+        TestObserver<Member2<Integer>> ts = pool.member() //
+                .doOnSuccess(m -> m.checkin()) //
+                .test();
         s.triggerActions();
-        ts.assertValueCount(4);
+        ts.assertValueCount(1) //
+                .assertComplete();
     }
 
     @Test
