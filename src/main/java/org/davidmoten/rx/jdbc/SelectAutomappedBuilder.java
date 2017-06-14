@@ -18,7 +18,7 @@ public final class SelectAutomappedBuilder<T> {
 
     private final Database db;
 
-    SelectAutomappedBuilder(Class<T> cls, Flowable<Connection> connections, Database db) {
+    SelectAutomappedBuilder(Class<T> cls, Single<Connection> connections, Database db) {
         this.selectBuilder = new SelectBuilder(getSql(cls), connections, db);
         this.cls = cls;
         this.db = db;

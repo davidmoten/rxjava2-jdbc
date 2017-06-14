@@ -12,11 +12,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
-import org.davidmoten.rx.pool.Member;
+import org.davidmoten.rx.pool.Member2;
 import org.davidmoten.rx.pool.MemberFactory;
-import org.davidmoten.rx.pool.NonBlockingMember;
-import org.davidmoten.rx.pool.NonBlockingPool;
-import org.davidmoten.rx.pool.Pool;
+import org.davidmoten.rx.pool.MemberFactory2;
+import org.davidmoten.rx.pool.NonBlockingMember2;
+import org.davidmoten.rx.pool.NonBlockingPool2;
+import org.davidmoten.rx.pool.Pool2;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
@@ -29,9 +30,9 @@ public class PoolTest {
     public void testSimplePool() throws InterruptedException {
         TestScheduler s = new TestScheduler();
         AtomicInteger count = new AtomicInteger();
-        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(pool,
+        MemberFactory2<Integer, NonBlockingPool2<Integer>> memberFactory = pool -> new NonBlockingMember2<Integer>(pool,
                 null);
-        Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet()) //
+        Pool2<Integer> pool = NonBlockingPool2.factory(() -> count.incrementAndGet()) //
                 .healthy(n -> true) //
                 .disposer(n -> {
                 }) //
@@ -40,7 +41,7 @@ public class PoolTest {
                 .memberFactory(memberFactory) //
                 .scheduler(s) //
                 .build();
-        TestSubscriber<Member<Integer>> ts = pool.members() //
+        TestSubscriber<Member2<Integer>> ts = pool.member().repeat() //
                 .doOnNext(m -> m.checkin()) //
                 .doOnNext(System.out::println) //
                 .test(4);
@@ -53,9 +54,9 @@ public class PoolTest {
         TestScheduler s = new TestScheduler();
         AtomicInteger count = new AtomicInteger();
         AtomicInteger disposed = new AtomicInteger();
-        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(pool,
+        MemberFactory2<Integer, NonBlockingPool2<Integer>> memberFactory = pool -> new NonBlockingMember2<Integer>(pool,
                 null);
-        Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet()) //
+        Pool2<Integer> pool = NonBlockingPool2.factory(() -> count.incrementAndGet()) //
                 .healthy(n -> true) //
                 .disposer(n -> {
                 }) //
@@ -66,10 +67,12 @@ public class PoolTest {
                 .memberFactory(memberFactory) //
                 .scheduler(s) //
                 .build();
-        TestSubscriber<Member<Integer>> ts = pool.members() //
+        TestSubscriber<Member2<Integer>> ts = pool //
+                .member() //
+                .repeat() //
                 .doOnNext(m -> m.checkin()) //
                 .doOnNext(System.out::println) //
-                .doOnRequest(t -> System.out.println("test request="+ t)) //
+                .doOnRequest(t -> System.out.println("test request=" + t)) //
                 .test(1);
         s.triggerActions();
         ts.assertValueCount(1);
@@ -84,6 +87,7 @@ public class PoolTest {
         TestScheduler s = new TestScheduler();
         Database db = DatabaseCreator.create(2, s);
         TestSubscriber<Connection> ts = db.connections() //
+                .repeat() //
                 .doOnNext(System.out::println) //
                 .doOnNext(c -> {
                     // release connection for reuse straight away
@@ -110,7 +114,9 @@ public class PoolTest {
     public void testConnectionPoolRecylesMany() throws SQLException {
         TestScheduler s = new TestScheduler();
         Database db = DatabaseCreator.create(2, s);
-        TestSubscriber<Connection> ts = db.connections() //
+        TestSubscriber<Connection> ts = db //
+                .connections() //
+                .repeat() //
                 .test(4); //
         s.triggerActions();
         ts.assertNoErrors() //

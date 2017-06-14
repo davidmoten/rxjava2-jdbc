@@ -6,18 +6,19 @@ import java.util.List;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 public final class SelectBuilder extends ParametersBuilder<SelectBuilder>
         implements Getter, DependsOn<SelectBuilder> {
 
     final String sql;
-    final Flowable<Connection> connections;
+    final Single<Connection> connections;
     private final Database db;
 
     int fetchSize = 0; // default
     private Flowable<?> dependsOn;
 
-    public SelectBuilder(String sql, Flowable<Connection> connections, Database db) {
+    public SelectBuilder(String sql, Single<Connection> connections, Database db) {
         super(sql);
         Preconditions.checkNotNull(sql);
         Preconditions.checkNotNull(connections);
@@ -50,7 +51,7 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder>
     @Override
     public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
         Flowable<List<Object>> pg = super.parameterGroupsToFlowable();
-        Flowable<T> f = Select.<T> create(connections.firstOrError(), pg, sql, fetchSize, function,
+        Flowable<T> f = Select.<T> create(connections, pg, sql, fetchSize, function,
                 true);
         if (dependsOn != null) {
             return dependsOn.ignoreElements().andThen(f);

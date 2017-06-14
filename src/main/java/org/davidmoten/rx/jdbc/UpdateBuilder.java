@@ -9,18 +9,17 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 
-public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder>
-        implements DependsOn<UpdateBuilder> {
+public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> implements DependsOn<UpdateBuilder> {
 
     static final int DEFAULT_BATCH_SIZE = 1;
 
     final String sql;
-    final Flowable<Connection> connections;
+    final Single<Connection> connections;
     private final Database db;
     Flowable<?> dependsOn;
     int batchSize = DEFAULT_BATCH_SIZE;
 
-    public UpdateBuilder(String sql, Flowable<Connection> connections, Database db) {
+    public UpdateBuilder(String sql, Single<Connection> connections, Database db) {
         super(sql);
         this.sql = sql;
         this.connections = connections;
@@ -49,14 +48,13 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder>
      *         ResultSet
      */
     public ReturnGeneratedKeysBuilder returnGeneratedKeys() {
-        Preconditions.checkArgument(batchSize == 1,
-                "Cannot return generated keys if batchSize > 1");
+        Preconditions.checkArgument(batchSize == 1, "Cannot return generated keys if batchSize > 1");
         return new ReturnGeneratedKeysBuilder(this);
     }
 
     public Flowable<Integer> counts() {
-        return startWithDependency(Update.create(connections.firstOrError(),
-                super.parameterGroupsToFlowable(), sql, batchSize, true).dematerialize());
+        return startWithDependency(
+                Update.create(connections, super.parameterGroupsToFlowable(), sql, batchSize, true).dematerialize());
     }
 
     <T> Flowable<T> startWithDependency(Flowable<T> f) {

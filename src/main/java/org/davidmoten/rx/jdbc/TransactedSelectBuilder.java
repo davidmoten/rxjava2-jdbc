@@ -96,20 +96,20 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
         return Flowable.defer(() -> {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
             return Select
-                    .create(sb.connections.firstOrError() //
+                    .create(sb.connections //
                             .map(c -> Util.toTransactedConnection(connection, c)), //
-                    sb.parameterGroupsToFlowable(), //
-                    sb.sql, //
-                    sb.fetchSize, //
-                    rs -> Util.mapObject(rs, cls, 1), //
-                    false) //
+                            sb.parameterGroupsToFlowable(), //
+                            sb.sql, //
+                            sb.fetchSize, //
+                            rs -> Util.mapObject(rs, cls, 1), //
+                            false) //
                     .materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                     .doOnNext(tx -> {
-                if (tx.isComplete()) {
-                    ((TxImpl<T>) tx).connection().commit();
-                }
-            });
+                        if (tx.isComplete()) {
+                            ((TxImpl<T>) tx).connection().commit();
+                        }
+                    });
         });
     }
 

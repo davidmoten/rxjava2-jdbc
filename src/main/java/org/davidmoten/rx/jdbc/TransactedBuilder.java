@@ -2,16 +2,16 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
 
-import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 public final class TransactedBuilder {
 
-    private final Flowable<Connection> connections;
+    private final Single<Connection> connections;
     private final Database db;
 
     TransactedBuilder(TransactedConnection con, Database db) {
         this.db = db;
-        this.connections = Flowable.just(con);
+        this.connections = Single.just(con);
     }
 
     public TransactedSelectBuilder select(String sql) {

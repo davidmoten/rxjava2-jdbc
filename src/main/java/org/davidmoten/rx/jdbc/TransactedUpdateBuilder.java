@@ -137,7 +137,6 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
             return ub.startWithDependency( //
                     Update.create(
                             ub.connections //
-                                    .firstOrError() //
                                     .map(c -> Util.toTransactedConnection(connection, c)), //
                             ub.parameterGroupsToFlowable(), //
                             ub.sql, //

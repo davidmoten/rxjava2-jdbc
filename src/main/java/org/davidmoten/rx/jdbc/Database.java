@@ -15,25 +15,26 @@ import javax.annotation.Nullable;
 
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.davidmoten.rx.jdbc.pool.Pools;
-import org.davidmoten.rx.pool.Pool;
+import org.davidmoten.rx.pool.Pool2;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 import io.reactivex.functions.Action;
 
 public final class Database implements AutoCloseable {
 
-    private final Flowable<Connection> connections;
+    private final Single<Connection> connections;
 
     private final Action onClose;
 
-    private Database(@Nonnull Flowable<Connection> connections, @Nonnull Action onClose) {
-        this.connections = connections;
+    private Database(@Nonnull Single<Connection> connection, @Nonnull Action onClose) {
+        this.connections = connection;
         this.onClose = onClose;
     }
 
-    public static Database from(@Nonnull Flowable<Connection> connections, @Nonnull Action onClose) {
+    public static Database from(@Nonnull Single<Connection> connections, @Nonnull Action onClose) {
         Preconditions.checkNotNull(connections, "connections cannot be null");
         Preconditions.checkNotNull(onClose, "onClose cannot be null");
         return new Database(connections, onClose);
@@ -49,9 +50,9 @@ public final class Database implements AutoCloseable {
                         .build());
     }
 
-    public static Database from(@Nonnull Pool<Connection> pool) {
+    public static Database from(@Nonnull Pool2<Connection> pool) {
         Preconditions.checkNotNull(pool, "pool canot be null");
-        return new Database(pool.members().cast(Connection.class), () -> pool.close());
+        return new Database(pool.member().cast(Connection.class), () -> pool.close());
     }
 
     public static Database test(int maxPoolSize) {
@@ -132,7 +133,7 @@ public final class Database implements AutoCloseable {
         return "jdbc:derby:memory:derby" + testDbNumber.incrementAndGet() + ";create=true";
     }
 
-    public Flowable<Connection> connections() {
+    public Single<Connection> connections() {
         return connections;
     }
 
