@@ -50,6 +50,29 @@ public class PoolTest {
     }
 
     @Test
+    public void testSimplePoolWithRequestOf4() throws InterruptedException {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger count = new AtomicInteger();
+        MemberFactory2<Integer, NonBlockingPool2<Integer>> memberFactory = pool -> new NonBlockingMember2<Integer>(pool,
+                null);
+        Pool2<Integer> pool = NonBlockingPool2.factory(() -> count.incrementAndGet()) //
+                .healthy(n -> true) //
+                .disposer(n -> {
+                }) //
+                .maxSize(3) //
+                .returnToPoolDelayAfterHealthCheckFailureMs(1000) //
+                .memberFactory(memberFactory) //
+                .scheduler(s) //
+                .build();
+        TestSubscriber<Member2<Integer>> ts = pool.member().repeat() //
+                .doOnNext(m -> m.checkin()) //
+                .test(4);
+        s.triggerActions();
+        ts.assertValueCount(4);
+                
+    }
+
+    @Test
     public void testMaxIdleTime() throws InterruptedException {
         TestScheduler s = new TestScheduler();
         AtomicInteger count = new AtomicInteger();
