@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.pool.Member2;
-import org.davidmoten.rx.pool.MemberFactory;
 import org.davidmoten.rx.pool.MemberFactory2;
 import org.davidmoten.rx.pool.NonBlockingMember2;
 import org.davidmoten.rx.pool.NonBlockingPool2;
@@ -21,7 +20,6 @@ import org.davidmoten.rx.pool.Pool2;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
-import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;

@@ -13,7 +13,7 @@ import io.reactivex.plugins.RxJavaPlugins;
 
 public final class NonBlockingMember2<T> implements Member2<T> {
 
-    private static final Logger log = LoggerFactory.getLogger(NonBlockingMember.class);
+    private static final Logger log = LoggerFactory.getLogger(NonBlockingMember2.class);
 
     private static final int NOT_INITIALIZED_NOT_IN_USE = 0;
     private static final int INITIALIZED_IN_USE = 1;

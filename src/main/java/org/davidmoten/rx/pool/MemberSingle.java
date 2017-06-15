@@ -24,7 +24,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
     final AtomicReference<Observers<T>> observers;
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    static final Observers EMPTY = new Observers(new MemberSingleObserver[0], 0);
+    static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0);
 
     private final SimplePlainQueue<Member2<T>> queue;
     private final AtomicInteger wip = new AtomicInteger();
@@ -84,7 +84,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
                         return;
                     }
                     Observers<T> obs = observers.get();
-                    if (obs == EMPTY) {
+                    if (obs.activeCount == 0) {
                         break;
                     }
                     Member2<T> m = queue.poll();
@@ -129,7 +129,14 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         while (true) {
             Observers<T> x = observers.get();
             if (x.index == index && x.observers[index] == o) {
-                if (observers.compareAndSet(x, new Observers<T>(x.observers, (x.index + 1) % x.observers.length))) {
+                boolean[] active = new boolean[x.active.length];
+                System.arraycopy(x.active, 0, active, 0, active.length);
+                active[index] = false;
+                int nextIndex = (index + 1) % active.length;
+                while (nextIndex != index && !active[nextIndex]) {
+                    nextIndex = (nextIndex + 1) % active.length;
+                }
+                if (observers.compareAndSet(x, new Observers<T>(x.observers, active, x.activeCount - 1, nextIndex))) {
                     break;
                 }
             } else {
@@ -171,7 +178,10 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
             MemberSingleObserver<T>[] b = new MemberSingleObserver[n + 1];
             System.arraycopy(a.observers, 0, b, 0, n);
             b[n] = inner;
-            if (observers.compareAndSet(a, new Observers<T>(b, a.index))) {
+            boolean[] active = new boolean[n + 1];
+            System.arraycopy(a.active, 0, active, 0, n);
+            active[n] = true;
+            if (observers.compareAndSet(a, new Observers<T>(b, active, a.activeCount + 1, a.index))) {
                 return;
             }
         }
@@ -203,12 +213,16 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
                 next = EMPTY;
             } else {
                 MemberSingleObserver<T>[] b = new MemberSingleObserver[n - 1];
-                System.arraycopy(a, 0, b, 0, j);
-                System.arraycopy(a, j + 1, b, j, n - j - 1);
+                System.arraycopy(a.observers, 0, b, 0, j);
+                System.arraycopy(a.observers, j + 1, b, j, n - j - 1);
+                boolean[] active = new boolean[n - 1];
+                System.arraycopy(a.active, 0, active, 0, j);
+                System.arraycopy(a.active, j + 1, active, j, n - j - 1);
+                int nextActiveCount = a.active[j] ? a.activeCount - 1 : a.activeCount;
                 if (a.index > j) {
-                    next = new Observers<T>(b, a.index - 1);
+                    next = new Observers<T>(b, active, nextActiveCount, a.index - 1);
                 } else {
-                    next = new Observers<T>(b, a.index);
+                    next = new Observers<T>(b, active, nextActiveCount, a.index);
                 }
             }
             if (observers.compareAndSet(a, next)) {
@@ -219,12 +233,18 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 
     private static final class Observers<T> {
         final MemberSingleObserver<T>[] observers;
+        //an observer is active until it is emitted to 
+        final boolean[] active;
+        private int activeCount;
         final int index;
 
-        Observers(MemberSingleObserver<T>[] observers, int index) {
+        Observers(MemberSingleObserver<T>[] observers, boolean[] active, int activeCount, int index) {
             Preconditions.checkArgument(observers.length > 0 || index == 0, "index must be -1 for zero length array");
+            Preconditions.checkArgument(observers.length == active.length);
             this.observers = observers;
             this.index = index;
+            this.active = active;
+            this.activeCount = activeCount;
         }
     }
 
