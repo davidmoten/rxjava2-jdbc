@@ -48,7 +48,6 @@ import org.davidmoten.rx.jdbc.exceptions.NamedParameterFoundButSqlDoesNotHaveNam
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.exceptions.QueryAnnotationMissingException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
-import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool2;
 import org.davidmoten.rx.jdbc.pool.PoolClosedException;
 import org.davidmoten.rx.jdbc.pool.Pools;
