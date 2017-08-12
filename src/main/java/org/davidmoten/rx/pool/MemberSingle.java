@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.davidmoten.rx.jdbc.pool.PoolClosedException;
 import org.reactivestreams.Subscription;
 
 import com.github.davidmoten.guavamini.Preconditions;
@@ -39,6 +40,8 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 	// number of members in the pool at the moment
 	private int count;
 
+	private final NonBlockingPool2<T> pool;
+
 	@SuppressWarnings("unchecked")
 	MemberSingle(NonBlockingPool2<T> pool) {
 		this.queue = new MpscLinkedQueue<Member2<T>>();
@@ -47,6 +50,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 		this.maxSize = pool.maxSize;
 		this.observers = new AtomicReference<>(EMPTY);
 		this.count = 1;
+		this.pool = pool;
 		queue.offer(members[0]);
 	}
 
@@ -169,6 +173,10 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 	protected void subscribeActual(SingleObserver<? super Member2<T>> observer) {
 		MemberSingleObserver<T> md = new MemberSingleObserver<T>(observer, this);
 		observer.onSubscribe(md);
+		if (pool.isClosed()) {
+			observer.onError(new PoolClosedException());
+			return;
+		}
 		add(md);
 		if (md.isDisposed()) {
 			remove(md);
