@@ -584,7 +584,7 @@ public class DatabaseTest {
                 .doOnNext(x -> latch.countDown()) //
                 .subscribe();
         list.add("subscribed");
-        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertTrue(latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
         assertEquals(Arrays.asList("subscribed", "emitted"), list);
     }
 

@@ -20,7 +20,7 @@ import io.reactivex.schedulers.Schedulers;
 
 public class DatabaseCreator {
 
-    private static AtomicInteger dbNumber = new AtomicInteger();
+    private static final AtomicInteger dbNumber = new AtomicInteger();
 
     public static Database create(int maxSize) {
         return create(maxSize, false, Schedulers.from(Executors.newFixedThreadPool(maxSize)));
