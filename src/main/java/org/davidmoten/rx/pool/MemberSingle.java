@@ -43,10 +43,11 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
     MemberSingle(NonBlockingPool2<T> pool) {
         this.queue = new MpscLinkedQueue<Member2<T>>();
         this.members = createMembersArray(pool);
-        this.count = 0;
         this.scheduler = pool.scheduler;
         this.maxSize = pool.maxSize;
         this.observers = new AtomicReference<>(EMPTY);
+        this.count = 1;
+        queue.offer(members[0]);
     }
 
     private static <T> Member2<T>[] createMembersArray(NonBlockingPool2<T> pool) {
@@ -59,6 +60,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
     }
 
     public void checkin(Member2<T> member) {
+        System.out.println("checking in");
         queue.offer(member);
         drain();
     }
@@ -76,9 +78,10 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
     @SuppressWarnings("resource")
     private void drain() {
         if (wip.getAndIncrement() == 0) {
-            int missed = 0;
+            int missed = 1;
             while (true) {
-                while (true) {
+                int c = 0;
+                while (c < count) {
                     if (cancelled) {
                         queue.clear();
                         return;
@@ -87,29 +90,31 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
                     if (obs.activeCount == 0) {
                         break;
                     }
-                    Member2<T> m = queue.poll();
+                    final Member2<T> m = queue.poll();
                     if (m == null) {
-                        while (count < maxSize) {
+                        if (count < maxSize) {
                             // haven't used all the members of the pool yet
-                            m = members[count].checkout();
-                            if (m != null) {
-                                emit(obs, m);
-                                break;
-                            }
+                            queue.offer(members[count]);
                             count++;
+                        } else {
+                            break;
                         }
-                        break;
                     } else {
-                        if ((m = m.checkout()) != null) {
-                            emit(obs, m);
+                        Member2<T> m2;
+                        if ((m2 = m.checkout()) != null) {
+                            emit(obs, m2);
+                        } else {
+                            //put back on the queue for consideration later
+                            queue.offer(m);
                         }
                     }
+                    c++;
                 }
                 missed = wip.addAndGet(-missed);
                 if (missed == 0) {
                     return;
                 }
-            }
+			}
         }
     }
 
@@ -233,7 +238,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 
     private static final class Observers<T> {
         final MemberSingleObserver<T>[] observers;
-        //an observer is active until it is emitted to 
+        // an observer is active until it is emitted to
         final boolean[] active;
         private int activeCount;
         final int index;
