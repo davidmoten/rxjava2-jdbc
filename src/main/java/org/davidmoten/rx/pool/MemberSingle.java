@@ -64,7 +64,6 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 	}
 
 	public void checkin(Member2<T> member) {
-		System.out.println("checking in");
 		queue.offer(member);
 		drain();
 	}
@@ -79,7 +78,6 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 		this.cancelled = true;
 	}
 
-	@SuppressWarnings("resource")
 	private void drain() {
 		if (wip.getAndIncrement() == 0) {
 			int missed = 1;
