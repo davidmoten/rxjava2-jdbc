@@ -245,7 +245,7 @@ public class DatabaseTest {
 		try {
 			try (Database db = db(3)) {
 				Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(50));
-				int n = 1000;
+				int n = 2;
 				CountDownLatch latch = new CountDownLatch(n);
 				AtomicInteger count = new AtomicInteger();
 				for (int i = 0; i < n; i++) {
@@ -275,6 +275,45 @@ public class DatabaseTest {
 			debug();
 		}
 	}
+	
+	   @Test
+	    public void testSelectConcurrencyTest() throws InterruptedException, TimeoutException {
+	        debug();
+	        try {
+	            try (Database db = db(1)) {
+	                Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(2));
+	                int n = 2;
+	                CountDownLatch latch = new CountDownLatch(n);
+	                AtomicInteger count = new AtomicInteger();
+	                for (int i = 0; i < n; i++) {
+	                    db.select("select score from person where name=?") //
+	                            .parameters("FRED", "JOSEPH") //
+	                            .getAs(Integer.class) //
+	                            .subscribeOn(scheduler) //
+	                            .toList() //
+	                            .doOnSuccess(x -> {
+	                                if (!x.equals(Lists.newArrayList(21, 34))) {
+	                                    throw new RuntimeException("run broken");
+	                                }
+	                            }) //
+	                            .doOnSuccess(x -> {
+	                                count.incrementAndGet();
+	                                latch.countDown();
+	                            }) //
+	                            .doOnError(x -> latch.countDown()) //
+	                            .subscribe();
+	                    log.info("submitted " + i);
+	                }
+	                if (!latch.await(5000, TimeUnit.SECONDS)) {
+	                    throw new TimeoutException("timeout");
+	                }
+	                assertEquals(n, count.get());
+	            }
+	        } finally {
+	            debug();
+	        }
+	    }
+
 
 	@Test
 	public void testDatabaseClose() {
