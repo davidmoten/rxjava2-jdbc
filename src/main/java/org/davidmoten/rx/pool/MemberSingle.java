@@ -118,7 +118,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         }
     }
 
-    private boolean emit(Observers<T> obs, Member2<T> m) {
+    private void emit(Observers<T> obs, Member2<T> m) {
         System.out.println("emitting");
         // get a fresh worker each time so we jump threads to
         // break the stack-trace (a long-enough chain of
@@ -148,13 +148,15 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
                     break;
                 }
             } else {
-                return false;
+                m.checkin();
+                return;
             }
-        }System.out.println("numObs="+obs.observers.length);
+        }
+        System.out.println("numObs="+obs.observers.length);
         System.out.println(oNext.child);
         Worker worker = scheduler.createWorker();
         worker.schedule(new Emitter<T>(worker, oNext, m));
-        return true;
+        return;
     }
 
     @Override
