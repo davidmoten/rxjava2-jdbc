@@ -120,7 +120,6 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
     }
 
     private void emit(Observers<T> obs, Member2<T> m) {
-        System.out.println("emitting");
         // get a fresh worker each time so we jump threads to
         // break the stack-trace (a long-enough chain of
         // checkout-checkins could otherwise provoke stack
@@ -136,7 +135,6 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         while (true) {
             Observers<T> x = observers.get();
             if (x.index == index && x.observers[index] == o) {
-                System.out.println("observers x="+ Arrays.toString(x.active) + ", index="+ index);
                 boolean[] active = new boolean[x.active.length];
                 System.arraycopy(x.active, 0, active, 0, active.length);
                 int nextIndex = (index + 1) % active.length;
@@ -153,8 +151,6 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
                 return;
             }
         }
-        System.out.println("numObs="+obs.observers.length);
-        System.out.println(oNext.child);
         Worker worker = scheduler.createWorker();
         worker.schedule(new Emitter<T>(worker, oNext, m));
         return;
@@ -279,7 +275,6 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 
         @Override
         public void run() {
-            System.out.println("running run");
             worker.dispose();
             try {
                 observer.child.onSuccess(m);
