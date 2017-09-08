@@ -117,6 +117,7 @@ public final class NonBlockingMember2<T> implements Member2<T> {
                     Resetter<T> resetter = new Resetter<>(this);
                     Disposable sub = worker.schedule(resetter, //
                             pool.maxIdleTimeMs, TimeUnit.MILLISECONDS);
+                    System.out.println("scheduled resetter in " + pool.maxIdleTimeMs + "ms, scheduler="+ pool.scheduler);
                     if (state.compareAndSet(s, new State(INITIALIZED_NOT_IN_USE, sub, s.enabled))) {
                         resetter.enable();
                         pool.checkin(this);
@@ -185,6 +186,7 @@ public final class NonBlockingMember2<T> implements Member2<T> {
 
         @Override
         public void run() {
+            System.out.println("running resetter");
             if (enabled) {
                 m.reset();
             }
@@ -231,6 +233,12 @@ public final class NonBlockingMember2<T> implements Member2<T> {
         State copy() {
             return new State(state, idleTimeoutClose, enabled);
         }
+
+        @Override
+        public String toString() {
+            return "State [state=" + state + ", idleTimeoutClose=" + idleTimeoutClose + ", enabled=" + enabled + "]";
+        }
+        
     }
 
     @Override
