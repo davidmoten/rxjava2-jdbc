@@ -276,7 +276,7 @@ public class DatabaseTest {
 		}
 	}
 	
-	   @Test
+	   @Test(timeout=5000)
 	    public void testSelectConcurrencyTest() throws InterruptedException, TimeoutException {
 	        debug();
 	        try {
