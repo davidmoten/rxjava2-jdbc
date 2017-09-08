@@ -245,7 +245,7 @@ public class DatabaseTest {
 		try {
 			try (Database db = db(3)) {
 				Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(50));
-				int n = 2;
+				int n = 1000;
 				CountDownLatch latch = new CountDownLatch(n);
 				AtomicInteger count = new AtomicInteger();
 				for (int i = 0; i < n; i++) {
