@@ -2,6 +2,7 @@ package org.davidmoten.rx.pool;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -135,14 +136,14 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         while (true) {
             Observers<T> x = observers.get();
             if (x.index == index && x.observers[index] == o) {
-                System.out.println("inner");
+                System.out.println("observers x="+ Arrays.toString(x.active) + ", index="+ index);
                 boolean[] active = new boolean[x.active.length];
                 System.arraycopy(x.active, 0, active, 0, active.length);
-                active[index] = false;
                 int nextIndex = (index + 1) % active.length;
                 while (nextIndex != index && !active[nextIndex]) {
                     nextIndex = (nextIndex + 1) % active.length;
                 }
+                active[nextIndex] = false;
                 if (observers.compareAndSet(x, new Observers<T>(x.observers, active, x.activeCount - 1, nextIndex))) {
                     oNext = x.observers[nextIndex];
                     break;
