@@ -8,7 +8,7 @@
         <version>0.1</version>
     </parent>
     <artifactId>rxjava2-jdbc</artifactId>
-    <version>0.1-RC2-SNAPSHOT</version>
+    <version>0.1-RC1</version>
 
     <name>${project.artifactId}</name>
     <description>RxJava2 streams for jdbc</description>
