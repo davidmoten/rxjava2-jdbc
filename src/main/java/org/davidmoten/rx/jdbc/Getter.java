@@ -25,6 +25,9 @@ public interface Getter {
      * Transforms the results using the given function.
      *
      * @param function
+     *            transforms results
+     * @param <T>
+     *            the type being mapped to
      * @return the results of the query as an Observable
      */
     <T> Flowable<T> get(@Nonnull ResultSetMapper<? extends T> function);
@@ -44,27 +47,27 @@ public interface Getter {
      * Transforms each row of the {@link ResultSet} into an instance of
      * <code>T</code> using <i>automapping</i> of the ResultSet columns into
      * corresponding constructor parameters that are assignable. Beyond normal
-     * assignable criteria (for example Integer 123 is assignable to a Double)
-     * other conversions exist to facilitate the automapping:
+     * assignable criteria (for example Integer 123 is assignable to a Double) other
+     * conversions exist to facilitate the automapping:
      * </p>
      * <p>
      * They are:
      * <ul>
-     * <li>java.sql.Blob &#10143; byte[]</li>
-     * <li>java.sql.Blob &#10143; java.io.InputStream</li>
-     * <li>java.sql.Clob &#10143; String</li>s
-     * <li>java.sql.Clob &#10143; java.io.Reader</li>
-     * <li>java.sql.Date &#10143; java.util.Date</li>
-     * <li>java.sql.Date &#10143; Long</li>
-     * <li>java.sql.Timestamp &#10143; java.util.Date</li>
-     * <li>java.sql.Timestamp &#10143; Long</li>
-     * <li>java.sql.Time &#10143; java.util.Date</li>
-     * <li>java.sql.Time &#10143; Long</li>
-     * <li>java.math.BigInteger &#10143;
+     * <li>java.sql.Blob --&gt; byte[]</li>
+     * <li>java.sql.Blob --&gt; java.io.InputStream</li>
+     * <li>java.sql.Clob --&gt; String</li>
+     * <li>java.sql.Clob --&gt; java.io.Reader</li>
+     * <li>java.sql.Date --&gt; java.util.Date</li>
+     * <li>java.sql.Date --&gt; Long</li>
+     * <li>java.sql.Timestamp --&gt; java.util.Date</li>
+     * <li>java.sql.Timestamp --&gt; Long</li>
+     * <li>java.sql.Time --&gt; java.util.Date</li>
+     * <li>java.sql.Time --&gt; Long</li>
+     * <li>java.math.BigInteger --&gt;
      * Short,Integer,Long,Float,Double,BigDecimal</li>
-     * <li>java.math.BigDecimal &#10143;
+     * <li>java.math.BigDecimal --&gt;
      * Short,Integer,Long,Float,Double,BigInteger</li>
-     * </p>
+     * </ul>
      *
      * @param cls
      *            class to automap each row of the ResultSet to
@@ -94,42 +97,46 @@ public interface Getter {
     }
 
     /**
-     * Automaps all the columns of the {@link ResultSet} into {@link Object} .
-     * See {@link #autoMap(Class) autoMap()}.
+     * Automaps all the columns of the {@link ResultSet} into {@link Object} . See
+     * {@link #autoMap(Class) autoMap()}.
      *
-     * @param cls
-     * @return
+     * @return stream of TupleN
      */
-    default <S> Flowable<TupleN<Object>> getTupleN() {
+    default Flowable<TupleN<Object>> getTupleN() {
         return get(Tuples.tupleN(Object.class));
     }
 
     /**
-     * Automaps the columns of the {@link ResultSet} into the specified classes.
-     * See {@link #autoMap(Class) autoMap()}.
+     * Automaps the columns of the {@link ResultSet} into the specified classes. See
+     * {@link #autoMap(Class) autoMap()}.
      *
      * @param cls1
+     *            first class
      * @param cls2
-     * @return
+     *            second class
+     * @param <T1>
+     *            type of first class
+     * @param <T2>
+     *            type of second class
+     * @return flowable
      */
-    default <T1, T2> Flowable<Tuple2<T1, T2>> getAs(@Nonnull Class<T1> cls1,
-            @Nonnull Class<T2> cls2) {
+    default <T1, T2> Flowable<Tuple2<T1, T2>> getAs(@Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         return get(Tuples.tuple(cls1, cls2));
     }
 
     /**
-     * Automaps the columns of the {@link ResultSet} into the specified classes.
-     * See {@link #autoMap(Class) autoMap()}.
+     * Automaps the columns of the {@link ResultSet} into the specified classes. See
+     * {@link #autoMap(Class) autoMap()}.
      *
      * @param cls1
      * @param cls2
      * @param cls3
      * @return
      */
-    default <T1, T2, T3> Flowable<Tuple3<T1, T2, T3>> getAs(@Nonnull Class<T1> cls1,
-            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3) {
+    default <T1, T2, T3> Flowable<Tuple3<T1, T2, T3>> getAs(@Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2,
+            @Nonnull Class<T3> cls3) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         Preconditions.checkNotNull(cls3, "cls3 cannot be null");
@@ -137,8 +144,8 @@ public interface Getter {
     }
 
     /**
-     * Automaps the columns of the {@link ResultSet} into the specified classes.
-     * See {@link #autoMap(Class) autoMap()}.
+     * Automaps the columns of the {@link ResultSet} into the specified classes. See
+     * {@link #autoMap(Class) autoMap()}.
      *
      * @param cls1
      * @param cls2
@@ -146,8 +153,8 @@ public interface Getter {
      * @param cls4
      * @return
      */
-    default <T1, T2, T3, T4> Flowable<Tuple4<T1, T2, T3, T4>> getAs(@Nonnull Class<T1> cls1,
-            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4) {
+    default <T1, T2, T3, T4> Flowable<Tuple4<T1, T2, T3, T4>> getAs(@Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2,
+            @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         Preconditions.checkNotNull(cls3, "cls3 cannot be null");
@@ -156,8 +163,8 @@ public interface Getter {
     }
 
     /**
-     * Automaps the columns of the {@link ResultSet} into the specified classes.
-     * See {@link #autoMap(Class) autoMap()}.
+     * Automaps the columns of the {@link ResultSet} into the specified classes. See
+     * {@link #autoMap(Class) autoMap()}.
      *
      * @param cls1
      * @param cls2
@@ -167,8 +174,7 @@ public interface Getter {
      * @return
      */
     default <T1, T2, T3, T4, T5> Flowable<Tuple5<T1, T2, T3, T4, T5>> getAs(@Nonnull Class<T1> cls1,
-            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4,
-            @Nonnull Class<T5> cls5) {
+            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         Preconditions.checkNotNull(cls3, "cls3 cannot be null");
@@ -178,8 +184,8 @@ public interface Getter {
     }
 
     /**
-     * Automaps the columns of the {@link ResultSet} into the specified classes.
-     * See {@link #autoMap(Class) autoMap()}.
+     * Automaps the columns of the {@link ResultSet} into the specified classes. See
+     * {@link #autoMap(Class) autoMap()}.
      *
      * @param cls1
      * @param cls2
@@ -189,9 +195,9 @@ public interface Getter {
      * @param cls6
      * @return
      */
-    default <T1, T2, T3, T4, T5, T6> Flowable<Tuple6<T1, T2, T3, T4, T5, T6>> getAs(
-            @Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3,
-            @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5, @Nonnull Class<T6> cls6) {
+    default <T1, T2, T3, T4, T5, T6> Flowable<Tuple6<T1, T2, T3, T4, T5, T6>> getAs(@Nonnull Class<T1> cls1,
+            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5,
+            @Nonnull Class<T6> cls6) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         Preconditions.checkNotNull(cls3, "cls3 cannot be null");
@@ -202,8 +208,8 @@ public interface Getter {
     }
 
     /**
-     * Automaps the columns of the {@link ResultSet} into the specified classes.
-     * See {@link #autoMap(Class) autoMap()}.
+     * Automaps the columns of the {@link ResultSet} into the specified classes. See
+     * {@link #autoMap(Class) autoMap()}.
      *
      * @param cls1
      * @param cls2
@@ -214,10 +220,9 @@ public interface Getter {
      * @param cls7
      * @return
      */
-    default <T1, T2, T3, T4, T5, T6, T7> Flowable<Tuple7<T1, T2, T3, T4, T5, T6, T7>> getAs(
-            @Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3,
-            @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5, @Nonnull Class<T6> cls6,
-            @Nonnull Class<T7> cls7) {
+    default <T1, T2, T3, T4, T5, T6, T7> Flowable<Tuple7<T1, T2, T3, T4, T5, T6, T7>> getAs(@Nonnull Class<T1> cls1,
+            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5,
+            @Nonnull Class<T6> cls6, @Nonnull Class<T7> cls7) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         Preconditions.checkNotNull(cls3, "cls3 cannot be null");
