@@ -46,65 +46,65 @@ public final class NonBlockingMember2<T> implements Member2<T> {
 
     @Override
     public Member2<T> checkout() {
-            // CAS loop for modifications to state of this member
-            while (true) {
-                State s = state.get();
-                if (s.state == NOT_INITIALIZED_NOT_IN_USE) {
-                    log.debug("checking out member not initialized={}", this);
-                    if (s.enabled) {
-                        if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, s.idleTimeoutClose, s.enabled))) {
-                            try {
-                                // this action might block (it does in the JDBC
-                                // 4 Connection case)
-                                value = pool.factory.call();
-                            } catch (Throwable e) {
-                                RxJavaPlugins.onError(e);
-                                disposeAndReturnToPool();
-                                return null;
-                            }
-                            // we don't do a health check on a just-created
-                            // connection
-                            lastCheckoutTime = pool.scheduler.now(TimeUnit.MILLISECONDS);
-                            log.debug("initialized in use: member={}", this);
-                            return ifNull(proxy, this);
-                        }
-                    } else {
-                        if (state.compareAndSet(s, s.copy())) {
-                            return null;
-                        }
-                    }
-                } else if (s.state == INITIALIZED_NOT_IN_USE) {
-                    log.debug("checking out member not in use={}", this);
-                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, DisposableHelper.DISPOSED, s.enabled))) {
-                        // cancel the idle timeout
-                        s.idleTimeoutClose.dispose();
-                        long now = pool.scheduler.now(TimeUnit.MILLISECONDS);
-                        long last = lastCheckoutTime;
-                        boolean checkOk = now < last + pool.idleTimeBeforeHealthCheckMs;
-                        if (!checkOk) {
-                            try {
-                                checkOk = pool.healthy.test(value);
-                            } catch (Throwable e) {
-                                checkOk = false;
-                            }
-                        }
-                        if (checkOk) {
-                            log.debug("initialized in use: member={}", this);
-                            lastCheckoutTime = now;
-                            return ifNull(proxy, this);
-                        } else {
-                            log.debug("initialized not healthy: member={}", this);
+        // CAS loop for modifications to state of this member
+        while (true) {
+            State s = state.get();
+            if (s.state == NOT_INITIALIZED_NOT_IN_USE) {
+                log.debug("checking out member not initialized={}", this);
+                if (s.enabled) {
+                    if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, s.idleTimeoutClose, s.enabled))) {
+                        try {
+                            // this action might block (it does in the JDBC
+                            // 4 Connection case)
+                            value = pool.factory.call();
+                        } catch (Throwable e) {
+                            RxJavaPlugins.onError(e);
                             disposeAndReturnToPool();
                             return null;
                         }
-
+                        // we don't do a health check on a just-created
+                        // connection
+                        lastCheckoutTime = pool.scheduler.now(TimeUnit.MILLISECONDS);
+                        log.debug("initialized in use: member={}", this);
+                        return ifNull(proxy, this);
                     }
-                } else if (s.state == INITIALIZED_IN_USE || s.state == DISPOSING) {
+                } else {
                     if (state.compareAndSet(s, s.copy())) {
                         return null;
                     }
                 }
+            } else if (s.state == INITIALIZED_NOT_IN_USE) {
+                log.debug("checking out member not in use={}", this);
+                if (state.compareAndSet(s, new State(INITIALIZED_IN_USE, DisposableHelper.DISPOSED, s.enabled))) {
+                    // cancel the idle timeout
+                    s.idleTimeoutClose.dispose();
+                    long now = pool.scheduler.now(TimeUnit.MILLISECONDS);
+                    long last = lastCheckoutTime;
+                    boolean checkOk = now < last + pool.idleTimeBeforeHealthCheckMs;
+                    if (!checkOk) {
+                        try {
+                            checkOk = pool.healthy.test(value);
+                        } catch (Throwable e) {
+                            checkOk = false;
+                        }
+                    }
+                    if (checkOk) {
+                        log.debug("initialized in use: member={}", this);
+                        lastCheckoutTime = now;
+                        return ifNull(proxy, this);
+                    } else {
+                        log.debug("initialized not healthy: member={}", this);
+                        disposeAndReturnToPool();
+                        return null;
+                    }
+
+                }
+            } else if (s.state == INITIALIZED_IN_USE || s.state == DISPOSING) {
+                if (state.compareAndSet(s, s.copy())) {
+                    return null;
+                }
             }
+        }
     }
 
     @Override
@@ -117,7 +117,6 @@ public final class NonBlockingMember2<T> implements Member2<T> {
                     Resetter<T> resetter = new Resetter<>(this);
                     Disposable sub = worker.schedule(resetter, //
                             pool.maxIdleTimeMs, TimeUnit.MILLISECONDS);
-                    System.out.println("scheduled resetter in " + pool.maxIdleTimeMs + "ms, scheduler="+ pool.scheduler);
                     if (state.compareAndSet(s, new State(INITIALIZED_NOT_IN_USE, sub, s.enabled))) {
                         resetter.enable();
                         pool.checkin(this);
@@ -186,7 +185,6 @@ public final class NonBlockingMember2<T> implements Member2<T> {
 
         @Override
         public void run() {
-            System.out.println("running resetter");
             if (enabled) {
                 m.reset();
             }
@@ -238,7 +236,7 @@ public final class NonBlockingMember2<T> implements Member2<T> {
         public String toString() {
             return "State [state=" + state + ", idleTimeoutClose=" + idleTimeoutClose + ", enabled=" + enabled + "]";
         }
-        
+
     }
 
     @Override
