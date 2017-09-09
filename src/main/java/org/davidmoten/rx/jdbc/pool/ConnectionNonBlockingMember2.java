@@ -19,16 +19,16 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import org.davidmoten.rx.pool.Member2;
-import org.davidmoten.rx.pool.NonBlockingMember2;
-import org.davidmoten.rx.pool.NonBlockingPool2;
+import org.davidmoten.rx.pool.Member;
+import org.davidmoten.rx.pool.NonBlockingMember;
+import org.davidmoten.rx.pool.NonBlockingPool;
 
-public final class ConnectionNonBlockingMember2 implements Connection, Member2<Connection> {
+public final class ConnectionNonBlockingMember2 implements Connection, Member<Connection> {
 
-    private final Member2<Connection> member;
+    private final Member<Connection> member;
 
-    public ConnectionNonBlockingMember2(NonBlockingPool2<Connection> pool) {
-        member = new NonBlockingMember2<Connection>(pool, this);
+    public ConnectionNonBlockingMember2(NonBlockingPool<Connection> pool) {
+        member = new NonBlockingMember<Connection>(pool, this);
     }
 
     private Connection con() {
@@ -313,7 +313,7 @@ public final class ConnectionNonBlockingMember2 implements Connection, Member2<C
     }
 
     @Override
-    public Member2<Connection> checkout() {
+    public Member<Connection> checkout() {
         return member.checkout();
     }
 

@@ -1,8 +1,8 @@
 package org.davidmoten.rx.pool;
 
-public interface Member2<T> extends AutoCloseable {
+public interface Member<T> extends AutoCloseable {
 
-    Member2<T> checkout();
+    Member<T> checkout();
 
     void checkin();
 

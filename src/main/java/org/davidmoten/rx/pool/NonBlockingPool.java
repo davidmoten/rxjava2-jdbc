@@ -14,7 +14,7 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
-public final class NonBlockingPool2<T> implements Pool2<T> {
+public final class NonBlockingPool<T> implements Pool<T> {
 
 	final Callable<T> factory;
 	final Predicate<T> healthy;
@@ -23,16 +23,16 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
 	final int maxSize;
 	final long maxIdleTimeMs;
 	final long returnToPoolDelayAfterHealthCheckFailureMs;
-	final MemberFactory2<T, NonBlockingPool2<T>> memberFactory;
+	final MemberFactory<T, NonBlockingPool<T>> memberFactory;
 	final Scheduler scheduler;
 
 	private final AtomicReference<MemberSingle<T>> member = new AtomicReference<>();
-	private final AtomicReference<List<Member2<T>>> list = new AtomicReference<>(Collections.emptyList());
+	private final AtomicReference<List<Member<T>>> list = new AtomicReference<>(Collections.emptyList());
 	private volatile boolean closed;
 
-	private NonBlockingPool2(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer, int maxSize,
+	private NonBlockingPool(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer, int maxSize,
 			long returnToPoolDelayAfterHealthCheckFailureMs, long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs,
-			MemberFactory2<T, NonBlockingPool2<T>> memberFactory, Scheduler scheduler) {
+			MemberFactory<T, NonBlockingPool<T>> memberFactory, Scheduler scheduler) {
 		Preconditions.checkNotNull(factory);
 		Preconditions.checkNotNull(healthy);
 		Preconditions.checkNotNull(disposer);
@@ -56,7 +56,7 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
 	}
 
 	@Override
-	public Single<Member2<T>> member() {
+	public Single<Member<T>> member() {
 		while (true) {
 			MemberSingle<T> m = member.get();
 			if (m != null)
@@ -70,16 +70,16 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
 		}
 	}
 
-	public void checkin(Member2<T> m) {
+	public void checkin(Member<T> m) {
 		member.get().checkin(m);
 	}
 
 	@Override
 	public void close() {
 		closed = true;
-		List<Member2<T>> ms = list.getAndSet(null);
+		List<Member<T>> ms = list.getAndSet(null);
 		if (ms != null) {
-			for (Member2<T> m : ms) {
+			for (Member<T> m : ms) {
 				m.shutdown();
 			}
 		}
@@ -106,7 +106,7 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
 		};
 		private int maxSize = 10;
 		private long returnToPoolDelayAfterHealthCheckFailureMs = 30000;
-		private MemberFactory2<T, NonBlockingPool2<T>> memberFactory;
+		private MemberFactory<T, NonBlockingPool<T>> memberFactory;
 		private Scheduler scheduler = Schedulers.computation();
 		private long maxIdleTimeMs;
 
@@ -166,7 +166,7 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
 			return returnToPoolDelayAfterHealthCheckFailureMs(unit.toMillis(value));
 		}
 
-		public Builder<T> memberFactory(MemberFactory2<T, NonBlockingPool2<T>> memberFactory) {
+		public Builder<T> memberFactory(MemberFactory<T, NonBlockingPool<T>> memberFactory) {
 			Preconditions.checkNotNull(memberFactory);
 			this.memberFactory = memberFactory;
 			return this;
@@ -178,8 +178,8 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
 			return this;
 		}
 
-		public NonBlockingPool2<T> build() {
-			return new NonBlockingPool2<T>(factory, healthy, disposer, maxSize,
+		public NonBlockingPool<T> build() {
+			return new NonBlockingPool<T>(factory, healthy, disposer, maxSize,
 					returnToPoolDelayAfterHealthCheckFailureMs, idleTimeBeforeHealthCheckMs, maxIdleTimeMs,
 					memberFactory, scheduler);
 		}

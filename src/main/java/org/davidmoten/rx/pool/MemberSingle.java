@@ -20,16 +20,16 @@ import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.plugins.RxJavaPlugins;
 
-class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closeable {
+class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeable {
 
     final AtomicReference<Observers<T>> observers;
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0);
 
-    private final SimplePlainQueue<Member2<T>> queue;
+    private final SimplePlainQueue<Member<T>> queue;
     private final AtomicInteger wip = new AtomicInteger();
-    private final Member2<T>[] members;
+    private final Member<T>[] members;
     private final Scheduler scheduler;
     private final int maxSize;
 
@@ -40,11 +40,11 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
     // number of members in the pool at the moment
     private int count;
 
-    private final NonBlockingPool2<T> pool;
+    private final NonBlockingPool<T> pool;
 
     @SuppressWarnings("unchecked")
-    MemberSingle(NonBlockingPool2<T> pool) {
-        this.queue = new MpscLinkedQueue<Member2<T>>();
+    MemberSingle(NonBlockingPool<T> pool) {
+        this.queue = new MpscLinkedQueue<Member<T>>();
         this.members = createMembersArray(pool);
         this.scheduler = pool.scheduler;
         this.maxSize = pool.maxSize;
@@ -54,16 +54,16 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         queue.offer(members[0]);
     }
 
-    private static <T> Member2<T>[] createMembersArray(NonBlockingPool2<T> pool) {
+    private static <T> Member<T>[] createMembersArray(NonBlockingPool<T> pool) {
         @SuppressWarnings("unchecked")
-        Member2<T>[] m = new Member2[pool.maxSize];
+        Member<T>[] m = new Member[pool.maxSize];
         for (int i = 0; i < m.length; i++) {
             m[i] = pool.memberFactory.create(pool);
         }
         return m;
     }
 
-    public void checkin(Member2<T> member) {
+    public void checkin(Member<T> member) {
         queue.offer(member);
         drain();
     }
@@ -91,7 +91,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
                     if (obs.activeCount == 0) {
                         break;
                     }
-                    final Member2<T> m = queue.poll();
+                    final Member<T> m = queue.poll();
                     if (m == null) {
                         if (count < maxSize) {
                             // haven't used all the members of the pool yet
@@ -101,7 +101,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
                             break;
                         }
                     } else {
-                        Member2<T> m2;
+                        Member<T> m2;
                         if ((m2 = m.checkout()) != null) {
                             emit(obs, m2);
                         } else {
@@ -118,7 +118,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
         }
     }
 
-    private void emit(Observers<T> obs, Member2<T> m) {
+    private void emit(Observers<T> obs, Member<T> m) {
         // get a fresh worker each time so we jump threads to
         // break the stack-trace (a long-enough chain of
         // checkout-checkins could otherwise provoke stack
@@ -157,7 +157,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 
     @Override
     public void close() throws IOException {
-        for (Member2<T> member : members) {
+        for (Member<T> member : members) {
             try {
                 member.close();
             } catch (Exception e) {
@@ -168,7 +168,7 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
     }
 
     @Override
-    protected void subscribeActual(SingleObserver<? super Member2<T>> observer) {
+    protected void subscribeActual(SingleObserver<? super Member<T>> observer) {
         MemberSingleObserver<T> md = new MemberSingleObserver<T>(observer, this);
         observer.onSubscribe(md);
         if (pool.isClosed()) {
@@ -264,9 +264,9 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
 
         private final Worker worker;
         private final MemberSingleObserver<T> observer;
-        private final Member2<T> m;
+        private final Member<T> m;
 
-        Emitter(Worker worker, MemberSingleObserver<T> observer, Member2<T> m) {
+        Emitter(Worker worker, MemberSingleObserver<T> observer, Member<T> m) {
             this.worker = worker;
             this.observer = observer;
             this.m = m;
@@ -287,9 +287,9 @@ class MemberSingle<T> extends Single<Member2<T>> implements Subscription, Closea
     static final class MemberSingleObserver<T> extends AtomicReference<MemberSingle<T>> implements Disposable {
         private static final long serialVersionUID = -7650903191002190468L;
 
-        final SingleObserver<? super Member2<T>> child;
+        final SingleObserver<? super Member<T>> child;
 
-        MemberSingleObserver(SingleObserver<? super Member2<T>> child, MemberSingle<T> parent) {
+        MemberSingleObserver(SingleObserver<? super Member<T>> child, MemberSingle<T> parent) {
             this.child = child;
             lazySet(parent);
         }

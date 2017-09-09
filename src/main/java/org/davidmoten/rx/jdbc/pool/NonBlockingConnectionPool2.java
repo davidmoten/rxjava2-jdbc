@@ -7,9 +7,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Util;
-import org.davidmoten.rx.pool.Member2;
-import org.davidmoten.rx.pool.NonBlockingPool2;
-import org.davidmoten.rx.pool.Pool2;
+import org.davidmoten.rx.pool.Member;
+import org.davidmoten.rx.pool.NonBlockingPool;
+import org.davidmoten.rx.pool.Pool;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
@@ -19,11 +19,11 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
-public final class NonBlockingConnectionPool2 implements Pool2<Connection> {
+public final class NonBlockingConnectionPool2 implements Pool<Connection> {
 
-    private final AtomicReference<NonBlockingPool2<Connection>> pool = new AtomicReference<NonBlockingPool2<Connection>>();
+    private final AtomicReference<NonBlockingPool<Connection>> pool = new AtomicReference<NonBlockingPool<Connection>>();
 
-    public NonBlockingConnectionPool2(org.davidmoten.rx.pool.NonBlockingPool2.Builder<Connection> builder) {
+    public NonBlockingConnectionPool2(org.davidmoten.rx.pool.NonBlockingPool.Builder<Connection> builder) {
         pool.set(builder.memberFactory(p -> new ConnectionNonBlockingMember2(pool.get())).build());
     }
 
@@ -125,7 +125,7 @@ public final class NonBlockingConnectionPool2 implements Pool2<Connection> {
             if (scheduler == null) {
                 scheduler = Schedulers.from(Executors.newFixedThreadPool(maxPoolSize));
             }
-            return new NonBlockingConnectionPool2(NonBlockingPool2 //
+            return new NonBlockingConnectionPool2(NonBlockingPool //
                     .factory(() -> cp.get()) //
                     .idleTimeBeforeHealthCheckMs(idleTimeBeforeHealthCheckMs) //
                     .maxIdleTimeMs(maxIdleTimeMs) //
@@ -140,7 +140,7 @@ public final class NonBlockingConnectionPool2 implements Pool2<Connection> {
     }
 
     @Override
-    public Single<Member2<Connection>> member() {
+    public Single<Member<Connection>> member() {
         return pool.get().member();
     }
 

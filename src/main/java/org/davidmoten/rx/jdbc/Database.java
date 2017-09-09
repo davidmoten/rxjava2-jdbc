@@ -15,7 +15,7 @@ import javax.annotation.Nullable;
 
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.davidmoten.rx.jdbc.pool.Pools;
-import org.davidmoten.rx.pool.Pool2;
+import org.davidmoten.rx.pool.Pool;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
@@ -50,7 +50,7 @@ public final class Database implements AutoCloseable {
                         .build());
     }
 
-    public static Database from(@Nonnull Pool2<Connection> pool) {
+    public static Database from(@Nonnull Pool<Connection> pool) {
         Preconditions.checkNotNull(pool, "pool canot be null");
         return new Database(pool.member().cast(Connection.class), () -> pool.close());
     }

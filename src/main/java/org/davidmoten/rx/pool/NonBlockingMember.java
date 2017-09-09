@@ -11,9 +11,9 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.disposables.DisposableHelper;
 import io.reactivex.plugins.RxJavaPlugins;
 
-public final class NonBlockingMember2<T> implements Member2<T> {
+public final class NonBlockingMember<T> implements Member<T> {
 
-    private static final Logger log = LoggerFactory.getLogger(NonBlockingMember2.class);
+    private static final Logger log = LoggerFactory.getLogger(NonBlockingMember.class);
 
     private static final int NOT_INITIALIZED_NOT_IN_USE = 0;
     private static final int INITIALIZED_IN_USE = 1;
@@ -31,21 +31,21 @@ public final class NonBlockingMember2<T> implements Member2<T> {
     private final AtomicReference<State> state = new AtomicReference<>(
             new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED, true));
     private final Worker worker;
-    private final NonBlockingPool2<T> pool;
-    private final Member2<T> proxy;
+    private final NonBlockingPool<T> pool;
+    private final Member<T> proxy;
 
     // mutable
     private volatile T value;
     private volatile long lastCheckoutTime;
 
-    public NonBlockingMember2(NonBlockingPool2<T> pool, Member2<T> proxy) {
+    public NonBlockingMember(NonBlockingPool<T> pool, Member<T> proxy) {
         this.pool = pool;
         this.proxy = proxy;
         this.worker = pool.scheduler.createWorker();
     }
 
     @Override
-    public Member2<T> checkout() {
+    public Member<T> checkout() {
         // CAS loop for modifications to state of this member
         while (true) {
             State s = state.get();
@@ -176,10 +176,10 @@ public final class NonBlockingMember2<T> implements Member2<T> {
 
     private static final class Resetter<T> implements Runnable {
 
-        private final NonBlockingMember2<T> m;
+        private final NonBlockingMember<T> m;
         private volatile boolean enabled = false;
 
-        Resetter(NonBlockingMember2<T> m) {
+        Resetter(NonBlockingMember<T> m) {
             this.m = m;
         }
 
