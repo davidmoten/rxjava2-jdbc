@@ -19,7 +19,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <scm.url>scm:git:https://github.com/davidmoten/rxjava-jdbc.git</scm.url>
+        <scm.url>scm:git:https://github.com/davidmoten/rxjava2-jdbc.git</scm.url>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <checkstyle.version>2.17</checkstyle.version>
@@ -49,12 +49,12 @@
 
     <ciManagement>
         <system>Travis</system>
-        <url>https://travis-ci.org/davidmoten/rxjava-jdbc</url>
+        <url>https://travis-ci.org/davidmoten/rxjava2-jdbc</url>
     </ciManagement>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/davidmoten/rxjava-jdbc/issues</url>
+        <url>https://github.com/davidmoten/rxjava2-jdbc/issues</url>
     </issueManagement>
 
     <inceptionYear>2016</inceptionYear>
