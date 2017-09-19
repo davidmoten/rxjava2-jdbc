@@ -786,7 +786,7 @@ public enum Util {
         private final Map<String, Integer> colIndexes;
         private final Map<String, Col> methodCols;
         private final Class<T> cls;
-        private ResultSet rs;
+        private final ResultSet rs;
 
         public ProxyService(ResultSet rs, Class<T> cls) {
             this(rs, collectColIndexes(rs), getMethodCols(cls), cls);
