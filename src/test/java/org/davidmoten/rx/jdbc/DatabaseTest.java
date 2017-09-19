@@ -275,45 +275,44 @@ public class DatabaseTest {
 			debug();
 		}
 	}
-	
-	   @Test(timeout=5000)
-	    public void testSelectConcurrencyTest() throws InterruptedException, TimeoutException {
-	        debug();
-	        try {
-	            try (Database db = db(1)) {
-	                Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(2));
-	                int n = 2;
-	                CountDownLatch latch = new CountDownLatch(n);
-	                AtomicInteger count = new AtomicInteger();
-	                for (int i = 0; i < n; i++) {
-	                    db.select("select score from person where name=?") //
-	                            .parameters("FRED", "JOSEPH") //
-	                            .getAs(Integer.class) //
-	                            .subscribeOn(scheduler) //
-	                            .toList() //
-	                            .doOnSuccess(x -> {
-	                                if (!x.equals(Lists.newArrayList(21, 34))) {
-	                                    throw new RuntimeException("run broken");
-	                                }
-	                            }) //
-	                            .doOnSuccess(x -> {
-	                                count.incrementAndGet();
-	                                latch.countDown();
-	                            }) //
-	                            .doOnError(x -> latch.countDown()) //
-	                            .subscribe();
-	                    log.info("submitted " + i);
-	                }
-	                if (!latch.await(5000, TimeUnit.SECONDS)) {
-	                    throw new TimeoutException("timeout");
-	                }
-	                assertEquals(n, count.get());
-	            }
-	        } finally {
-	            debug();
-	        }
-	    }
 
+	@Test(timeout = 5000)
+	public void testSelectConcurrencyTest() throws InterruptedException, TimeoutException {
+		debug();
+		try {
+			try (Database db = db(1)) {
+				Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(2));
+				int n = 2;
+				CountDownLatch latch = new CountDownLatch(n);
+				AtomicInteger count = new AtomicInteger();
+				for (int i = 0; i < n; i++) {
+					db.select("select score from person where name=?") //
+							.parameters("FRED", "JOSEPH") //
+							.getAs(Integer.class) //
+							.subscribeOn(scheduler) //
+							.toList() //
+							.doOnSuccess(x -> {
+								if (!x.equals(Lists.newArrayList(21, 34))) {
+									throw new RuntimeException("run broken");
+								}
+							}) //
+							.doOnSuccess(x -> {
+								count.incrementAndGet();
+								latch.countDown();
+							}) //
+							.doOnError(x -> latch.countDown()) //
+							.subscribe();
+					log.info("submitted " + i);
+				}
+				if (!latch.await(5000, TimeUnit.SECONDS)) {
+					throw new TimeoutException("timeout");
+				}
+				assertEquals(n, count.get());
+			}
+		} finally {
+			debug();
+		}
+	}
 
 	@Test
 	public void testDatabaseClose() {
@@ -1698,6 +1697,23 @@ public class DatabaseTest {
 	@Test
 	public void testSingleFlatMap() {
 		Single.just(1).flatMapPublisher(n -> Flowable.just(1)).test(1).assertValue(1).assertComplete();
+	}
+
+	@Test
+	public void testAutomappedInstanceHasMeaningfulToStringMethod() {
+		info();
+		String s = Database.test() //
+				.select("select name, score from person where name=?") //
+				.parameterStream(Flowable.just("FRED")) //
+				.autoMap(Person2.class) //
+				.map(x -> x.toString()) //
+				.blockingSingle();
+		assertEquals("Person2[score=21, name=FRED]", s);
+	}
+
+	interface Score {
+		@Column
+		int score();
 	}
 
 	interface Person {
