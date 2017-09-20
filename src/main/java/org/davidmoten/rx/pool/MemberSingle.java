@@ -231,7 +231,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                 System.arraycopy(a.active, 0, active, 0, j);
                 System.arraycopy(a.active, j + 1, active, j, n - j - 1);
                 int nextActiveCount = a.active[j] ? a.activeCount - 1 : a.activeCount;
-                if (a.index > j) {
+                if (a.index >= j && a.index > 0) {
                     next = new Observers<T>(b, active, nextActiveCount, a.index - 1);
                 } else {
                     next = new Observers<T>(b, active, nextActiveCount, a.index);
