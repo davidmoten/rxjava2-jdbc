@@ -903,7 +903,7 @@ public enum Util {
                     return false;
                 }
             } else if ("hashCode".equals(method.getName()) && isEmpty(args)) {
-                return 0;
+                return this.hashCode();
             } else {
                 return values.get(method.getName());
             }

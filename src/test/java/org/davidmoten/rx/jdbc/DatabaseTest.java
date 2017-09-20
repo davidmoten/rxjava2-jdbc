@@ -1750,7 +1750,16 @@ public class DatabaseTest {
         assertFalse(b);
     }
 
-    
+    @Test
+    public void testAutomappedHashCode() {
+        Person2 p = Database.test() //
+                .select("select name, score from person where name=?") //
+                .parameterStream(Flowable.just("FRED")) //
+                .autoMap(Person2.class) //
+                .blockingSingle();
+        assertTrue(p.hashCode()!=0);
+    }
+
     interface Score {
         @Column
         int score();
