@@ -20,9 +20,9 @@ Use this maven dependency:
 
 ```xml
 <dependency>
-  <groupId>com.github.davidmoten.rxjava2-jdbc</groupId>
+  <groupId>com.github.davidmoten</groupId>
   <artifactId>rxjava2-jdbc</artifactId>
-  <version>0.1-RC4</version>
+  <version>0.1-RC5</version>
 </dependency>
 ```
 If you want to use the built-in test database then add the Apache Derby dependency (otherwise you'll need the jdbc dependency for the database you want to connect to):
