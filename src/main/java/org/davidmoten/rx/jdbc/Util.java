@@ -601,17 +601,17 @@ public enum Util {
     static <T> ResultSetMapper<T> autoMap(Class<T> cls) {
         return new ResultSetMapper<T>() {
 
-            boolean firstTime = true;
             ProxyService<T> proxyService;
+            private ResultSet rs;
 
             @Override
             public T apply(ResultSet rs) {
                 // access to this method will be serialized
-                if (firstTime) {
-                    // if (cls.isInterface()) {
+                // only create a new ProxyService when the ResultSet changes
+                // for example with the second run of a PreparedStatement
+                if (rs != this.rs) {
+                    this.rs = rs;
                     proxyService = new ProxyService<T>(rs, cls);
-                    // }
-                    firstTime = false;
                 }
                 return autoMap(rs, cls, proxyService);
             }
