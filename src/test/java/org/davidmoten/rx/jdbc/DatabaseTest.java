@@ -1757,7 +1757,22 @@ public class DatabaseTest {
                 .parameterStream(Flowable.just("FRED")) //
                 .autoMap(Person2.class) //
                 .blockingSingle();
-        assertTrue(p.hashCode()!=0);
+        assertTrue(p.hashCode() != 0);
+    }
+
+    @Test
+    public void testAutomappedWithParameterStreamThatProvokesMoreThanOneQuery() {
+        Database.test() //
+                .select("select name, score from person where name=?") //
+                .parameters("FRED", "FRED") //
+                .autoMap(Person2.class) //
+                // .getAs(String.class, Integer.class) //
+                .doOnNext(System.out::println) //
+                .test() //
+                .awaitDone(20, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValueCount(2) //
+                .assertComplete();
     }
 
     interface Score {
