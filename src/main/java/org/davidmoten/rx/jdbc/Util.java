@@ -9,6 +9,7 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
@@ -880,9 +881,10 @@ public enum Util {
         }
     }
 
-    private static class ProxyInstance<T> implements java.lang.reflect.InvocationHandler {
+    private static final class ProxyInstance<T> implements java.lang.reflect.InvocationHandler {
 
         private static final String METHOD_TO_STRING = "toString";
+        
         private final Class<T> cls;
         private final Map<String, Object> values;
 
@@ -916,7 +918,7 @@ public enum Util {
                 return values.get(method.getName());
             } else {
                 // TODO invoke a default method on the interface for example
-                throw new RuntimeException("extra method not supported (yet): " + method);
+                throw new RuntimeException("extra methods like interface default methods not supported (yet): " + method);
             }
         }
 
