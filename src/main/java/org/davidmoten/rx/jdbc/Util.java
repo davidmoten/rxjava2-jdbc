@@ -9,7 +9,6 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
@@ -268,9 +267,7 @@ public enum Util {
         } catch (SQLException e) {
         }
         closeSilently(ps);
-        if (con != null) {
-            closeSilently(con);
-        }
+        closeSilently(con);
     }
 
     static void closePreparedStatementAndConnection(NamedPreparedStatement ps) {
