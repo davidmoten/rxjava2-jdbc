@@ -44,6 +44,7 @@ import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.MethodCallNotSupportedException;
 import org.davidmoten.rx.jdbc.exceptions.MoreColumnsRequestedThanExistException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterFoundButSqlDoesNotHaveNamesException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
@@ -884,7 +885,7 @@ public enum Util {
     private static final class ProxyInstance<T> implements java.lang.reflect.InvocationHandler {
 
         private static final String METHOD_TO_STRING = "toString";
-        
+
         private final Class<T> cls;
         private final Map<String, Object> values;
 
@@ -917,8 +918,10 @@ public enum Util {
             } else if (values.containsKey(method.getName()) && isEmpty(args)) {
                 return values.get(method.getName());
             } else {
-                // TODO invoke a default method on the interface for example
-                throw new RuntimeException("extra methods like interface default methods not supported (yet): " + method);
+                // TODO defer to a default method on the interface for example
+                throw new MethodCallNotSupportedException(
+                        "extra methods like interface default methods not supported (yet): "
+                                + method);
             }
         }
 

@@ -46,6 +46,7 @@ import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.MethodCallNotSupportedException;
 import org.davidmoten.rx.jdbc.exceptions.MoreColumnsRequestedThanExistException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterFoundButSqlDoesNotHaveNamesException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
@@ -1808,15 +1809,15 @@ public class DatabaseTest {
         assertNotEquals(p1, p2);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = MethodCallNotSupportedException.class)
     public void testAutomappedObjectsWhenDefaultMethodInvoked() {
         PersonWithDefaultMethod p1 = Database.test() //
                 .select("select name, score from person where name=?") //
                 .parameters("FRED") //
                 .autoMap(PersonWithDefaultMethod.class) //
                 .blockingFirst();
-        //TODO should not throw exception
-        assertEquals("fred", p1.nameLower());
+        // TODO should not throw exception
+        p1.nameLower();
     }
 
     interface PersonWithDefaultMethod {
