@@ -192,6 +192,22 @@ If you don't configure things correctly these exceptions may be emitted and incl
 * `ColumnNotFoundException`
 * `ClassCastException`
 
+### Automapped toString
+The `toString()` method is implemented for automapped objects. For example the `toString` method for a `Person` object produces something like:
+
+```
+Person[name=FRED, score=21]
+```
+
+### Automapped equals/hashCode
+The `equals` and `hashCode` methods on automapped objects have been implemented based on method value comparisons. For example
+
+* `Person[name=FRED, score=21]` is equal to `Person[name=FRED, score=21]`
+* `Person[name=FRED, score=21]` is not equal to `Person[name=FRED, score=22]`
+* `Person[name=FRED, score=21]` is not equal to `Person2[name=FRED, score=21]`
+
+Note that if you try to compare an automapped object with a custom implementation of the automapped interface then the custom implementation must implement equals/hashCode in the same way. In short, avoid doing that!
+
 Automap with annotated query
 -----------------------------
 The automapped interface can be annotated with the select query:
