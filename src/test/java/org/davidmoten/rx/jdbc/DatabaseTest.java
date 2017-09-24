@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.jar.Attributes.Name;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -1805,6 +1806,29 @@ public class DatabaseTest {
                 .blockingFirst();
 
         assertNotEquals(p1, p2);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testAutomappedObjectsWhenDefaultMethodInvoked() {
+        PersonWithDefaultMethod p1 = Database.test() //
+                .select("select name, score from person where name=?") //
+                .parameters("FRED") //
+                .autoMap(PersonWithDefaultMethod.class) //
+                .blockingFirst();
+        //TODO should not throw exception
+        assertEquals("fred", p1.nameLower());
+    }
+
+    interface PersonWithDefaultMethod {
+        @Column
+        String name();
+
+        @Column
+        int score();
+
+        default String nameLower() {
+            return name().toLowerCase();
+        }
     }
 
     interface PersonDistinct1 {

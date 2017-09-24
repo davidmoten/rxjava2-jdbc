@@ -912,8 +912,11 @@ public enum Util {
                 }
             } else if ("hashCode".equals(method.getName()) && isEmpty(args)) {
                 return values.hashCode();
-            } else {
+            } else if (values.containsKey(method.getName()) && isEmpty(args)) {
                 return values.get(method.getName());
+            } else {
+                // TODO invoke a default method on the interface for example
+                throw new RuntimeException("extra method not supported (yet): " + method);
             }
         }
 
