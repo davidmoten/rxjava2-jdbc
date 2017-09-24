@@ -191,6 +191,7 @@ If you don't configure things correctly these exceptions may be emitted and incl
 * `ColumnIndexOutOfRangeException`
 * `ColumnNotFoundException`
 * `ClassCastException`
+* `MethodCallNotSupportedException`
 
 ### Automapped toString
 The `toString()` method is implemented for automapped objects. For example the `toString` method for a `Person` object produces something like:
@@ -207,6 +208,10 @@ The `equals` and `hashCode` methods on automapped objects have been implemented 
 * `Person[name=FRED, score=21]` is not equal to `Person2[name=FRED, score=21]`
 
 Note that if you try to compare an automapped object with a custom implementation of the automapped interface then the custom implementation must implement equals/hashCode in the same way. In short, avoid doing that!
+
+### Automapped interface with default methods
+
+Calling a default method on an automapped interface will throw a `MethodCallNotSupportedException` at the moment. It's on the TODO list.
 
 Automap with annotated query
 -----------------------------
