@@ -1714,7 +1714,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .map(x -> x.toString()) //
                 .blockingSingle();
-        assertEquals("Person2[score=21, name=FRED]", s);
+        assertEquals("Person2[name=FRED, score=21]", s);
     }
 
     @Test
@@ -1766,6 +1766,21 @@ public class DatabaseTest {
                 .select("select name, score from person where name=?") //
                 .parameters("FRED", "FRED") //
                 .autoMap(Person2.class) //
+                .doOnNext(System.out::println) //
+                .test() //
+                .awaitDone(2000, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValueCount(2) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testAutomappedObjectsEqualsAndHashCodeIsDistinctOnValues() {
+        Database.test() //
+                .select("select name, score from person where name=?") //
+                .parameters("FRED", "FRED") //
+                .autoMap(Person2.class) //
+                .distinct() //
                 .doOnNext(System.out::println) //
                 .test() //
                 .awaitDone(2000, TimeUnit.SECONDS) //

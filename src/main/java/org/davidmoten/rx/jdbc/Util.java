@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -920,7 +921,7 @@ public enum Util {
         s.append(clsSimpleName);
         s.append("[");
         boolean first = true;
-        for (Entry<String, Object> entry : values.entrySet()) {
+        for (Entry<String, Object> entry : new TreeMap<String, Object>(values).entrySet()) {
             if (!first) {
                 s.append(", ");
             }
