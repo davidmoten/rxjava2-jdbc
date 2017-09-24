@@ -2,6 +2,7 @@ package org.davidmoten.rx.jdbc;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -1785,8 +1786,43 @@ public class DatabaseTest {
                 .test() //
                 .awaitDone(2000, TimeUnit.SECONDS) //
                 .assertNoErrors() //
-                .assertValueCount(2) //
+                .assertValueCount(1) //
                 .assertComplete();
+    }
+
+    @Test
+    public void testAutomappedObjectsEqualsDifferentiatesDifferentInterfacesWithSameMethodNamesAndValues() {
+        PersonDistinct1 p1 = Database.test() //
+                .select("select name, score from person where name=?") //
+                .parameters("FRED") //
+                .autoMap(PersonDistinct1.class) //
+                .blockingFirst();
+
+        PersonDistinct2 p2 = Database.test() //
+                .select("select name, score from person where name=?") //
+                .parameters("FRED") //
+                .autoMap(PersonDistinct2.class) //
+                .blockingFirst();
+
+        assertNotEquals(p1, p2);
+    }
+
+    interface PersonDistinct1 {
+        @Column
+        String name();
+
+        @Column
+        int score();
+
+    }
+
+    interface PersonDistinct2 {
+        @Column
+        String name();
+
+        @Column
+        int score();
+
     }
 
     interface Score {

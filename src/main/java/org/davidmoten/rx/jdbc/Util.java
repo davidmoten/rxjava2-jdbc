@@ -867,7 +867,7 @@ public enum Util {
         @SuppressWarnings("unchecked")
         public T newInstance() {
             return (T) java.lang.reflect.Proxy.newProxyInstance(cls.getClassLoader(),
-                    new Class[] { cls }, new ProxyInstance<T>(cls.getSimpleName(), values()));
+                    new Class[] { cls }, new ProxyInstance<T>(cls, values()));
         }
 
     }
@@ -883,28 +883,35 @@ public enum Util {
     private static class ProxyInstance<T> implements java.lang.reflect.InvocationHandler {
 
         private static final String METHOD_TO_STRING = "toString";
-        private final String clsSimpleName;
+        private final Class<T> cls;
         private final Map<String, Object> values;
 
-        ProxyInstance(String clsSimpleName, Map<String, Object> values) {
-            this.clsSimpleName = clsSimpleName;
+        ProxyInstance(Class<T> cls, Map<String, Object> values) {
+            this.cls = cls;
             this.values = values;
         }
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (METHOD_TO_STRING.equals(method.getName()) && isEmpty(args)) {
-                return Util.toString(clsSimpleName, values);
+                return Util.toString(cls.getSimpleName(), values);
             } else if ("equals".equals(method.getName()) && args != null && args.length == 1) {
                 if (args[0] == null) {
                     return false;
                 } else if (args[0] instanceof Proxy) {
-                    return Proxy.getInvocationHandler(args[0]) == this;
+                    ProxyInstance<?> handler = (ProxyInstance<?>) Proxy
+                            .getInvocationHandler(args[0]);
+                    if (!handler.cls.equals(cls)) {
+                        // is a proxied object for a different interface!
+                        return false;
+                    } else {
+                        return handler.values.equals(values);
+                    }
                 } else {
                     return false;
                 }
             } else if ("hashCode".equals(method.getName()) && isEmpty(args)) {
-                return this.hashCode();
+                return values.hashCode();
             } else {
                 return values.get(method.getName());
             }
