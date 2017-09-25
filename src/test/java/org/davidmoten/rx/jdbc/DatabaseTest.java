@@ -518,6 +518,143 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testSelectAutomappedTransacted() {
+        db() //
+                .select("select name, score from person") //
+                .transacted() //
+                .autoMap(Person2.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(4) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSelectTransactedTuple2() {
+        Tx<Tuple2<String, Integer>> t = db() //
+                .select("select name, score from person where name=?") //
+                .parameters("FRED") //
+                .transacted() //
+                .getAs(String.class, Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(2) //
+                .assertComplete() //
+                .values().get(0);
+        assertEquals("FRED", t.value()._1());
+        assertEquals(21, (int) t.value()._2());
+    }
+
+    @Test
+    public void testSelectTransactedTuple3() {
+        Tx<Tuple3<String, Integer, String>> t = db() //
+                .select("select name, score, name from person where name=?") //
+                .parameters("FRED") //
+                .transacted() //
+                .getAs(String.class, Integer.class, String.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(2) //
+                .assertComplete() //
+                .values().get(0);
+        assertEquals("FRED", t.value()._1());
+        assertEquals(21, (int) t.value()._2());
+        assertEquals("FRED", t.value()._3());
+    }
+
+    @Test
+    public void testSelectTransactedTuple4() {
+        Tx<Tuple4<String, Integer, String, Integer>> t = db() //
+                .select("select name, score, name, score from person where name=?") //
+                .parameters("FRED") //
+                .transacted() //
+                .getAs(String.class, Integer.class, String.class, Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(2) //
+                .assertComplete() //
+                .values().get(0);
+        assertEquals("FRED", t.value()._1());
+        assertEquals(21, (int) t.value()._2());
+        assertEquals("FRED", t.value()._3());
+        assertEquals(21, (int) t.value()._4());
+    }
+
+    @Test
+    public void testSelectTransactedTuple5() {
+        Tx<Tuple5<String, Integer, String, Integer, String>> t = db() //
+                .select("select name, score, name, score, name from person where name=?") //
+                .parameters("FRED") //
+                .transacted() //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(2) //
+                .assertComplete() //
+                .values().get(0);
+        assertEquals("FRED", t.value()._1());
+        assertEquals(21, (int) t.value()._2());
+        assertEquals("FRED", t.value()._3());
+        assertEquals(21, (int) t.value()._4());
+        assertEquals("FRED", t.value()._5());
+    }
+
+    @Test
+    public void testSelectTransactedTuple6() {
+        Tx<Tuple6<String, Integer, String, Integer, String, Integer>> t = db() //
+                .select("select name, score, name, score, name, score from person where name=?") //
+                .parameters("FRED") //
+                .transacted() //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                        Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(2) //
+                .assertComplete() //
+                .values().get(0);
+        assertEquals("FRED", t.value()._1());
+        assertEquals(21, (int) t.value()._2());
+        assertEquals("FRED", t.value()._3());
+        assertEquals(21, (int) t.value()._4());
+        assertEquals("FRED", t.value()._5());
+        assertEquals(21, (int) t.value()._6());
+    }
+
+    @Test
+    public void testSelectTransactedTuple7() {
+        Tx<Tuple7<String, Integer, String, Integer, String, Integer, String>> t = db() //
+                .select("select name, score, name, score, name, score, name from person where name=?") //
+                .parameters("FRED") //
+                .transacted() //
+                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                        Integer.class, String.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(2) //
+                .assertComplete() //
+                .values().get(0);
+        assertEquals("FRED", t.value()._1());
+        assertEquals(21, (int) t.value()._2());
+        assertEquals("FRED", t.value()._3());
+        assertEquals(21, (int) t.value()._4());
+        assertEquals("FRED", t.value()._5());
+        assertEquals(21, (int) t.value()._6());
+        assertEquals("FRED", t.value()._7());
+    }
+
+    @Test
+    public void testSelectTransactedGetAs() {
+        db() //
+                .select("select name from person") //
+                .transacted() //
+                .getAs(String.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(4) //
+                .assertComplete();
+    }
+
+    @Test
     public void testDatabaseFrom() {
         Database.from(DatabaseCreator.nextUrl(), 3) //
                 .select("select name from person") //

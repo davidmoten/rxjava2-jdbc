@@ -8,7 +8,7 @@ import javax.annotation.Nonnull;
 
 import io.reactivex.Flowable;
 
-public final class TransactedSelectBuilder implements DependsOn<TransactedSelectBuilder> {
+public final class TransactedSelectBuilder implements DependsOn<TransactedSelectBuilder>, GetterTx {
 
     private final SelectBuilder selectBuilder;
 
@@ -86,8 +86,9 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
 
     }
 
-    public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
-        Flowable<Tx<T>> o = createFlowable(selectBuilder, cls, db);
+    @Override
+    public <T> Flowable<Tx<T>> get(ResultSetMapper<? extends T> function) {
+        Flowable<Tx<T>> o = createFlowable(selectBuilder, function, db);
         if (valuesOnly) {
             return o.filter(tx -> tx.isValue());
         } else {
@@ -95,9 +96,10 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
         }
     }
 
-    private static <T> Flowable<Tx<T>> createFlowable(SelectBuilder sb, ResultSetMapper<T> mapper,
-            Database db) {
-        return Flowable.defer(() -> {
+    @SuppressWarnings("unchecked")
+    private static <T> Flowable<Tx<T>> createFlowable(SelectBuilder sb,
+            ResultSetMapper<? extends T> mapper, Database db) {
+        return (Flowable<Tx<T>>) (Flowable<?>) Flowable.defer(() -> {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
             return Select.create(sb.connections //
                     .map(c -> Util.toTransactedConnection(connection, c)), //
@@ -114,10 +116,6 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
                         }
                     });
         });
-    }
-
-    private static <T> Flowable<Tx<T>> createFlowable(SelectBuilder sb, Class<T> cls, Database db) {
-        return createFlowable(sb, rs -> Util.mapObject(rs, cls, 1), db);
     }
 
 }
