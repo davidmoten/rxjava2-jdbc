@@ -643,6 +643,37 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testSelectTransactedTupleN() {
+        List<Tx<TupleN<Object>>> list = db() //
+                .select("select name, score from person where name=?") //
+                .parameters("FRED") //
+                .transacted() //
+                .getTupleN() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(2) //
+                .assertComplete() //
+                .values();
+        assertEquals("FRED", list.get(0).value().values().get(0));
+        assertEquals(21, (int) list.get(0).value().values().get(1));
+        assertTrue(list.get(1).isComplete());
+        assertEquals(2, list.size());
+    }
+    
+    @Test
+    public void testSelectTransactedCount() {
+        db() //
+                .select("select name, score, name, score, name, score, name from person where name=?") //
+                .parameters("FRED") //
+                .transacted() //
+                .count() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(1) //
+                .assertComplete();
+    }
+
+    @Test
     public void testSelectTransactedGetAs() {
         db() //
                 .select("select name from person") //
@@ -652,6 +683,23 @@ public class DatabaseTest {
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValueCount(4) //
                 .assertComplete();
+    }
+    
+    @Test
+    public void testSelectTransactedGetAsOptional() {
+        List<Tx<Optional<String>>> list = db() //
+                .select("select name from person where name=?") //
+                .parameters("FRED") //
+                .transacted() //
+                .getAsOptional(String.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(2) //
+                .assertComplete() //
+                .values();
+        assertTrue(list.get(0).isValue());
+        assertEquals("FRED", list.get(0).value().get());
+        assertTrue(list.get(1).isComplete());
     }
 
     @Test
