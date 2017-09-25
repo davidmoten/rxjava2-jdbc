@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.annotation.Nonnull;
+
 import io.reactivex.Flowable;
 
 public final class TransactedSelectBuilder implements DependsOn<TransactedSelectBuilder> {
@@ -68,7 +70,7 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
         return new TransactedSelectBuilderValuesOnly(this, db);
     }
 
-    public static final class TransactedSelectBuilderValuesOnly {
+    public static final class TransactedSelectBuilderValuesOnly implements Getter {
         private final TransactedSelectBuilder b;
         private final Database db;
 
@@ -77,10 +79,11 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
             this.db = db;
         }
 
-        public <T> Flowable<T> getAs(Class<T> cls) {
-            return createFlowable(b.selectBuilder, cls, db) //
+        public <T> Flowable<T> get(@Nonnull ResultSetMapper<? extends T> function) {
+            return createFlowable(b.selectBuilder, function, db) //
                     .flatMap(Tx.flattenToValuesOnly());
         }
+
     }
 
     public <T> Flowable<Tx<T>> getAs(Class<T> cls) {
@@ -92,17 +95,17 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
         }
     }
 
-    private static <T> Flowable<Tx<T>> createFlowable(SelectBuilder sb, Class<T> cls, Database db) {
+    private static <T> Flowable<Tx<T>> createFlowable(SelectBuilder sb, ResultSetMapper<T> mapper,
+            Database db) {
         return Flowable.defer(() -> {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
-            return Select
-                    .create(sb.connections //
-                            .map(c -> Util.toTransactedConnection(connection, c)), //
-                            sb.parameterGroupsToFlowable(), //
-                            sb.sql, //
-                            sb.fetchSize, //
-                            rs -> Util.mapObject(rs, cls, 1), //
-                            false) //
+            return Select.create(sb.connections //
+                    .map(c -> Util.toTransactedConnection(connection, c)), //
+                    sb.parameterGroupsToFlowable(), //
+                    sb.sql, //
+                    sb.fetchSize, //
+                    rs -> mapper.apply(rs), //
+                    false) //
                     .materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                     .doOnNext(tx -> {
@@ -111,6 +114,10 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
                         }
                     });
         });
+    }
+
+    private static <T> Flowable<Tx<T>> createFlowable(SelectBuilder sb, Class<T> cls, Database db) {
+        return createFlowable(sb, rs -> Util.mapObject(rs, cls, 1), db);
     }
 
 }

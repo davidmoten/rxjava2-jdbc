@@ -493,12 +493,25 @@ public class DatabaseTest {
     }
 
     @Test
-    public void testSelectAutomappedTransacted() {
+    public void testSelectAutomappedAnnotatedTransacted() {
         db() //
                 .select(Person10.class) //
                 .transacted() //
                 .valuesOnly() //
                 .get().test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(3) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSelectAutomappedTransactedValuesOnly() {
+        db() //
+                .select("select name, score from person") //
+                .transacted() //
+                .valuesOnly() //
+                .autoMap(Person2.class) //
+                .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValueCount(3) //
                 .assertComplete();
