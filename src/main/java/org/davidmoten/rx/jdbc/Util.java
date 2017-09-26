@@ -284,12 +284,19 @@ public enum Util {
         // builder?
         SqlInfo s = SqlInfo.parse(sql);
         log.debug("preparing statement: {}", sql);
-        try (PreparedStatement ps = con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY,
-                ResultSet.CONCUR_READ_ONLY)) {
+        PreparedStatement ps = null;
+        try {
+            ps = con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY,
+                    ResultSet.CONCUR_READ_ONLY);
             if (fetchSize > 0) {
                 ps.setFetchSize(fetchSize);
             }
             return new NamedPreparedStatement(ps, s.names());
+        } catch (RuntimeException e) {
+            if (ps != null) {
+                ps.close();
+            }
+            throw e;
         }
     }
 
