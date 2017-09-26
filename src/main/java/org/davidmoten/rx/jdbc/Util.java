@@ -292,7 +292,7 @@ public enum Util {
                 ps.setFetchSize(fetchSize);
             }
             return new NamedPreparedStatement(ps, s.names());
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | SQLException e) {
             if (ps != null) {
                 ps.close();
             }
