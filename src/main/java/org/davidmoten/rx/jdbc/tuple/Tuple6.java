@@ -4,11 +4,17 @@ package org.davidmoten.rx.jdbc.tuple;
  * An explicitly typed tuple.
  * 
  * @param <T1>
+ *            type of first element
  * @param <T2>
+ *            type of second element
  * @param <T3>
+ *            type of third element
  * @param <T4>
+ *            type of fourth element
  * @param <T5>
+ *            type of fifth element
  * @param <T6>
+ *            type of sixth element
  */
 public class Tuple6<T1, T2, T3, T4, T5, T6> {
 
@@ -23,11 +29,16 @@ public class Tuple6<T1, T2, T3, T4, T5, T6> {
      * Constructor.
      * 
      * @param value1
+     *            first element
      * @param value2
+     *            second element
      * @param value3
+     *            third element
      * @param value4
+     *            fourth element
      * @param value5
-     * @param value6
+     *            fifth element
+     * @param value6 sixth element
      */
     public Tuple6(T1 value1, T2 value2, T3 value3, T4 value4, T5 value5, T6 value6) {
         this.value1 = value1;
@@ -37,9 +48,9 @@ public class Tuple6<T1, T2, T3, T4, T5, T6> {
         this.value5 = value5;
         this.value6 = value6;
     }
-    
-    public static <T1, T2, T3, T4, T5, T6> Tuple6<T1, T2, T3, T4, T5, T6> create(T1 value1, T2 value2, T3 value3, T4 value4,
-            T5 value5, T6 value6) {
+
+    public static <T1, T2, T3, T4, T5, T6> Tuple6<T1, T2, T3, T4, T5, T6> create(T1 value1,
+            T2 value2, T3 value3, T4 value4, T5 value5, T6 value6) {
         return new Tuple6<T1, T2, T3, T4, T5, T6>(value1, value2, value3, value4, value5, value6);
     }
 

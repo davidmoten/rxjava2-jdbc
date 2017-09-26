@@ -3,9 +3,9 @@ package org.davidmoten.rx.jdbc.tuple;
 /**
  * An explicitly typed tuple.
  * 
- * @param <T1>
- * @param <T2>
- * @param <T3>
+ * @param <T1> type of first element
+ * @param <T2> type of second element
+ * @param <T3> type of third element
  */
 public class Tuple3<T1, T2, T3> {
 
@@ -16,9 +16,9 @@ public class Tuple3<T1, T2, T3> {
     /**
      * Constructor.
      * 
-     * @param value1
-     * @param value2
-     * @param value3
+     * @param value1 first element 
+     * @param value2 second element
+     * @param value3 third element
      */
     public Tuple3(T1 value1, T2 value2, T3 value3) {
         this.value1 = value1;

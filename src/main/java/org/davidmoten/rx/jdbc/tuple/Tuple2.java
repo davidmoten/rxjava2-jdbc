@@ -3,8 +3,8 @@ package org.davidmoten.rx.jdbc.tuple;
 /**
  * An explicitly typed tuple.
  * 
- * @param <T1>
- * @param <T2>
+ * @param <T1> type of first element
+ * @param <T2> type of second element
  */
 public class Tuple2<T1, T2> {
 
@@ -14,8 +14,8 @@ public class Tuple2<T1, T2> {
     /**
      * Constructor.
      * 
-     * @param value1
-     * @param value2
+     * @param value1 first element
+     * @param value2 second element
      */
     public Tuple2(T1 value1, T2 value2) {
         this.value1 = value1;
@@ -25,45 +25,45 @@ public class Tuple2<T1, T2> {
     /**
      * Returns a new instance.
      * 
-     * @param r
-     * @param s
-     * @return
+     * @param r first element
+     * @param s second element
+     * @return tuple
      */
     public static <R, S> Tuple2<R, S> create(R r, S s) {
         return new Tuple2<R, S>(r, s);
     }
 
     /**
-     * Returns the first member of the tuple.
+     * Returns the first element of the tuple.
      * 
-     * @return
+     * @return first element
      */
     public T1 value1() {
         return value1;
     }
 
     /**
-     * Returns the first member of the tuple.
+     * Returns the first element of the tuple.
      * 
-     * @return
+     * @return first element
      */
     public T1 _1() {
         return value1;
     }
 
     /**
-     * Returns the 2nd member of the tuple.
+     * Returns the 2nd element of the tuple.
      * 
-     * @return
+     * @return second element
      */
     public T2 value2() {
         return value2;
     }
 
     /**
-     * Returns the 2nd member of the tuple.
+     * Returns the 2nd element of the tuple.
      * 
-     * @return
+     * @return second element
      */
     public T2 _2() {
         return value2;

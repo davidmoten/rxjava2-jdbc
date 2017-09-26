@@ -8,6 +8,7 @@ import java.util.List;
  * Variable length tuple backed by a List.
  * 
  * @param <T>
+ *            type of each element of the tuple
  */
 public class TupleN<T> {
 
@@ -16,12 +17,12 @@ public class TupleN<T> {
     /**
      * Constructor.
      * 
-     * @param list
+     * @param list values of the elements in the tuple
      */
     public TupleN(List<T> list) {
         this.list = list;
     }
-    
+
     @SafeVarargs
     public static <T> TupleN<T> create(T... array) {
         return new TupleN<T>(Arrays.asList(array));

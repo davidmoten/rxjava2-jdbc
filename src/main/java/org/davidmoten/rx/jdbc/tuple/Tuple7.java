@@ -3,15 +3,22 @@ package org.davidmoten.rx.jdbc.tuple;
 import java.util.Objects;
 
 /**
- * An explicitly typed tuple. *
+ * An explicitly typed tuple.
  * 
  * @param <T1>
+ *            type of first element
  * @param <T2>
+ *            type of second element
  * @param <T3>
+ *            type of third element
  * @param <T4>
+ *            type of fourth element
  * @param <T5>
+ *            type of fifth element
  * @param <T6>
+ *            type of sixth element
  * @param <T7>
+ *            type of seventh element
  */
 public class Tuple7<T1, T2, T3, T4, T5, T6, T7> {
 
@@ -27,12 +34,19 @@ public class Tuple7<T1, T2, T3, T4, T5, T6, T7> {
      * Constructor.
      * 
      * @param value1
+     *            first element
      * @param value2
+     *            second element
      * @param value3
+     *            third element
      * @param value4
+     *            fourth element
      * @param value5
+     *            fifth element
      * @param value6
+     *            sixth element
      * @param value7
+     *            seventh element
      */
     public Tuple7(T1 value1, T2 value2, T3 value3, T4 value4, T5 value5, T6 value6, T7 value7) {
         this.value1 = value1;
@@ -44,9 +58,10 @@ public class Tuple7<T1, T2, T3, T4, T5, T6, T7> {
         this.value7 = value7;
     }
 
-    public static <T1, T2, T3, T4, T5, T6, T7> Tuple7<T1, T2, T3, T4, T5, T6, T7> create(T1 value1, T2 value2,
-            T3 value3, T4 value4, T5 value5, T6 value6, T7 value7) {
-        return new Tuple7<T1, T2, T3, T4, T5, T6, T7>(value1, value2, value3, value4, value5, value6, value7);
+    public static <T1, T2, T3, T4, T5, T6, T7> Tuple7<T1, T2, T3, T4, T5, T6, T7> create(T1 value1,
+            T2 value2, T3 value3, T4 value4, T5 value5, T6 value6, T7 value7) {
+        return new Tuple7<T1, T2, T3, T4, T5, T6, T7>(value1, value2, value3, value4, value5,
+                value6, value7);
     }
 
     public T1 value1() {

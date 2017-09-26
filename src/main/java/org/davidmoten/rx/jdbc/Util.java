@@ -360,9 +360,9 @@ public enum Util {
      * Converts from java.sql Types to common java types like java.util.Date and
      * numeric types.
      * 
-     * @param o
-     * @param cls
-     * @return
+     * @param o object to map to new object of type {@code cls}
+     * @param cls object return type
+     * @return object of type {@code cls}
      */
     public static Object autoMap(Object o, Class<?> cls) {
         if (o == null)

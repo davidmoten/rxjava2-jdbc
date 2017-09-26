@@ -3,11 +3,11 @@ package org.davidmoten.rx.jdbc.tuple;
 /**
  * An explicitly typed tuple.
  * 
- * @param <T1>
- * @param <T2>
- * @param <T3>
- * @param <T4>
- * @param <T5>
+ * @param <T1> type of first element
+ * @param <T2> type of second element
+ * @param <T3> type of third element
+ * @param <T4> type of fourth element
+ * @param <T5> type of fifth element
  */
 public class Tuple5<T1, T2, T3, T4, T5> {
 
@@ -20,11 +20,11 @@ public class Tuple5<T1, T2, T3, T4, T5> {
     /**
      * Constructor.
      * 
-     * @param value1
-     * @param value2
-     * @param value3
-     * @param value4
-     * @param value5
+     * @param value1 first element
+     * @param value2 second element
+     * @param value3 third element
+     * @param value4 fourth element
+     * @param value5 fifth element
      */
     public Tuple5(T1 value1, T2 value2, T3 value3, T4 value4, T5 value5) {
         this.value1 = value1;

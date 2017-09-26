@@ -133,7 +133,7 @@ public interface Getter {
      * @param cls1
      * @param cls2
      * @param cls3
-     * @return
+     * @return tuple
      */
     default <T1, T2, T3> Flowable<Tuple3<T1, T2, T3>> getAs(@Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2,
             @Nonnull Class<T3> cls3) {
@@ -151,7 +151,7 @@ public interface Getter {
      * @param cls2
      * @param cls3
      * @param cls4
-     * @return
+     * @return tuple
      */
     default <T1, T2, T3, T4> Flowable<Tuple4<T1, T2, T3, T4>> getAs(@Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2,
             @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4) {
@@ -171,7 +171,7 @@ public interface Getter {
      * @param cls3
      * @param cls4
      * @param cls5
-     * @return
+     * @return tuple
      */
     default <T1, T2, T3, T4, T5> Flowable<Tuple5<T1, T2, T3, T4, T5>> getAs(@Nonnull Class<T1> cls1,
             @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5) {
@@ -193,7 +193,7 @@ public interface Getter {
      * @param cls4
      * @param cls5
      * @param cls6
-     * @return
+     * @return tuple
      */
     default <T1, T2, T3, T4, T5, T6> Flowable<Tuple6<T1, T2, T3, T4, T5, T6>> getAs(@Nonnull Class<T1> cls1,
             @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5,
@@ -218,7 +218,7 @@ public interface Getter {
      * @param cls5
      * @param cls6
      * @param cls7
-     * @return
+     * @return tuple
      */
     default <T1, T2, T3, T4, T5, T6, T7> Flowable<Tuple7<T1, T2, T3, T4, T5, T6, T7>> getAs(@Nonnull Class<T1> cls1,
             @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5,

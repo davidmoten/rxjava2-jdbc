@@ -18,16 +18,16 @@ public final class TransactedReturnGeneratedKeysBuilder {
     /**
      * Transforms the results using the given function.
      *
-     * @param function
+     * @param mapper maps the query results to an object
      * @return the results of the query as an Observable
      */
-    public <T> Flowable<Tx<T>> get(ResultSetMapper<? extends T> function) {
+    public <T> Flowable<Tx<T>> get(ResultSetMapper<? extends T> mapper) {
         return Flowable.defer(() -> {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
             Flowable<T> o = Update.<T>createReturnGeneratedKeys( //
                     update.updateBuilder.connections //
                             .map(c -> Util.toTransactedConnection(connection, c)),
-                    update.parameterGroupsToFlowable(), update.updateBuilder.sql, function, false);
+                    update.parameterGroupsToFlowable(), update.updateBuilder.sql, mapper, false);
             return o.materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                     .doOnNext(tx -> {
