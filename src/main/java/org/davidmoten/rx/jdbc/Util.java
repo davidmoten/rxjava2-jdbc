@@ -284,12 +284,13 @@ public enum Util {
         // builder?
         SqlInfo s = SqlInfo.parse(sql);
         log.debug("preparing statement: {}", sql);
-        PreparedStatement ps = con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY,
-                ResultSet.CONCUR_READ_ONLY);
-        if (fetchSize > 0) {
-            ps.setFetchSize(fetchSize);
+        try (PreparedStatement ps = con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_READ_ONLY)) {
+            if (fetchSize > 0) {
+                ps.setFetchSize(fetchSize);
+            }
+            return new NamedPreparedStatement(ps, s.names());
         }
-        return new NamedPreparedStatement(ps, s.names());
     }
 
     static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql)
