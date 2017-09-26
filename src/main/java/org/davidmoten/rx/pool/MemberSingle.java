@@ -42,9 +42,11 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     // synchronized by `wip`
     private int count;
 
+    //synchronized by `wip`
+    private Disposable scheduledDrain;
+    
     private final NonBlockingPool<T> pool;
 
-    private Disposable scheduledDrain;
 
     private final long checkoutRetryIntervalMs;
 
@@ -126,7 +128,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                         if ((m2 = m.checkout()) != null) {
                             emit(obs, m2);
                         } else if (m.isShutdown()) {
-                            // continue
+                            // don't return m to the queue and continue
                         } else {
                             // put back on the queue for consideration later
                             // if not shutdown
