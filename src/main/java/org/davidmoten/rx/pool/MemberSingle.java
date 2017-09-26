@@ -102,6 +102,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
             while (true) {
                 Member<T> couldNotCheckout = null;
                 if (scheduledDrain != null) {
+                    // if a drain has been scheduled then cancel it because we are draining now
                     scheduledDrain.dispose();
                     scheduledDrain = null;
                 }
