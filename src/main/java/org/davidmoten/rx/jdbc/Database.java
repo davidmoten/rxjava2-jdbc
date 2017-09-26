@@ -68,8 +68,8 @@ public final class Database implements AutoCloseable {
     }
 
     /**
-     * Returns a new testing apache derby in-memory database with a connection
-     * pool of size 3.
+     * Returns a new testing apache derby in-memory database with a connection pool
+     * of size 3.
      * 
      * @return new testing Database instance
      */
@@ -83,8 +83,8 @@ public final class Database implements AutoCloseable {
                     .statements(Database.class.getResourceAsStream("/database-test.sql")) //
                     .stream() //
                     .forEach(x -> {
-                        try {
-                            c.prepareStatement(x).execute();
+                        try (PreparedStatement s = c.prepareStatement(x)) {
+                            s.execute();
                         } catch (SQLException e) {
                             throw new SQLRuntimeException(e);
                         }
@@ -179,11 +179,10 @@ public final class Database implements AutoCloseable {
     }
 
     /**
-     * Sentinel object used to indicate in parameters of a query that rather
-     * than calling {@link PreparedStatement#setObject(int, Object)} with a null
-     * we call {@link PreparedStatement#setNull(int, int)} with
-     * {@link Types#CLOB}. This is required by many databases for setting CLOB
-     * and BLOB fields to null.
+     * Sentinel object used to indicate in parameters of a query that rather than
+     * calling {@link PreparedStatement#setObject(int, Object)} with a null we call
+     * {@link PreparedStatement#setNull(int, int)} with {@link Types#CLOB}. This is
+     * required by many databases for setting CLOB and BLOB fields to null.
      */
     public static final Object NULL_BLOB = new Object();
 
