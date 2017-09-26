@@ -17,7 +17,8 @@ public class TupleN<T> {
     /**
      * Constructor.
      * 
-     * @param list values of the elements in the tuple
+     * @param list
+     *            values of the elements in the tuple
      */
     public TupleN(List<T> list) {
         this.list = list;
