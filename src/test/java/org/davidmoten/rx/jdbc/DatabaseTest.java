@@ -51,7 +51,7 @@ import org.davidmoten.rx.jdbc.exceptions.NamedParameterFoundButSqlDoesNotHaveNam
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.exceptions.QueryAnnotationMissingException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
-import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool2;
+import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.davidmoten.rx.jdbc.pool.PoolClosedException;
 import org.davidmoten.rx.jdbc.pool.Pools;
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
@@ -221,11 +221,12 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingNonBlockingBuilder() {
-        NonBlockingConnectionPool2 pool = Pools //
+        NonBlockingConnectionPool pool = Pools //
                 .nonBlocking() //
                 .connectionProvider(DatabaseCreator.connectionProvider()) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
+                .checkoutRetryInterval(1, TimeUnit.SECONDS) //
                 .healthy(c -> c.prepareStatement("select 1").execute()) //
                 .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) //
                 .maxPoolSize(3) //
@@ -1569,7 +1570,7 @@ public class DatabaseTest {
     private void testHealthCheck(Predicate<Connection> healthy) throws InterruptedException {
         TestScheduler scheduler = new TestScheduler();
 
-        NonBlockingConnectionPool2 pool = Pools //
+        NonBlockingConnectionPool pool = Pools //
                 .nonBlocking() //
                 .connectionProvider(DatabaseCreator.connectionProvider()) //
                 .maxIdleTime(10, TimeUnit.MINUTES) //
@@ -1609,7 +1610,7 @@ public class DatabaseTest {
 
     @Test
     public void testShutdownBeforeUse() {
-        NonBlockingConnectionPool2 pool = Pools //
+        NonBlockingConnectionPool pool = Pools //
                 .nonBlocking() //
                 .connectionProvider(DatabaseCreator.connectionProvider()) //
                 .scheduler(Schedulers.io()) //

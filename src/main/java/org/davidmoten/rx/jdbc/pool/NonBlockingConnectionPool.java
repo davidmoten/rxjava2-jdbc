@@ -19,12 +19,13 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
-public final class NonBlockingConnectionPool2 implements Pool<Connection> {
+public final class NonBlockingConnectionPool implements Pool<Connection> {
 
     private final AtomicReference<NonBlockingPool<Connection>> pool = new AtomicReference<NonBlockingPool<Connection>>();
 
-    public NonBlockingConnectionPool2(org.davidmoten.rx.pool.NonBlockingPool.Builder<Connection> builder) {
-        pool.set(builder.memberFactory(p -> new ConnectionNonBlockingMember2(pool.get())).build());
+    public NonBlockingConnectionPool(
+            org.davidmoten.rx.pool.NonBlockingPool.Builder<Connection> builder) {
+        pool.set(builder.memberFactory(p -> new ConnectionNonBlockingMember(pool.get())).build());
     }
 
     public static Builder builder() {
@@ -39,6 +40,7 @@ public final class NonBlockingConnectionPool2 implements Pool<Connection> {
         private long returnToPoolDelayAfterHealthCheckFailureMs = 1000;
         private long idleTimeBeforeHealthCheckMs = 60000;
         private long maxIdleTimeMs = 30 * 60000;
+        private long checkoutRetryIntervalMs = 30000;
         private Consumer<Connection> disposer = Util::closeSilently;
         private Scheduler scheduler = null;
 
@@ -64,6 +66,15 @@ public final class NonBlockingConnectionPool2 implements Pool<Connection> {
             Preconditions.checkArgument(value >= 0);
             this.idleTimeBeforeHealthCheckMs = value;
             return this;
+        }
+
+        public Builder checkoutRetryIntervalMs(long value) {
+            this.checkoutRetryIntervalMs = value;
+            return this;
+        }
+
+        public Builder checkoutRetryInterval(long value, TimeUnit unit) {
+            return checkoutRetryIntervalMs(unit.toMillis(value));
         }
 
         public Builder idleTimeBeforeHealthCheck(long value, TimeUnit unit) {
@@ -97,19 +108,17 @@ public final class NonBlockingConnectionPool2 implements Pool<Connection> {
         }
 
         /**
-         * Sets the scheduler used for emitting connections (must be scheduled
-         * to another thread to break the chain of stack calls otherwise can get
-         * StackOverflowError) and for scheduling timeouts and retries. Defaults
-         * to
-         * {@code Schedulers.from(Executors.newFixedThreadPool(maxPoolSize))}.
-         * Do not set the scheduler to {@code Schedulers.trampoline()} because
-         * queries will block waiting for timeout workers. Also, do not use a
-         * single-threaded {@link Scheduler} because you may encounter
-         * {@link StackOverflowError}.
+         * Sets the scheduler used for emitting connections (must be scheduled to
+         * another thread to break the chain of stack calls otherwise can get
+         * StackOverflowError) and for scheduling timeouts and retries. Defaults to
+         * {@code Schedulers.from(Executors.newFixedThreadPool(maxPoolSize))}. Do not
+         * set the scheduler to {@code Schedulers.trampoline()} because queries will
+         * block waiting for timeout workers. Also, do not use a single-threaded
+         * {@link Scheduler} because you may encounter {@link StackOverflowError}.
          * 
          * @param scheduler
-         *            scheduler to use for emitting connections and for
-         *            scheduling timeouts and retries. Defaults to
+         *            scheduler to use for emitting connections and for scheduling
+         *            timeouts and retries. Defaults to
          *            {@code Schedulers.from(Executors.newFixedThreadPool(maxPoolSize))}.
          *            Do not use {@code Schedulers.trampoline()}.
          * @return this
@@ -121,20 +130,22 @@ public final class NonBlockingConnectionPool2 implements Pool<Connection> {
             return this;
         }
 
-        public NonBlockingConnectionPool2 build() {
+        public NonBlockingConnectionPool build() {
             if (scheduler == null) {
                 scheduler = Schedulers.from(Executors.newFixedThreadPool(maxPoolSize));
             }
-            return new NonBlockingConnectionPool2(NonBlockingPool //
+            return new NonBlockingConnectionPool(NonBlockingPool //
                     .factory(() -> cp.get()) //
                     .idleTimeBeforeHealthCheckMs(idleTimeBeforeHealthCheckMs) //
                     .maxIdleTimeMs(maxIdleTimeMs) //
+                    .checkoutRetryIntervalMs(checkoutRetryIntervalMs) //
                     .scheduler(scheduler) //
                     .disposer(disposer)//
                     .healthy(healthy) //
                     .scheduler(scheduler) //
                     .maxSize(maxPoolSize) //
-                    .returnToPoolDelayAfterHealthCheckFailureMs(returnToPoolDelayAfterHealthCheckFailureMs)); //
+                    .returnToPoolDelayAfterHealthCheckFailureMs(
+                            returnToPoolDelayAfterHealthCheckFailureMs)); //
         }
 
     }

@@ -2,6 +2,7 @@ package org.davidmoten.rx.pool;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -38,9 +39,12 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     private volatile boolean cancelled;
 
     // number of members in the pool at the moment
+    // synchronized by `wip`
     private int count;
 
     private final NonBlockingPool<T> pool;
+
+    private final long checkoutRetryIntervalMs;
 
     @SuppressWarnings("unchecked")
     MemberSingle(NonBlockingPool<T> pool) {
@@ -51,6 +55,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         this.observers = new AtomicReference<>(EMPTY);
         this.count = 1;
         this.pool = pool;
+        this.checkoutRetryIntervalMs = pool.checkoutRetryIntervalMs;
         queue.offer(members[0]);
     }
 
@@ -82,6 +87,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         if (wip.getAndIncrement() == 0) {
             int missed = 1;
             while (true) {
+                Member<T> couldNotCheckout = null;
                 while (true) {
                     if (cancelled) {
                         queue.clear();
@@ -107,6 +113,16 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                         } else {
                             // put back on the queue for consideration later
                             queue.offer(m);
+                            if (couldNotCheckout == null) {
+                                couldNotCheckout = m;
+                            } else if (couldNotCheckout == m) {
+                                // this m has failed to checkout before in this loop
+                                // which could happen if database is not available for instance
+                                // so let's try again after an interval
+                                scheduler.scheduleDirect(() -> drain(), checkoutRetryIntervalMs,
+                                        TimeUnit.MILLISECONDS);
+                                break;
+                            }
                         }
                     }
                 }
@@ -141,7 +157,8 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                     nextIndex = (nextIndex + 1) % active.length;
                 }
                 active[nextIndex] = false;
-                if (observers.compareAndSet(x, new Observers<T>(x.observers, active, x.activeCount - 1, nextIndex))) {
+                if (observers.compareAndSet(x,
+                        new Observers<T>(x.observers, active, x.activeCount - 1, nextIndex))) {
                     oNext = x.observers[nextIndex];
                     break;
                 }
@@ -193,7 +210,8 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
             boolean[] active = new boolean[n + 1];
             System.arraycopy(a.active, 0, active, 0, n);
             active[n] = true;
-            if (observers.compareAndSet(a, new Observers<T>(b, active, a.activeCount + 1, a.index))) {
+            if (observers.compareAndSet(a,
+                    new Observers<T>(b, active, a.activeCount + 1, a.index))) {
                 return;
             }
         }
@@ -250,8 +268,10 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         private int activeCount;
         final int index;
 
-        Observers(MemberSingleObserver<T>[] observers, boolean[] active, int activeCount, int index) {
-            Preconditions.checkArgument(observers.length > 0 || index == 0, "index must be -1 for zero length array");
+        Observers(MemberSingleObserver<T>[] observers, boolean[] active, int activeCount,
+                int index) {
+            Preconditions.checkArgument(observers.length > 0 || index == 0,
+                    "index must be -1 for zero length array");
             Preconditions.checkArgument(observers.length == active.length);
             this.observers = observers;
             this.index = index;
@@ -284,7 +304,8 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         }
     }
 
-    static final class MemberSingleObserver<T> extends AtomicReference<MemberSingle<T>> implements Disposable {
+    static final class MemberSingleObserver<T> extends AtomicReference<MemberSingle<T>>
+            implements Disposable {
         private static final long serialVersionUID = -7650903191002190468L;
 
         final SingleObserver<? super Member<T>> child;

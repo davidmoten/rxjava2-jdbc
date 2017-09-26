@@ -23,11 +23,11 @@ import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingMember;
 import org.davidmoten.rx.pool.NonBlockingPool;
 
-public final class ConnectionNonBlockingMember2 implements Connection, Member<Connection> {
+public final class ConnectionNonBlockingMember implements Connection, Member<Connection> {
 
     private final Member<Connection> member;
 
-    public ConnectionNonBlockingMember2(NonBlockingPool<Connection> pool) {
+    public ConnectionNonBlockingMember(NonBlockingPool<Connection> pool) {
         member = new NonBlockingMember<Connection>(pool, this);
     }
 
