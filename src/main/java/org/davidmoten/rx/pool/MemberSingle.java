@@ -21,7 +21,7 @@ import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.plugins.RxJavaPlugins;
 
-class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeable {
+class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeable, Runnable {
 
     final AtomicReference<Observers<T>> observers;
 
@@ -43,6 +43,8 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     private int count;
 
     private final NonBlockingPool<T> pool;
+
+    private Disposable scheduledDrain;
 
     private final long checkoutRetryIntervalMs;
 
@@ -83,11 +85,24 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         this.cancelled = true;
     }
 
+    @Override
+    public void run() {
+        try {
+            drain();
+        } catch (Throwable t) {
+            RxJavaPlugins.onError(t);
+        }
+    }
+
     private void drain() {
         if (wip.getAndIncrement() == 0) {
             int missed = 1;
             while (true) {
                 Member<T> couldNotCheckout = null;
+                if (scheduledDrain != null) {
+                    scheduledDrain.dispose();
+                    scheduledDrain = null;
+                }
                 while (true) {
                     if (cancelled) {
                         queue.clear();
@@ -119,8 +134,8 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                                 // this m has failed to checkout before in this loop
                                 // which could happen if database is not available for instance
                                 // so let's try again after an interval
-                                scheduler.scheduleDirect(() -> drain(), checkoutRetryIntervalMs,
-                                        TimeUnit.MILLISECONDS);
+                                scheduledDrain = scheduler.scheduleDirect(this,
+                                        checkoutRetryIntervalMs, TimeUnit.MILLISECONDS);
                                 break;
                             }
                         }
