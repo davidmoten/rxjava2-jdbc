@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -64,7 +65,7 @@ public final class Database implements AutoCloseable {
     }
 
     static ConnectionProvider testConnectionProvider() {
-        return connectionProvider(nextUrl());
+        return testConnectionProvider(nextUrl());
     }
 
     /**
@@ -77,7 +78,7 @@ public final class Database implements AutoCloseable {
         return test(3);
     }
 
-    private static void createDatabase(@Nonnull Connection c) {
+    private static void createTestDatabase(@Nonnull Connection c) {
         try {
             Sql //
                     .statements(Database.class.getResourceAsStream("/database-test.sql")) //
@@ -95,7 +96,7 @@ public final class Database implements AutoCloseable {
         }
     }
 
-    private static ConnectionProvider connectionProvider(@Nonnull String url) {
+    private static ConnectionProvider testConnectionProvider(@Nonnull String url) {
         return new ConnectionProvider() {
 
             private final AtomicBoolean once = new AtomicBoolean();
@@ -106,10 +107,12 @@ public final class Database implements AutoCloseable {
                 try {
                     Connection c = DriverManager.getConnection(url);
                     if (once.compareAndSet(false, true)) {
-                        createDatabase(c);
+                        createTestDatabase(c);
                         latch.countDown();
                     } else {
-                        latch.await(1, TimeUnit.MINUTES);
+                        if (!latch.await(1, TimeUnit.MINUTES)) {
+                            throw new SQLRuntimeException("waited 1 minute but test database was not created");
+                        }
                     }
                     return c;
                 } catch (SQLException e) {
