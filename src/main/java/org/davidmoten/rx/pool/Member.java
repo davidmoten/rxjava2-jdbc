@@ -15,4 +15,6 @@ public interface Member<T> extends AutoCloseable {
     T value();
 
     void shutdown();
+    
+    boolean isShutdown();
 }
