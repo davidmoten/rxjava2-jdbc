@@ -285,7 +285,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         final MemberSingleObserver<T>[] observers;
         // an observer is active until it is emitted to
         final boolean[] active;
-        int activeCount;
+        final int activeCount;
         final int index;
 
         Observers(MemberSingleObserver<T>[] observers, boolean[] active, int activeCount,
