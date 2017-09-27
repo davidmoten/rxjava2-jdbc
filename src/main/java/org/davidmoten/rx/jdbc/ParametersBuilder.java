@@ -21,7 +21,7 @@ class ParametersBuilder<T> {
     private final List<Object> parameterBuffer = new ArrayList<>();
     private final SqlInfo sqlInfo;
 
-    ParametersBuilder(String sql) {
+    ParametersBuilder(@Nonnull String sql) {
         this.sqlInfo = SqlInfo.parse(sql);
     }
 
@@ -60,7 +60,7 @@ class ParametersBuilder<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public final T parameter(String name, Object value) {
+    public final T parameter(@Nonnull String name, Object value) {
         Preconditions.checkNotNull(name, "name cannot be null");
         parameterBuffer.add(new Parameter(name, value));
         return (T) this;
@@ -71,7 +71,7 @@ class ParametersBuilder<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public final T parameters(Object... values) {
+    public final T parameters(@Nonnull Object... values) {
         Preconditions.checkNotNull(values);
         if (values.length == 0) {
             // no effect

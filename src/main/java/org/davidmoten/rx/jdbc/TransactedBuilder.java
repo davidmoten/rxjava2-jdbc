@@ -2,6 +2,10 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
 
+import javax.annotation.Nonnull;
+
+import com.github.davidmoten.guavamini.Preconditions;
+
 import io.reactivex.Single;
 
 public final class TransactedBuilder {
@@ -14,11 +18,13 @@ public final class TransactedBuilder {
         this.connections = Single.just(con);
     }
 
-    public TransactedSelectBuilder select(String sql) {
+    public TransactedSelectBuilder select(@Nonnull String sql) {
+        Preconditions.checkNotNull(sql, "sql cannot be null");
         return new SelectBuilder(sql, connections, db).transacted();
     }
-    
-    public TransactedUpdateBuilder update(String sql) {
+
+    public TransactedUpdateBuilder update(@Nonnull String sql) {
+        Preconditions.checkNotNull(sql, "sql cannot be null");
         return new UpdateBuilder(sql, connections, db).transacted();
     }
 

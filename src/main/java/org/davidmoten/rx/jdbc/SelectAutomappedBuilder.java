@@ -3,6 +3,8 @@ package org.davidmoten.rx.jdbc;
 import java.sql.Connection;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.QueryAnnotationMissingException;
 
@@ -45,11 +47,11 @@ public final class SelectAutomappedBuilder<T> {
         return selectBuilder.autoMap(cls);
     }
     
-    public <R> Flowable<R> get(Function<? super T, ? extends R> function) {
+    public <R> Flowable<R> get(@Nonnull Function<? super T, ? extends R> function) {
         return get().map(function);
     }
 
-    public SelectAutomappedBuilder<T> parameterStream(Flowable<?> values) {
+    public SelectAutomappedBuilder<T> parameterStream(@Nonnull Flowable<?> values) {
         selectBuilder.parameterStream(values);
         return this;
     }
@@ -59,22 +61,22 @@ public final class SelectAutomappedBuilder<T> {
         return this;
     }
 
-    public SelectAutomappedBuilder<T> parameterListStream(Flowable<List<?>> valueLists) {
+    public SelectAutomappedBuilder<T> parameterListStream(@Nonnull Flowable<List<?>> valueLists) {
         selectBuilder.parameterListStream(valueLists);
         return this;
     }
 
-    public SelectAutomappedBuilder<T> parameterList(List<Object> values) {
+    public SelectAutomappedBuilder<T> parameterList(@Nonnull List<Object> values) {
         selectBuilder.parameterList(values);
         return this;
     }
 
-    public SelectAutomappedBuilder<T> parameterList(Object... values) {
+    public SelectAutomappedBuilder<T> parameterList(@Nonnull Object... values) {
         selectBuilder.parameterList(values);
         return this;
     }
 
-    public SelectAutomappedBuilder<T> parameter(String name, Object value) {
+    public SelectAutomappedBuilder<T> parameter(@Nonnull String name, Object value) {
         selectBuilder.parameter(name, value);
         return this;
     }
@@ -83,7 +85,7 @@ public final class SelectAutomappedBuilder<T> {
         return parameters(value);
     }
 
-    public SelectAutomappedBuilder<T> parameters(Object... values) {
+    public SelectAutomappedBuilder<T> parameters(@Nonnull Object... values) {
         selectBuilder.parameters(values);
         return this;
     }

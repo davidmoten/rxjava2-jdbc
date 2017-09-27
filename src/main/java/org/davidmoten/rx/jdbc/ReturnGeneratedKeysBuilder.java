@@ -2,6 +2,8 @@ package org.davidmoten.rx.jdbc;
 
 import javax.annotation.Nonnull;
 
+import com.github.davidmoten.guavamini.Preconditions;
+
 import io.reactivex.Flowable;
 
 public final class ReturnGeneratedKeysBuilder implements Getter {
@@ -20,6 +22,7 @@ public final class ReturnGeneratedKeysBuilder implements Getter {
      */
     @Override
     public <T> Flowable<T> get(@Nonnull ResultSetMapper<? extends T> mapper) {
+        Preconditions.checkNotNull(mapper, "mapper cannot be null");
         return update.startWithDependency(
                 Update.<T> createReturnGeneratedKeys(update.connections,
                         update.parameterGroupsToFlowable(), update.sql, mapper, true));

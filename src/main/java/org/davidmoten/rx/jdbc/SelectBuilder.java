@@ -3,6 +3,8 @@ package org.davidmoten.rx.jdbc;
 import java.sql.Connection;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
@@ -28,10 +30,11 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder>
     }
 
     /**
-     * Sets the fetchSize for the JDBC statement. If 0 then fetchSize is not set
-     * and the default fetchSize for the JDBC driver you are using will be used.
+     * Sets the fetchSize for the JDBC statement. If 0 then fetchSize is not set and
+     * the default fetchSize for the JDBC driver you are using will be used.
      * 
-     * @param size sets the fetchSize or chooses default value if 0
+     * @param size
+     *            sets the fetchSize or chooses default value if 0
      * @return this
      */
     public SelectBuilder fetchSize(int size) {
@@ -49,10 +52,10 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder>
     }
 
     @Override
-    public <T> Flowable<T> get(ResultSetMapper<? extends T> function) {
+    public <T> Flowable<T> get(@Nonnull ResultSetMapper<? extends T> mapper) {
+        Preconditions.checkNotNull(mapper, "mapper cannot be null");
         Flowable<List<Object>> pg = super.parameterGroupsToFlowable();
-        Flowable<T> f = Select.<T> create(connections, pg, sql, fetchSize, function,
-                true);
+        Flowable<T> f = Select.<T>create(connections, pg, sql, fetchSize, mapper, true);
         if (dependsOn != null) {
             return dependsOn.ignoreElements().andThen(f);
         } else {
@@ -61,7 +64,7 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder>
     }
 
     @Override
-    public SelectBuilder dependsOn(Flowable<?> flowable) {
+    public SelectBuilder dependsOn(@Nonnull Flowable<?> flowable) {
         Preconditions.checkArgument(dependsOn == null, "can only set dependsOn once");
         Preconditions.checkNotNull(flowable);
         dependsOn = flowable;
