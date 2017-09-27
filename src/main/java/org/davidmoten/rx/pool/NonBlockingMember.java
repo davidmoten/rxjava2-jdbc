@@ -11,7 +11,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.disposables.DisposableHelper;
 import io.reactivex.plugins.RxJavaPlugins;
 
-public final class NonBlockingMember<T> implements Member<T> {
+public final class NonBlockingMember<T> implements MemberWithValue<T> {
 
     private static final Logger log = LoggerFactory.getLogger(NonBlockingMember.class);
 
@@ -32,20 +32,20 @@ public final class NonBlockingMember<T> implements Member<T> {
             new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED, true));
     private final Worker worker;
     private final NonBlockingPool<T> pool;
-    private final Member<T> proxy;
+    private final MemberWithValue<T> proxy;
 
     // mutable
     private volatile T value;
     private volatile long lastCheckoutTime;
 
-    public NonBlockingMember(NonBlockingPool<T> pool, Member<T> proxy) {
+    public NonBlockingMember(NonBlockingPool<T> pool, MemberWithValue<T> proxy) {
         this.pool = pool;
         this.proxy = proxy;
         this.worker = pool.scheduler.createWorker();
     }
 
     @Override
-    public Member<T> checkout() {
+    public MemberWithValue<T> checkout() {
         // CAS loop for modifications to state of this member
         while (true) {
             State s = state.get();

@@ -20,12 +20,13 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 
 import org.davidmoten.rx.pool.Member;
+import org.davidmoten.rx.pool.MemberWithValue;
 import org.davidmoten.rx.pool.NonBlockingMember;
 import org.davidmoten.rx.pool.NonBlockingPool;
 
-public final class ConnectionNonBlockingMember implements Connection, Member<Connection> {
+public final class ConnectionNonBlockingMember implements Connection, MemberWithValue<Connection> {
 
-    private final Member<Connection> member;
+    private final MemberWithValue<Connection> member;
 
     public ConnectionNonBlockingMember(NonBlockingPool<Connection> pool) {
         member = new NonBlockingMember<Connection>(pool, this);
@@ -320,7 +321,7 @@ public final class ConnectionNonBlockingMember implements Connection, Member<Con
     }
 
     @Override
-    public Member<Connection> checkout() {
+    public MemberWithValue<Connection> checkout() {
         return member.checkout();
     }
 
