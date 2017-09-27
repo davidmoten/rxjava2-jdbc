@@ -127,9 +127,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                         Member<T> m2;
                         if ((m2 = m.checkout()) != null) {
                             emit(obs, m2);
-                        } else if (m.isShutdown()) {
-                            // don't return m to the queue and continue
-                        } else {
+                        } else if (!m.isShutdown()) {
                             // put back on the queue for consideration later
                             // if not shutdown
                             queue.offer(m);
