@@ -3,6 +3,8 @@ package org.davidmoten.rx.pool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,13 +34,13 @@ public final class NonBlockingMember<T> implements MemberWithValue<T> {
             new State(NOT_INITIALIZED_NOT_IN_USE, DisposableHelper.DISPOSED, true));
     private final Worker worker;
     private final NonBlockingPool<T> pool;
-    private final MemberWithValue<T> proxy;
+    private final @Nullable MemberWithValue<T> proxy;
 
     // mutable
     private volatile T value;
     private volatile long lastCheckoutTime;
 
-    public NonBlockingMember(NonBlockingPool<T> pool, MemberWithValue<T> proxy) {
+    public NonBlockingMember(NonBlockingPool<T> pool, @Nullable MemberWithValue<T> proxy) {
         this.pool = pool;
         this.proxy = proxy;
         this.worker = pool.scheduler.createWorker();
