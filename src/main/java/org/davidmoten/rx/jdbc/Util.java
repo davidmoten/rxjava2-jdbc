@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import javax.annotation.RegEx;
+import javax.sql.DataSource;
 
 import org.apache.commons.io.IOUtils;
 import org.davidmoten.rx.jdbc.annotations.Column;
@@ -1013,6 +1014,7 @@ public enum Util {
             @Override
             public Connection get() {
                 try {
+
                     return DriverManager.getConnection(url);
                 } catch (SQLException e) {
                     throw new SQLRuntimeException(e);
@@ -1038,5 +1040,24 @@ public enum Util {
             connection.set(c2);
             return c2;
         }
+    }
+
+    public static ConnectionProvider connectionProvider(DataSource dataSource) {
+        return new ConnectionProvider() {
+
+            @Override
+            public Connection get() {
+                try {
+                    return dataSource.getConnection();
+                } catch (SQLException e) {
+                    throw new SQLRuntimeException(e);
+                }
+            }
+
+            @Override
+            public void close() {
+                // do nothing
+            }
+        };
     }
 }

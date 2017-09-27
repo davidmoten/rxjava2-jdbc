@@ -12,8 +12,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.sql.DataSource;
 
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
+import org.davidmoten.rx.jdbc.pool.ConnectionProviderBlockingPool;
 import org.davidmoten.rx.jdbc.pool.Pools;
 import org.davidmoten.rx.pool.Pool;
 
@@ -52,6 +54,14 @@ public final class Database implements AutoCloseable {
     public static Database from(@Nonnull Pool<Connection> pool) {
         Preconditions.checkNotNull(pool, "pool canot be null");
         return new Database(pool.member().cast(Connection.class), () -> pool.close());
+    }
+
+    public static Database fromBlocking(@Nonnull ConnectionProvider cp) {
+        return Database.from(new ConnectionProviderBlockingPool(cp));
+    }
+
+    public static Database fromBlocking(@Nonnull DataSource dataSource) {
+        return fromBlocking(Util.connectionProvider(dataSource));
     }
 
     public static Database test(int maxPoolSize) {
@@ -110,7 +120,8 @@ public final class Database implements AutoCloseable {
                         latch.countDown();
                     } else {
                         if (!latch.await(1, TimeUnit.MINUTES)) {
-                            throw new SQLRuntimeException("waited 1 minute but test database was not created");
+                            throw new SQLRuntimeException(
+                                    "waited 1 minute but test database was not created");
                         }
                     }
                     return c;

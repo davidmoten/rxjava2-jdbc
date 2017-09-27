@@ -22,6 +22,10 @@ public class DatabaseCreator {
 
     private static final AtomicInteger dbNumber = new AtomicInteger();
 
+    public static Database createBlocking() {
+        return Database.fromBlocking(connectionProvider());
+    }
+    
     public static Database create(int maxSize) {
         return create(maxSize, false, Schedulers.from(Executors.newFixedThreadPool(maxSize)));
     }
@@ -73,7 +77,8 @@ public class DatabaseCreator {
 
     public static Database create(int maxSize, boolean big, Scheduler scheduler) {
         return Database.from(Pools.nonBlocking() //
-                .connectionProvider(connectionProvider(nextUrl(), big)).maxPoolSize(maxSize) //
+                .connectionProvider(connectionProvider(nextUrl(), big)) //
+                .maxPoolSize(maxSize) //
                 .scheduler(scheduler) //
                 .build());
     }
@@ -81,7 +86,7 @@ public class DatabaseCreator {
     public static ConnectionProvider connectionProvider() {
         return connectionProvider(nextUrl(), false);
     }
-
+    
     private static ConnectionProvider connectionProvider(String url, boolean big) {
         return new ConnectionProvider() {
 
@@ -124,12 +129,13 @@ public class DatabaseCreator {
                     "create table person (name varchar(50) primary key, score int not null, date_of_birth date, registered timestamp)")
                     .execute();
             if (big) {
-                List<String> lines = IOUtils.readLines(DatabaseCreator.class.getResourceAsStream("/big.txt"),
+                List<String> lines = IOUtils.readLines(
+                        DatabaseCreator.class.getResourceAsStream("/big.txt"),
                         StandardCharsets.UTF_8);
                 lines.stream().map(line -> line.split("\t")).forEach(items -> {
                     try {
-                        c.prepareStatement("insert into person(name,score) values('" + items[0] + "',"
-                                + Integer.parseInt(items[1]) + ")").execute();
+                        c.prepareStatement("insert into person(name,score) values('" + items[0]
+                                + "'," + Integer.parseInt(items[1]) + ")").execute();
                     } catch (SQLException e) {
                         throw new SQLRuntimeException(e);
                     }

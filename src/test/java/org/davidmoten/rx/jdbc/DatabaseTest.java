@@ -66,6 +66,7 @@ import org.hsqldb.jdbc.JDBCBlobFile;
 import org.hsqldb.jdbc.JDBCClobFile;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
@@ -94,6 +95,10 @@ public class DatabaseTest {
 
     private static Database db() {
         return DatabaseCreator.create(1);
+    }
+
+    private static Database blocking() {
+        return DatabaseCreator.createBlocking();
     }
 
     private static Database db(int poolSize) {
@@ -660,7 +665,7 @@ public class DatabaseTest {
         assertTrue(list.get(1).isComplete());
         assertEquals(2, list.size());
     }
-    
+
     @Test
     public void testSelectTransactedCount() {
         db() //
@@ -685,7 +690,7 @@ public class DatabaseTest {
                 .assertValueCount(4) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testSelectTransactedGetAsOptional() {
         List<Tx<Optional<String>>> list = db() //
@@ -2016,6 +2021,19 @@ public class DatabaseTest {
                 .blockingFirst();
         // TODO should not throw exception
         p1.nameLower();
+    }
+
+    @Test
+    @Ignore
+    public void testBlockingDatabase() {
+        blocking().select("select score from person where name=?") //
+                .parameters("FRED", "JOSEPH") //
+                .getAs(Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
     }
 
     interface PersonWithDefaultMethod {
