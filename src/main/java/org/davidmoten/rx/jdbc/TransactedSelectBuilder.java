@@ -21,27 +21,27 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
         this.db = db;
     }
 
-    public TransactedSelectBuilder parameters(Flowable<List<Object>> parameters) {
+    public TransactedSelectBuilder parameters(@Nonnull Flowable<List<Object>> parameters) {
         selectBuilder.parameters(parameters);
         return this;
     }
 
-    public TransactedSelectBuilder parameterList(List<Object> values) {
+    public TransactedSelectBuilder parameterList(@Nonnull List<Object> values) {
         selectBuilder.parameterList(values);
         return this;
     }
 
-    public TransactedSelectBuilder parameterList(Object... values) {
+    public TransactedSelectBuilder parameterList(@Nonnull Object... values) {
         selectBuilder.parameterList(values);
         return this;
     }
 
-    public TransactedSelectBuilder parameter(String name, Object value) {
+    public TransactedSelectBuilder parameter(@Nonnull String name, Object value) {
         selectBuilder.parameter(name, value);
         return this;
     }
 
-    public TransactedSelectBuilder parameters(Object... values) {
+    public TransactedSelectBuilder parameters(@Nonnull Object... values) {
         selectBuilder.parameters(values);
         return this;
     }
@@ -61,7 +61,7 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
     }
 
     @Override
-    public TransactedSelectBuilder dependsOn(Flowable<?> flowable) {
+    public TransactedSelectBuilder dependsOn(@Nonnull Flowable<?> flowable) {
         selectBuilder.dependsOn(flowable);
         return this;
     }

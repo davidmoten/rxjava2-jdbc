@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.annotation.Nonnull;
+
 import io.reactivex.Flowable;
 
 public final class TransactedSelectAutomappedBuilder<T> {
@@ -19,27 +21,28 @@ public final class TransactedSelectAutomappedBuilder<T> {
         this.db = db;
     }
 
-    public TransactedSelectAutomappedBuilder<T> parameters(Flowable<List<Object>> parameters) {
+    public TransactedSelectAutomappedBuilder<T> parameters(
+            @Nonnull Flowable<List<Object>> parameters) {
         selectBuilder.parameters(parameters);
         return this;
     }
 
-    public TransactedSelectAutomappedBuilder<T> parameterList(List<Object> values) {
+    public TransactedSelectAutomappedBuilder<T> parameterList(@Nonnull List<Object> values) {
         selectBuilder.parameterList(values);
         return this;
     }
 
-    public TransactedSelectAutomappedBuilder<T> parameterList(Object... values) {
+    public TransactedSelectAutomappedBuilder<T> parameterList(@Nonnull Object... values) {
         selectBuilder.parameterList(values);
         return this;
     }
 
-    public TransactedSelectAutomappedBuilder<T> parameter(String name, Object value) {
+    public TransactedSelectAutomappedBuilder<T> parameter(@Nonnull String name, Object value) {
         selectBuilder.parameter(name, value);
         return this;
     }
 
-    public TransactedSelectAutomappedBuilder<T> parameters(Object... values) {
+    public TransactedSelectAutomappedBuilder<T> parameters(@Nonnull Object... values) {
         selectBuilder.parameters(values);
         return this;
     }
@@ -62,7 +65,8 @@ public final class TransactedSelectAutomappedBuilder<T> {
         private final TransactedSelectAutomappedBuilder<T> b;
         private final Database db;
 
-        TransactedSelectAutomappedBuilderValuesOnly(TransactedSelectAutomappedBuilder<T> b, Database db) {
+        TransactedSelectAutomappedBuilderValuesOnly(TransactedSelectAutomappedBuilder<T> b,
+                Database db) {
             this.b = b;
             this.db = db;
         }
@@ -85,14 +89,13 @@ public final class TransactedSelectAutomappedBuilder<T> {
     private static <T> Flowable<Tx<T>> createFlowable(SelectAutomappedBuilder<T> sb, Database db) {
         return Flowable.defer(() -> {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
-            return Select
-                    .create(sb.selectBuilder.connections //
-                            .map(c -> Util.toTransactedConnection(connection, c)), //
-                            sb.selectBuilder.parameterGroupsToFlowable(), //
-                            sb.selectBuilder.sql, //
-                            sb.selectBuilder.fetchSize, //
-                            rs -> Util.mapObject(rs, sb.cls, 1), //
-                            false) //
+            return Select.create(sb.selectBuilder.connections //
+                    .map(c -> Util.toTransactedConnection(connection, c)), //
+                    sb.selectBuilder.parameterGroupsToFlowable(), //
+                    sb.selectBuilder.sql, //
+                    sb.selectBuilder.fetchSize, //
+                    rs -> Util.mapObject(rs, sb.cls, 1), //
+                    false) //
                     .materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                     .doOnNext(tx -> {

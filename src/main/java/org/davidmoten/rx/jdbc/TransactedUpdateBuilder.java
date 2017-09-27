@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.annotation.Nonnull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,27 +26,27 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
         this.db = db;
     }
 
-    public TransactedUpdateBuilder parameterStream(Flowable<?> values) {
+    public TransactedUpdateBuilder parameterStream(@Nonnull Flowable<?> values) {
         updateBuilder.parameterStream(values);
         return this;
     }
 
-    public TransactedUpdateBuilder parameterListStream(Flowable<List<?>> valueLists) {
+    public TransactedUpdateBuilder parameterListStream(@Nonnull Flowable<List<?>> valueLists) {
         updateBuilder.parameterListStream(valueLists);
         return this;
     }
 
-    public TransactedUpdateBuilder parameterList(List<Object> values) {
+    public TransactedUpdateBuilder parameterList(@Nonnull List<Object> values) {
         updateBuilder.parameterList(values);
         return this;
     }
 
-    public TransactedUpdateBuilder parameterList(Object... values) {
+    public TransactedUpdateBuilder parameterList(@Nonnull Object... values) {
         updateBuilder.parameterList(values);
         return this;
     }
 
-    public TransactedUpdateBuilder parameter(String name, Object value) {
+    public TransactedUpdateBuilder parameter(@Nonnull String name, Object value) {
         updateBuilder.parameter(name, value);
         return this;
     }
@@ -53,13 +55,13 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
         return parameters(value);
     }
 
-    public TransactedUpdateBuilder parameters(Object... values) {
+    public TransactedUpdateBuilder parameters(@Nonnull Object... values) {
         updateBuilder.parameters(values);
         return this;
     }
 
     @Override
-    public TransactedUpdateBuilder dependsOn(Flowable<?> dependency) {
+    public TransactedUpdateBuilder dependsOn(@Nonnull Flowable<?> dependency) {
         updateBuilder.dependsOn(dependency);
         return this;
     }

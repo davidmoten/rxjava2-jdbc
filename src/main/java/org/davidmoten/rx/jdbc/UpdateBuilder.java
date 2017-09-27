@@ -3,6 +3,8 @@ package org.davidmoten.rx.jdbc;
 import java.sql.Connection;
 import java.sql.ResultSet;
 
+import javax.annotation.Nonnull;
+
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Completable;
@@ -57,7 +59,7 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> implem
                 Update.create(connections, super.parameterGroupsToFlowable(), sql, batchSize, true).dematerialize());
     }
 
-    <T> Flowable<T> startWithDependency(Flowable<T> f) {
+    <T> Flowable<T> startWithDependency(@Nonnull Flowable<T> f) {
         if (dependsOn != null) {
             return dependsOn.ignoreElements().andThen(f);
         } else {

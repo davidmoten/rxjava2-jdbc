@@ -24,13 +24,13 @@ public interface GetterTx {
     /**
      * Transforms the results using the given function.
      *
-     * @param function
-     *            transforms results
+     * @param mapper
+     *            transforms ResultSet row to an object of type T
      * @param <T>
      *            the type being mapped to
      * @return the results of the query as an Observable
      */
-    <T> Flowable<Tx<T>> get(@Nonnull ResultSetMapper<? extends T> function);
+    <T> Flowable<Tx<T>> get(@Nonnull ResultSetMapper<? extends T> mapper);
 
     default <T> Flowable<Tx<T>> getAs(@Nonnull Class<T> cls) {
         Preconditions.checkNotNull(cls, "cls cannot be null");
