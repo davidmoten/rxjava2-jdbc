@@ -120,7 +120,8 @@ public interface Getter {
      *            type of second class
      * @return flowable
      */
-    default <T1, T2> Flowable<Tuple2<T1, T2>> getAs(@Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2) {
+    default <T1, T2> Flowable<Tuple2<T1, T2>> getAs(@Nonnull Class<T1> cls1,
+            @Nonnull Class<T2> cls2) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         return get(Tuples.tuple(cls1, cls2));
@@ -135,8 +136,8 @@ public interface Getter {
      * @param cls3
      * @return tuple
      */
-    default <T1, T2, T3> Flowable<Tuple3<T1, T2, T3>> getAs(@Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2,
-            @Nonnull Class<T3> cls3) {
+    default <T1, T2, T3> Flowable<Tuple3<T1, T2, T3>> getAs(@Nonnull Class<T1> cls1,
+            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         Preconditions.checkNotNull(cls3, "cls3 cannot be null");
@@ -153,8 +154,8 @@ public interface Getter {
      * @param cls4
      * @return tuple
      */
-    default <T1, T2, T3, T4> Flowable<Tuple4<T1, T2, T3, T4>> getAs(@Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2,
-            @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4) {
+    default <T1, T2, T3, T4> Flowable<Tuple4<T1, T2, T3, T4>> getAs(@Nonnull Class<T1> cls1,
+            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         Preconditions.checkNotNull(cls3, "cls3 cannot be null");
@@ -174,7 +175,8 @@ public interface Getter {
      * @return tuple
      */
     default <T1, T2, T3, T4, T5> Flowable<Tuple5<T1, T2, T3, T4, T5>> getAs(@Nonnull Class<T1> cls1,
-            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5) {
+            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4,
+            @Nonnull Class<T5> cls5) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         Preconditions.checkNotNull(cls3, "cls3 cannot be null");
@@ -195,9 +197,9 @@ public interface Getter {
      * @param cls6
      * @return tuple
      */
-    default <T1, T2, T3, T4, T5, T6> Flowable<Tuple6<T1, T2, T3, T4, T5, T6>> getAs(@Nonnull Class<T1> cls1,
-            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5,
-            @Nonnull Class<T6> cls6) {
+    default <T1, T2, T3, T4, T5, T6> Flowable<Tuple6<T1, T2, T3, T4, T5, T6>> getAs(
+            @Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3,
+            @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5, @Nonnull Class<T6> cls6) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         Preconditions.checkNotNull(cls3, "cls3 cannot be null");
@@ -220,9 +222,10 @@ public interface Getter {
      * @param cls7
      * @return tuple
      */
-    default <T1, T2, T3, T4, T5, T6, T7> Flowable<Tuple7<T1, T2, T3, T4, T5, T6, T7>> getAs(@Nonnull Class<T1> cls1,
-            @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3, @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5,
-            @Nonnull Class<T6> cls6, @Nonnull Class<T7> cls7) {
+    default <T1, T2, T3, T4, T5, T6, T7> Flowable<Tuple7<T1, T2, T3, T4, T5, T6, T7>> getAs(
+            @Nonnull Class<T1> cls1, @Nonnull Class<T2> cls2, @Nonnull Class<T3> cls3,
+            @Nonnull Class<T4> cls4, @Nonnull Class<T5> cls5, @Nonnull Class<T6> cls6,
+            @Nonnull Class<T7> cls7) {
         Preconditions.checkNotNull(cls1, "cls1 cannot be null");
         Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         Preconditions.checkNotNull(cls3, "cls3 cannot be null");
