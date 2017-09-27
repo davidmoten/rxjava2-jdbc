@@ -33,6 +33,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     private final Member<T>[] members;
     private final Scheduler scheduler;
     private final int maxSize;
+    private final long checkoutRetryIntervalMs;
 
     // mutable
 
@@ -47,18 +48,17 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
 
     private final NonBlockingPool<T> pool;
 
-    private final long checkoutRetryIntervalMs;
 
     @SuppressWarnings("unchecked")
     MemberSingle(NonBlockingPool<T> pool) {
         this.queue = new MpscLinkedQueue<Member<T>>();
         this.members = createMembersArray(pool);
         this.scheduler = pool.scheduler;
+        this.checkoutRetryIntervalMs = pool.checkoutRetryIntervalMs;
         this.maxSize = pool.maxSize;
         this.observers = new AtomicReference<>(EMPTY);
         this.count = 1;
         this.pool = pool;
-        this.checkoutRetryIntervalMs = pool.checkoutRetryIntervalMs;
         queue.offer(members[0]);
     }
 
