@@ -45,7 +45,7 @@ import org.apache.commons.io.IOUtils;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
-import org.davidmoten.rx.jdbc.exceptions.AutomappedClassInaccessibleException;
+import org.davidmoten.rx.jdbc.exceptions.AutomappedInterfaceInaccessibleException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.MoreColumnsRequestedThanExistException;
@@ -931,7 +931,7 @@ public enum Util {
             } else if (method.isDefault()) {
                 final Class<?> declaringClass = method.getDeclaringClass();
                 if (!Modifier.isPublic(declaringClass.getModifiers())) {
-                    throw new AutomappedClassInaccessibleException(
+                    throw new AutomappedInterfaceInaccessibleException(
                             "An automapped interface must be public for you to call default methods on that interface");
                 }
                 Constructor<MethodHandles.Lookup> constructor = MethodHandles.Lookup.class

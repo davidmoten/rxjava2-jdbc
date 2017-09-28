@@ -191,7 +191,8 @@ If you don't configure things correctly these exceptions may be emitted and incl
 * `ColumnIndexOutOfRangeException`
 * `ColumnNotFoundException`
 * `ClassCastException`
-* `MethodCallNotSupportedException`
+* `AutomappedInterfaceInaccessibleException`
+
 
 ### Automapped toString
 The `toString()` method is implemented for automapped objects. For example the `toString` method for a `Person` object produces something like:
@@ -211,7 +212,7 @@ Note that if you try to compare an automapped object with a custom implementatio
 
 ### Automapped interface with default methods
 
-Calling a default method on an automapped interface will throw a `MethodCallNotSupportedException` at the moment. It's on the TODO list.
+Calling a default method on an automapped interface is supported provided the interface is public and you use the default SecurityManager.
 
 Automap with annotated query
 -----------------------------

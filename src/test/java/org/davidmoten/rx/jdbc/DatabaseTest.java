@@ -43,7 +43,7 @@ import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
-import org.davidmoten.rx.jdbc.exceptions.AutomappedClassInaccessibleException;
+import org.davidmoten.rx.jdbc.exceptions.AutomappedInterfaceInaccessibleException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.MoreColumnsRequestedThanExistException;
@@ -2021,7 +2021,7 @@ public class DatabaseTest {
         assertEquals("fred", p.nameLower());
     }
 
-    @Test(expected = AutomappedClassInaccessibleException.class)
+    @Test(expected = AutomappedInterfaceInaccessibleException.class)
     public void testAutomappedObjectsWhenDefaultMethodInvokedAndIsNonPublicThrows() {
         PersonWithDefaultMethodNonPublic p = Database.test() //
                 .select("select name, score from person where name=?") //
