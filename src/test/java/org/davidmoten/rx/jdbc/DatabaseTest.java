@@ -43,9 +43,9 @@ import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.AutomappedClassInaccessibleException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
-import org.davidmoten.rx.jdbc.exceptions.MethodCallNotSupportedException;
 import org.davidmoten.rx.jdbc.exceptions.MoreColumnsRequestedThanExistException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterFoundButSqlDoesNotHaveNamesException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
@@ -66,7 +66,6 @@ import org.hsqldb.jdbc.JDBCBlobFile;
 import org.hsqldb.jdbc.JDBCClobFile;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
@@ -2012,15 +2011,24 @@ public class DatabaseTest {
         assertNotEquals(p1, p2);
     }
 
-    @Test(expected = MethodCallNotSupportedException.class)
+    @Test
     public void testAutomappedObjectsWhenDefaultMethodInvoked() {
-        PersonWithDefaultMethod p1 = Database.test() //
+        PersonWithDefaultMethod p = Database.test() //
                 .select("select name, score from person where name=?") //
                 .parameters("FRED") //
                 .autoMap(PersonWithDefaultMethod.class) //
                 .blockingFirst();
-        // TODO should not throw exception
-        p1.nameLower();
+        assertEquals("fred", p.nameLower());
+    }
+
+    @Test(expected = AutomappedClassInaccessibleException.class)
+    public void testAutomappedObjectsWhenDefaultMethodInvokedAndIsNonPublicThrows() {
+        PersonWithDefaultMethodNonPublic p = Database.test() //
+                .select("select name, score from person where name=?") //
+                .parameters("FRED") //
+                .autoMap(PersonWithDefaultMethodNonPublic.class) //
+                .blockingFirst();
+        p.nameLower();
     }
 
     @Test
@@ -2040,7 +2048,19 @@ public class DatabaseTest {
         debug();
     }
 
-    interface PersonWithDefaultMethod {
+    public interface PersonWithDefaultMethod {
+        @Column
+        String name();
+
+        @Column
+        int score();
+
+        default String nameLower() {
+            return name().toLowerCase();
+        }
+    }
+
+    interface PersonWithDefaultMethodNonPublic {
         @Column
         String name();
 

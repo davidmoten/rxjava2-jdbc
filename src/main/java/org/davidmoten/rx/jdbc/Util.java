@@ -7,7 +7,10 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -42,9 +45,9 @@ import org.apache.commons.io.IOUtils;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
+import org.davidmoten.rx.jdbc.exceptions.AutomappedClassInaccessibleException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
-import org.davidmoten.rx.jdbc.exceptions.MethodCallNotSupportedException;
 import org.davidmoten.rx.jdbc.exceptions.MoreColumnsRequestedThanExistException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterFoundButSqlDoesNotHaveNamesException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
@@ -925,11 +928,21 @@ public enum Util {
                 return values.hashCode();
             } else if (values.containsKey(method.getName()) && isEmpty(args)) {
                 return values.get(method.getName());
+            } else if (method.isDefault()) {
+                final Class<?> declaringClass = method.getDeclaringClass();
+                if (!Modifier.isPublic(declaringClass.getModifiers())) {
+                    throw new AutomappedClassInaccessibleException(
+                            "An automapped interface must be public for you to call default methods on that interface");
+                }
+                Constructor<MethodHandles.Lookup> constructor = MethodHandles.Lookup.class
+                        .getDeclaredConstructor(Class.class, int.class);
+                constructor.setAccessible(true);
+                return constructor.newInstance(declaringClass, MethodHandles.Lookup.PRIVATE) //
+                        .unreflectSpecial(method, declaringClass) //
+                        .bindTo(proxy) //
+                        .invokeWithArguments(args);
             } else {
-                // TODO defer to a default method on the interface for example
-                throw new MethodCallNotSupportedException(
-                        "extra methods like interface default methods not supported (yet): "
-                                + method);
+                throw new RuntimeException("unexpected");
             }
         }
 
