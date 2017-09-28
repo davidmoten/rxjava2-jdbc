@@ -2024,7 +2024,7 @@ public class DatabaseTest {
     }
 
     @Test
-    @Ignore
+//    @Ignore
     public void testBlockingDatabase() {
         blocking().select("select score from person where name=?") //
                 .parameters("FRED", "JOSEPH") //
