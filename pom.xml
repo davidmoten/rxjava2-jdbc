@@ -8,7 +8,7 @@
         <version>0.1</version>
     </parent>
     <artifactId>rxjava2-jdbc</artifactId>
-    <version>0.1-RC8</version>
+    <version>0.1-RC9-SNAPSHOT</version>
 
     <name>${project.artifactId}</name>
     <description>RxJava2 streams for jdbc</description>
@@ -75,7 +75,7 @@
         <connection>${scm.url}</connection>
         <developerConnection>${scm.url}</developerConnection>
         <url>${scm.url}</url>
-        <tag>0.1-RC8</tag>
+        <tag>0.1-RC1</tag>
     </scm>
 
     <dependencies>
