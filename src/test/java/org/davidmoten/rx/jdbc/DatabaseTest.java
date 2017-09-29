@@ -2048,6 +2048,47 @@ public class DatabaseTest {
         debug();
     }
 
+    @Test
+    public void testBlockingDatabaseTransacted() {
+        info();
+        Database db = blocking();
+        for (int i = 0; i < 100; i++) {
+            db.select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .transactedValuesOnly() //
+                    .getAs(Integer.class) //
+                    .map(x -> x.value()) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
+        debug();
+    }
+
+    @Test
+    public void testBlockingDatabaseTransactedNested() {
+        info();
+        Database db = blocking();
+        for (int i = 0; i < 100; i++) {
+            db.select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .transactedValuesOnly() //
+                    .getAs(Integer.class) //
+                    .flatMap(tx -> tx.select("select name from person where score=?") //
+                            .parameter(tx.value()) //
+                            .valuesOnly() //
+                            .getAs(String.class))
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues("FRED", "JOSEPH") //
+                    .assertComplete();
+        }
+        debug();
+    }
+
     public interface PersonWithDefaultMethod {
         @Column
         String name();
