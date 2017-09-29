@@ -2034,16 +2034,14 @@ public class DatabaseTest {
     @Test
     public void testBlockingDatabase() {
         Database db = blocking();
-        for (int i = 0; i < 100; i++) {
-            db.select("select score from person where name=?") //
-                    .parameters("FRED", "JOSEPH") //
-                    .getAs(Integer.class) //
-                    .test() //
-                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                    .assertNoErrors() //
-                    .assertValues(21, 34) //
-                    .assertComplete();
-        }
+        db.select("select score from person where name=?") //
+                .parameters("FRED", "JOSEPH") //
+                .getAs(Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
     }
 
     @Test
