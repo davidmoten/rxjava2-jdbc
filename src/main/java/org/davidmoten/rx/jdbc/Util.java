@@ -1067,11 +1067,7 @@ public enum Util {
 
             @Override
             public Connection get() {
-                try {
-                    return dataSource.getConnection();
-                } catch (SQLException e) {
-                    throw new SQLRuntimeException(e);
-                }
+                return getConnection(dataSource);
             }
 
             @Override
@@ -1079,5 +1075,14 @@ public enum Util {
                 // do nothing
             }
         };
+    }
+
+    @VisibleForTesting
+    static Connection getConnection(DataSource ds) {
+        try {
+            return ds.getConnection();
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
     }
 }
