@@ -385,7 +385,7 @@ public enum Util {
                 else if (cls.isAssignableFrom(BigInteger.class))
                     return BigInteger.valueOf(d.getTime());
                 else if (cls.isAssignableFrom(Instant.class))
-                    return d.toInstant();
+                    return Instant.ofEpochMilli(d.getTime());
                 else
                     return o;
             } else if (o instanceof java.sql.Timestamp) {
