@@ -5,6 +5,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.sql.DataSource;
+
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Util;
 import org.davidmoten.rx.pool.Member;
@@ -46,6 +48,11 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
 
         public Builder connectionProvider(ConnectionProvider cp) {
             this.cp = cp;
+            return this;
+        }
+
+        public Builder connectionProvider(DataSource d) {
+            this.cp = Util.connectionProvider(d);
             return this;
         }
 
