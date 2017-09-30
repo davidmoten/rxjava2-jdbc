@@ -313,7 +313,7 @@ public enum Util {
                 con.prepareStatement(s.sql(), Statement.RETURN_GENERATED_KEYS), s.names());
     }
 
-    // Visible for testing
+    @VisibleForTesting
     static int countQuestionMarkParameters(String sql) {
         // was originally using regular expressions, but they didn't work well
         // for ignoring parameter-like strings inside quotes.
