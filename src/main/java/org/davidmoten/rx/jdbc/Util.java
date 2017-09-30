@@ -56,6 +56,8 @@ import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
+
 import io.reactivex.functions.Consumer;
 
 public enum Util {
@@ -924,7 +926,7 @@ public enum Util {
                 } else {
                     return false;
                 }
-            } else if ("hashCode".equals(method.getName()) && isEmpty(args)) {
+            } else if (isHashCode(method, args)) {
                 return values.hashCode();
             } else if (values.containsKey(method.getName()) && isEmpty(args)) {
                 return values.get(method.getName());
@@ -946,6 +948,11 @@ public enum Util {
             }
         }
 
+    }
+
+    @VisibleForTesting
+    static boolean isHashCode(Method method, Object[] args) {
+        return "hashCode".equals(method.getName()) && isEmpty(args);
     }
 
     private static boolean isEmpty(Object[] args) {
