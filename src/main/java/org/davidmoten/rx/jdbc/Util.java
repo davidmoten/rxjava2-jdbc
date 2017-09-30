@@ -1034,7 +1034,6 @@ public enum Util {
             @Override
             public Connection get() {
                 try {
-
                     return DriverManager.getConnection(url);
                 } catch (SQLException e) {
                     throw new SQLRuntimeException(e);
