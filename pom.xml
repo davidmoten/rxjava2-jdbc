@@ -245,7 +245,7 @@
                                 <exclude>**/TransactedPreparedStatement.*</exclude>
                                 <exclude>**/TransactedResultSet.*</exclude>
                                 <exclude>**/Tuple*</exclude>
-                                <exclude>**/DelegateConnection.*</exclude>
+                                <exclude>**/DelegatedConnection.*</exclude>
                             </excludes>
                         </configuration>
                     </execution>

@@ -1207,6 +1207,16 @@ public class DatabaseTest {
                 .assertComplete();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testReturnGeneratedKeysWithBatchSizeShouldThrow() {
+        Database db = db();
+        // note is a table with auto increment
+        db.update("insert into note(text) values(?)") //
+                .parameters("HI", "THERE") //
+                .batchSize(2) //
+                .returnGeneratedKeys();
+    }
+
     @Test
     public void testTransactedReturnGeneratedKeys() {
         Database db = db();
