@@ -1,7 +1,5 @@
 package org.davidmoten.rx.pool;
 
-import io.reactivex.Scheduler;
-import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.plugins.RxJavaPlugins;
 
 public class Member2Impl<T> implements Member2<T> {

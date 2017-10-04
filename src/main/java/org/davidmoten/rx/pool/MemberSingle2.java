@@ -130,9 +130,6 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                         return;
                     }
                     Observers<T> obs = observers.get();
-                    if (obs.activeCount == 0) {
-                        break;
-                    }
                     // check for an already initialized available member
                     final Member2Impl<T> m = (Member2Impl<T>) queue.poll();
                     if (m == null) {
@@ -146,6 +143,8 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                             scheduled.add(scheduleCreateValue(m2));
                         }
                     } else {
+                        e++;
+                        // this should not block because it just schedules emissions to observers
                         emit(obs, m);
                     }
                 }
