@@ -44,7 +44,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     // synchronized by `wip`
     private CompositeDisposable scheduled = new CompositeDisposable();
 
-    private final NonBlockingPool2<T> pool;
+    final NonBlockingPool2<T> pool;
 
     // represents the number of outstanding member requests.
     // the number is decremented when a new member value is
@@ -57,7 +57,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     MemberSingle2(NonBlockingPool2<T> pool) {
         this.queue = new MpscLinkedQueue<Member2<T>>();
         this.released = new MpscLinkedQueue<Member2<T>>();
-        this.members = createMembersArray(pool);
+        this.members = createMembersArray();
         for (Member2Impl<T> m : members) {
             released.offer(m);
         }
@@ -67,11 +67,11 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
         this.pool = pool;
     }
 
-    private static <T> Member2Impl<T>[] createMembersArray(NonBlockingPool2<T> pool) {
+    private Member2Impl<T>[] createMembersArray() {
         @SuppressWarnings("unchecked")
         Member2Impl<T>[] m = new Member2Impl[pool.maxSize];
         for (int i = 0; i < m.length; i++) {
-            m[i] = new Member2Impl<T>(null, pool);
+            m[i] = new Member2Impl<T>(null, this);
         }
         return m;
     }
@@ -362,6 +362,10 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
         public boolean isDisposed() {
             return get() == null;
         }
+    }
+
+    public void release(Member2Impl<T> m) {
+        scheduleCreateValue(m);
     }
 
 }

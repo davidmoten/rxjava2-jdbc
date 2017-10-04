@@ -1,32 +1,40 @@
 package org.davidmoten.rx.pool;
 
+import io.reactivex.Scheduler;
+import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.plugins.RxJavaPlugins;
 
 public class Member2Impl<T> implements Member2<T> {
 
     private T value;
-    private final NonBlockingPool2<T> pool;
+    private final MemberSingle2<T> memberSingle;
 
-    public Member2Impl(T value, NonBlockingPool2<T> pool) {
+    public Member2Impl(T value, MemberSingle2<T> memberSingle) {
         this.value = value;
-        this.pool = pool;
+        this.memberSingle = memberSingle;
     }
 
     @Override
     public void checkin() {
-        pool.checkin(this);
+        memberSingle.pool.checkin(this);
+        // TODO schedule release
     }
 
     @Override
     public void disposeValue() {
         try {
-            pool.disposer.accept(value);
+            memberSingle.pool.disposer.accept(value);
             value = null;
         } catch (Throwable e) {
             // make action configurable
             RxJavaPlugins.onError(e);
             value = null;
         }
+    }
+
+    public void release() {
+        disposeValue();
+        memberSingle.release(this);
     }
 
     @Override
