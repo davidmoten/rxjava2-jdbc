@@ -31,19 +31,15 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0);
 
     private final SimplePlainQueue<Member2<T>> queue;
+    private final SimplePlainQueue<Member2<T>> released;
     private final AtomicInteger wip = new AtomicInteger();
     private final Member2Impl<T>[] members;
     private final Scheduler scheduler;
-    private final int maxSize;
     private final long checkoutRetryIntervalMs;
 
     // mutable
 
     private volatile boolean cancelled;
-
-    // number of members in the pool at the moment
-    // synchronized by `wip`
-    private int count;
 
     // synchronized by `wip`
     private CompositeDisposable scheduled = new CompositeDisposable();
@@ -53,21 +49,22 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     // represents the number of outstanding member requests.
     // the number is decremented when a new member value is
     // initialized (a scheduled action with a subsequent drain call)
-    // or an existing value is available from the pool (and is then
+    // or an existing value is available from the pool (queue) (and is then
     // emitted).
     private AtomicLong requested = new AtomicLong();
 
     @SuppressWarnings("unchecked")
     MemberSingle2(NonBlockingPool2<T> pool) {
         this.queue = new MpscLinkedQueue<Member2<T>>();
+        this.released = new MpscLinkedQueue<Member2<T>>();
         this.members = createMembersArray(pool);
+        for (Member2Impl<T> m : members) {
+            released.offer(m);
+        }
         this.scheduler = pool.scheduler;
         this.checkoutRetryIntervalMs = pool.checkoutRetryIntervalMs;
-        this.maxSize = pool.maxSize;
         this.observers = new AtomicReference<>(EMPTY);
-        this.count = 1;
         this.pool = pool;
-        queue.offer(members[0]);
     }
 
     private static <T> Member2Impl<T>[] createMembersArray(NonBlockingPool2<T> pool) {
@@ -136,16 +133,17 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                     if (obs.activeCount == 0) {
                         break;
                     }
-                    final Member2<T> m = queue.poll();
+                    // check for an already initialized available member
+                    final Member2Impl<T> m = (Member2Impl<T>) queue.poll();
                     if (m == null) {
-                        if (count < maxSize) {
-                            // haven't used all the members of the pool yet
-                            e++;
-                            int currentIndex = count;
-                            count++;
-                            scheduled.add(scheduleCreateValue(currentIndex));
-                        } else {
+                        // no members available, check for a released member (that needs to be
+                        // reinitialized before use)
+                        final Member2Impl<T> m2 = (Member2Impl<T>) released.poll();
+                        if (m2 == null) {
                             break;
+                        } else {
+                            e++;
+                            scheduled.add(scheduleCreateValue(m2));
                         }
                     } else {
                         emit(obs, m);
@@ -162,15 +160,15 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
         }
     }
 
-    private Disposable scheduleCreateValue(int currentIndex) {
+    private Disposable scheduleCreateValue(Member2Impl<T> m) {
         // TODO use custom class to limit coupling to fields of `this`
         return scheduler.scheduleDirect(() -> {
             if (!cancelled) {
                 try {
                     // this action might block so is scheduled
                     T value = pool.factory.call();
-                    members[currentIndex].setValue(value);
-                    queue.offer(members[currentIndex]);
+                    m.setValue(value);
+                    queue.offer(m);
                     drain();
                 } catch (Throwable t) {
                     RxJavaPlugins.onError(t);
