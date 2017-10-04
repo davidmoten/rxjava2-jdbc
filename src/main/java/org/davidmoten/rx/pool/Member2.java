@@ -1,7 +1,7 @@
 package org.davidmoten.rx.pool;
 
 public interface Member2<T> {
-
+    
     void checkin();
 
     /**
