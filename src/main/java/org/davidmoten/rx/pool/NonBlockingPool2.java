@@ -24,7 +24,6 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
     final long maxIdleTimeMs;
     final long checkoutRetryIntervalMs;
     final long returnToPoolDelayAfterHealthCheckFailureMs;
-    final MemberFactory2<T, NonBlockingPool2<T>> memberFactory;
     final Scheduler scheduler;
 
     private final AtomicReference<MemberSingle2<T>> member = new AtomicReference<>();
@@ -35,13 +34,12 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
     private NonBlockingPool2(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer,
             int maxSize, long returnToPoolDelayAfterHealthCheckFailureMs,
             long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs, long checkoutRetryIntervalMs,
-            MemberFactory2<T, NonBlockingPool2<T>> memberFactory, Scheduler scheduler) {
+            Scheduler scheduler) {
         Preconditions.checkNotNull(factory);
         Preconditions.checkNotNull(healthy);
         Preconditions.checkNotNull(disposer);
         Preconditions.checkArgument(maxSize > 0);
         Preconditions.checkArgument(returnToPoolDelayAfterHealthCheckFailureMs >= 0);
-        Preconditions.checkNotNull(memberFactory);
         Preconditions.checkNotNull(scheduler);
         Preconditions.checkArgument(checkoutRetryIntervalMs >= 0,
                 "checkoutRetryIntervalMs must be >=0");
@@ -53,7 +51,6 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
         this.idleTimeBeforeHealthCheckMs = idleTimeBeforeHealthCheckMs;
         this.maxIdleTimeMs = maxIdleTimeMs;
         this.checkoutRetryIntervalMs = checkoutRetryIntervalMs;
-        this.memberFactory = memberFactory;
         this.scheduler = scheduler;// schedules retries
     }
 
@@ -113,7 +110,6 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
         private int maxSize = 10;
         private long returnToPoolDelayAfterHealthCheckFailureMs = 30000;
         private long checkoutRetryIntervalMs = 30000;
-        private MemberFactory2<T, NonBlockingPool2<T>> memberFactory;
         private Scheduler scheduler = Schedulers.computation();
         private long maxIdleTimeMs;
 
@@ -182,12 +178,6 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
             return returnToPoolDelayAfterHealthCheckFailureMs(unit.toMillis(value));
         }
 
-        public Builder<T> memberFactory(MemberFactory2<T, NonBlockingPool2<T>> memberFactory) {
-            Preconditions.checkNotNull(memberFactory);
-            this.memberFactory = memberFactory;
-            return this;
-        }
-
         public Builder<T> scheduler(Scheduler scheduler) {
             Preconditions.checkNotNull(scheduler);
             this.scheduler = scheduler;
@@ -197,7 +187,7 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
         public NonBlockingPool2<T> build() {
             return new NonBlockingPool2<T>(factory, healthy, disposer, maxSize,
                     returnToPoolDelayAfterHealthCheckFailureMs, idleTimeBeforeHealthCheckMs,
-                    maxIdleTimeMs, checkoutRetryIntervalMs, memberFactory, scheduler);
+                    maxIdleTimeMs, checkoutRetryIntervalMs, scheduler);
         }
     }
 

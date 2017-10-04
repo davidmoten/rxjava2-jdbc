@@ -17,6 +17,7 @@ import io.reactivex.Scheduler.Worker;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
@@ -31,7 +32,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
 
     private final SimplePlainQueue<Member2<T>> queue;
     private final AtomicInteger wip = new AtomicInteger();
-    private final Member2<T>[] members;
+    private final Member2Impl<T>[] members;
     private final Scheduler scheduler;
     private final int maxSize;
     private final long checkoutRetryIntervalMs;
@@ -45,7 +46,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     private int count;
 
     // synchronized by `wip`
-    private Disposable scheduledDrain;
+    private CompositeDisposable scheduled = new CompositeDisposable();
 
     private final NonBlockingPool2<T> pool;
 
@@ -69,11 +70,11 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
         queue.offer(members[0]);
     }
 
-    private static <T> Member2<T>[] createMembersArray(NonBlockingPool2<T> pool) {
+    private static <T> Member2Impl<T>[] createMembersArray(NonBlockingPool2<T> pool) {
         @SuppressWarnings("unchecked")
-        Member2<T>[] m = new Member2[pool.maxSize];
+        Member2Impl<T>[] m = new Member2Impl[pool.maxSize];
         for (int i = 0; i < m.length; i++) {
-            m[i] = pool.memberFactory.create(pool);
+            m[i] = new Member2Impl<T>(null, pool);
         }
         return m;
     }
@@ -107,6 +108,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     @Override
     public void cancel() {
         this.cancelled = true;
+        closeNow();
     }
 
     @Override
@@ -124,9 +126,10 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
             while (true) {
                 long r = requested.get();
                 long e = 0;
-                while (r != 0) {
+                while (e != r) {
                     if (cancelled) {
                         queue.clear();
+                        closeNow();
                         return;
                     }
                     Observers<T> obs = observers.get();
@@ -136,42 +139,11 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                     final Member2<T> m = queue.poll();
                     if (m == null) {
                         if (count < maxSize) {
-                            e++;
-                            scheduler.scheduleDirect(() -> {
-                                try {
-                                    // this action might block so is scheduled
-                                    T value = pool.factory.call();
-                                    m = new Member2<T>() {
-
-                                        @Override
-                                        public void checkin() {
-                                            // TODO Auto-generated method stub
-                                            
-                                        }
-
-                                        @Override
-                                        public void shutdown() {
-                                            // TODO Auto-generated method stub
-                                            
-                                        }
-
-                                        @Override
-                                        public T value() {
-                                            // TODO Auto-generated method stub
-                                            return null;
-                                        }};
-                                } catch (Throwable t) {
-                                    RxJavaPlugins.onError(t);
-                                    if (!cancelled) {
-                                        // schedule a retry
-                                        scheduler.scheduleDirect(this, pool.checkoutRetryIntervalMs,
-                                                TimeUnit.MILLISECONDS);
-                                    }
-                                }
-                            });
                             // haven't used all the members of the pool yet
-                            queue.offer(members[count]);
+                            e++;
+                            int currentIndex = count;
                             count++;
+                            scheduled.add(scheduleCreateValue(currentIndex));
                         } else {
                             break;
                         }
@@ -179,12 +151,39 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                         emit(obs, m);
                     }
                 }
+                if (e != 0L && r != Long.MAX_VALUE) {
+                    requested.addAndGet(-e);
+                }
                 missed = wip.addAndGet(-missed);
                 if (missed == 0) {
                     return;
                 }
             }
         }
+    }
+
+    private Disposable scheduleCreateValue(int currentIndex) {
+        // TODO use custom class to limit coupling to fields of `this`
+        return scheduler.scheduleDirect(() -> {
+            if (!cancelled) {
+                try {
+                    // this action might block so is scheduled
+                    T value = pool.factory.call();
+                    members[currentIndex].setValue(value);
+                    queue.offer(members[currentIndex]);
+                    drain();
+                } catch (Throwable t) {
+                    RxJavaPlugins.onError(t);
+                    // check cancelled again because factory.call() is user specified and could have
+                    // taken a significant time to complete
+                    if (!cancelled) {
+                        // schedule a retry
+                        scheduler.scheduleDirect(this, checkoutRetryIntervalMs,
+                                TimeUnit.MILLISECONDS);
+                    }
+                }
+            }
+        });
     }
 
     private void emit(Observers<T> obs, Member2<T> m) {
@@ -227,13 +226,13 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
 
     @Override
     public void close() throws IOException {
+        closeNow();
+    }
+
+    private void closeNow() {
+        scheduled.dispose();
         for (Member2<T> member : members) {
-            try {
-                member.shutdown();
-            } catch (Exception e) {
-                // TODO accumulate and throw?
-                e.printStackTrace();
-            }
+            member.disposeValue();
         }
     }
 

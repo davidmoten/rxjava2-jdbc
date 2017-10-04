@@ -18,17 +18,24 @@ public class Member2Impl<T> implements Member2<T> {
     }
 
     @Override
-    public void shutdown() {
+    public void disposeValue() {
         try {
             pool.disposer.accept(value);
-        } catch (Exception e) {
+            value = null;
+        } catch (Throwable e) {
+            // make action configurable
             RxJavaPlugins.onError(e);
+            value = null;
         }
     }
 
     @Override
     public T value() {
         return value;
+    }
+
+    public void setValue(T value) {
+        this.value = value;
     }
 
 }
