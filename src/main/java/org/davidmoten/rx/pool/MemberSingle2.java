@@ -30,8 +30,8 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     @SuppressWarnings({ "rawtypes", "unchecked" })
     static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0);
 
-    private final SimplePlainQueue<Member2Impl<T>> queue;
-    private final SimplePlainQueue<Member2Impl<T>> released;
+    private final SimplePlainQueue<Member2Impl<T>> initializedAvailable;
+    private final SimplePlainQueue<Member2Impl<T>> notInitialized;
     private final SimplePlainQueue<Member2Impl<T>> toBeReleased;
 
     private final AtomicInteger wip = new AtomicInteger();
@@ -57,12 +57,12 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
 
     @SuppressWarnings("unchecked")
     MemberSingle2(NonBlockingPool2<T> pool) {
-        this.queue = new MpscLinkedQueue<Member2Impl<T>>();
-        this.released = new MpscLinkedQueue<Member2Impl<T>>();
+        this.initializedAvailable = new MpscLinkedQueue<Member2Impl<T>>();
+        this.notInitialized = new MpscLinkedQueue<Member2Impl<T>>();
         this.toBeReleased = new MpscLinkedQueue<Member2Impl<T>>();
         this.members = createMembersArray();
         for (Member2Impl<T> m : members) {
-            released.offer(m);
+            notInitialized.offer(m);
         }
         this.scheduler = pool.scheduler;
         this.checkoutRetryIntervalMs = pool.checkoutRetryIntervalMs;
@@ -98,7 +98,8 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     }
 
     public void checkin(Member2<T> member) {
-        queue.offer((Member2Impl<T>) member);
+        ((Member2Impl<T>) member).scheduleRelease();
+        initializedAvailable.offer((Member2Impl<T>) member);
         drain();
     }
 
@@ -141,17 +142,19 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                 long e = 0;
                 while (e != r) {
                     if (cancelled) {
-                        queue.clear();
+                        initializedAvailable.clear();
+                        toBeReleased.clear();
+                        notInitialized.clear();
                         closeNow();
                         return;
                     }
                     Observers<T> obs = observers.get();
                     // check for an already initialized available member
-                    final Member2Impl<T> m = (Member2Impl<T>) queue.poll();
+                    final Member2Impl<T> m = (Member2Impl<T>) initializedAvailable.poll();
                     if (m == null) {
                         // no members available, check for a released member (that needs to be
                         // reinitialized before use)
-                        final Member2Impl<T> m2 = (Member2Impl<T>) released.poll();
+                        final Member2Impl<T> m2 = (Member2Impl<T>) notInitialized.poll();
                         if (m2 == null) {
                             break;
                         } else {
@@ -161,6 +164,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                     } else {
                         e++;
                         // this should not block because it just schedules emissions to observers
+                        m.preCheckout();
                         emit(obs, m);
                     }
                 }
@@ -183,7 +187,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                     // this action might block so is scheduled
                     T value = pool.factory.call();
                     m.setValue(value);
-                    queue.offer(m);
+                    initializedAvailable.offer(m);
                     drain();
                 } catch (Throwable t) {
                     RxJavaPlugins.onError(t);
@@ -380,7 +384,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     }
 
     public void release(Member2Impl<T> m) {
-        released.offer(m);
+        notInitialized.offer(m);
         drain();
     }
 

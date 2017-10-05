@@ -78,6 +78,7 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
 
     public void checkin(Member2<T> m) {
         member.get().checkin(m);
+        
     }
 
     @Override
