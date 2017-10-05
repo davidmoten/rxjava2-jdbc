@@ -30,8 +30,10 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     @SuppressWarnings({ "rawtypes", "unchecked" })
     static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0);
 
-    private final SimplePlainQueue<Member2<T>> queue;
-    private final SimplePlainQueue<Member2<T>> released;
+    private final SimplePlainQueue<Member2Impl<T>> queue;
+    private final SimplePlainQueue<Member2Impl<T>> released;
+    private final SimplePlainQueue<Member2Impl<T>> toBeReleased;
+
     private final AtomicInteger wip = new AtomicInteger();
     private final Member2Impl<T>[] members;
     private final Scheduler scheduler;
@@ -55,8 +57,9 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
 
     @SuppressWarnings("unchecked")
     MemberSingle2(NonBlockingPool2<T> pool) {
-        this.queue = new MpscLinkedQueue<Member2<T>>();
-        this.released = new MpscLinkedQueue<Member2<T>>();
+        this.queue = new MpscLinkedQueue<Member2Impl<T>>();
+        this.released = new MpscLinkedQueue<Member2Impl<T>>();
+        this.toBeReleased = new MpscLinkedQueue<Member2Impl<T>>();
         this.members = createMembersArray();
         for (Member2Impl<T> m : members) {
             released.offer(m);
@@ -78,6 +81,8 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
 
     @Override
     protected void subscribeActual(SingleObserver<? super Member2<T>> observer) {
+        // the action of checking out a member from the pool is implemented as a
+        // subscription to the singleton MemberSingle
         MemberSingleObserver<T> md = new MemberSingleObserver<T>(observer, this);
         observer.onSubscribe(md);
         if (pool.isClosed()) {
@@ -93,7 +98,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     }
 
     public void checkin(Member2<T> member) {
-        queue.offer(member);
+        queue.offer((Member2Impl<T>) member);
         drain();
     }
 
@@ -121,6 +126,17 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
         if (wip.getAndIncrement() == 0) {
             int missed = 1;
             while (true) {
+                // release any member queued for releasing
+                {
+                    Member2Impl<T> m;
+                    while ((m = toBeReleased.poll()) != null) {
+                        // the action of releasing may block
+                        // but does not in theory happen often
+                        // and is best to put in the drain loop to control
+                        // concurrent access to the member resource
+                        m.release();
+                    }
+                }
                 long r = requested.get();
                 long e = 0;
                 while (e != r) {
@@ -364,7 +380,8 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     }
 
     public void release(Member2Impl<T> m) {
-        scheduleCreateValue(m);
+        released.offer(m);
+        drain();
     }
 
 }
