@@ -212,7 +212,8 @@ Note that if you try to compare an automapped object with a custom implementatio
 
 ### Automapped interface with default methods
 
-Calling a default method on an automapped interface is supported provided the interface is public and you use the default SecurityManager.
+* Java 8 - Calling a default method on an automapped interface is supported provided the interface is public and you use the default SecurityManager.
+* Java 9 - not supported yet (TODO)
 
 Automap with annotated query
 -----------------------------
