@@ -2094,7 +2094,7 @@ public class DatabaseTest {
         @Column
         int score();
 
-        default String nameLower() {
+        public default String nameLower() {
             return name().toLowerCase();
         }
     }

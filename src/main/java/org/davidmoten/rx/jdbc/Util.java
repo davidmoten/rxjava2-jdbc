@@ -936,6 +936,10 @@ public enum Util {
                     throw new AutomappedInterfaceInaccessibleException(
                             "An automapped interface must be public for you to call default methods on that interface");
                 }
+                // TODO java 9 support (fix IllegalAccessException)
+                // return MethodHandles.lookup().findSpecial(declaringClass, method.getName(),
+                // MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
+                // declaringClass).invoke(args);
                 Constructor<MethodHandles.Lookup> constructor = MethodHandles.Lookup.class
                         .getDeclaredConstructor(Class.class, int.class);
                 constructor.setAccessible(true);
