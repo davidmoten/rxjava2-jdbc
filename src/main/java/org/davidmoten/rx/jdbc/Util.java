@@ -8,6 +8,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -897,6 +898,8 @@ public enum Util {
 
     private static final class ProxyInstance<T> implements java.lang.reflect.InvocationHandler {
 
+        private static boolean JAVA_9 = false;
+
         private static final String METHOD_TO_STRING = "toString";
 
         private final Class<T> cls;
@@ -937,16 +940,29 @@ public enum Util {
                             "An automapped interface must be public for you to call default methods on that interface");
                 }
                 // TODO java 9 support (fix IllegalAccessException)
-                // return MethodHandles.lookup().findSpecial(declaringClass, method.getName(),
-                // MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
-                // declaringClass).invoke(args);
-                Constructor<MethodHandles.Lookup> constructor = MethodHandles.Lookup.class
-                        .getDeclaredConstructor(Class.class, int.class);
-                constructor.setAccessible(true);
-                return constructor.newInstance(declaringClass, MethodHandles.Lookup.PRIVATE) //
-                        .unreflectSpecial(method, declaringClass) //
-                        .bindTo(proxy) //
-                        .invokeWithArguments(args);
+                if (JAVA_9) {
+                    MethodType methodType = MethodType.methodType(method.getReturnType(),
+                            method.getParameterTypes());
+                    return MethodHandles.lookup() //
+                            .findSpecial( //
+                                    declaringClass, //
+                                    method.getName(), //
+                                    methodType, //
+                                    declaringClass) //
+                            .bindTo(proxy) //
+                            .invoke(args);
+                } else {
+                    Constructor<MethodHandles.Lookup> constructor = //
+                            MethodHandles.Lookup.class //
+                            .getDeclaredConstructor(Class.class,
+                                    int.class);
+                    constructor.setAccessible(true);
+                    return constructor //
+                            .newInstance(declaringClass, MethodHandles.Lookup.PRIVATE)
+                            .unreflectSpecial(method, declaringClass) //
+                            .bindTo(proxy) //
+                            .invokeWithArguments(args);
+                }
             } else {
                 throw new RuntimeException("unexpected");
             }

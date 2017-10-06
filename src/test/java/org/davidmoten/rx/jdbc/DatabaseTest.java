@@ -13,6 +13,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Connection;
@@ -2030,6 +2032,13 @@ public class DatabaseTest {
                 .blockingFirst();
         assertEquals("fred", p.nameLower());
     }
+
+//    @Test
+//    public void testDefaultMethod() throws NoSuchMethodException, IllegalAccessException {
+//        MethodHandles.lookup().findSpecial(PersonWithDefaultMethod.class, "nameLower",
+//                MethodType.methodType(String.class, new Class[] {}), PersonWithDefaultMethod.class)
+////        .bindTo(x);
+//    }
 
     @Test(expected = AutomappedInterfaceInaccessibleException.class)
     public void testAutomappedObjectsWhenDefaultMethodInvokedAndIsNonPublicThrows() {
