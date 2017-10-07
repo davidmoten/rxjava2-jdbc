@@ -31,8 +31,8 @@ public class PoolTest {
     public void testSimplePool() throws InterruptedException {
         TestScheduler s = new TestScheduler();
         AtomicInteger count = new AtomicInteger();
-        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(pool,
-                null);
+        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(
+                pool, null);
         Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet()) //
                 .healthy(n -> true) //
                 .disposer(n -> {
@@ -57,9 +57,10 @@ public class PoolTest {
         TestScheduler s = new TestScheduler();
         AtomicInteger count = new AtomicInteger();
         AtomicInteger disposed = new AtomicInteger();
-        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(pool,
-                null);
-        Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet()) //
+        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(
+                pool, null);
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
                 .healthy(n -> true) //
                 .disposer(n -> {
                 }) //
@@ -89,7 +90,7 @@ public class PoolTest {
     public void testConnectionPoolRecylesAlternating() {
         TestScheduler s = new TestScheduler();
         Database db = DatabaseCreator.create(2, s);
-        TestSubscriber<Connection> ts = db.connections() //
+        TestSubscriber<Connection> ts = db.connection() //
                 .repeat() //
                 .doOnNext(System.out::println) //
                 .doOnNext(c -> {
@@ -118,7 +119,7 @@ public class PoolTest {
         TestScheduler s = new TestScheduler();
         Database db = DatabaseCreator.create(2, s);
         TestSubscriber<Connection> ts = db //
-                .connections() //
+                .connection() //
                 .repeat() //
                 .test(4); //
         s.triggerActions();

@@ -145,7 +145,7 @@ public final class Database implements AutoCloseable {
         return "jdbc:derby:memory:derby" + testDbNumber.incrementAndGet() + ";create=true";
     }
 
-    public Single<Connection> connections() {
+    public Single<Connection> connection() {
         return connections;
     }
 
@@ -165,12 +165,12 @@ public final class Database implements AutoCloseable {
 
     public SelectBuilder select(@Nonnull String sql) {
         Preconditions.checkNotNull(sql, "sql cannot be null");
-        return new SelectBuilder(sql, connections(), this);
+        return new SelectBuilder(sql, connection(), this);
     }
 
     public UpdateBuilder update(@Nonnull String sql) {
         Preconditions.checkNotNull(sql, "sql cannot be null");
-        return new UpdateBuilder(sql, connections(), this);
+        return new UpdateBuilder(sql, connection(), this);
     }
 
     public TransactedBuilder tx(@Nonnull Tx<?> tx) {
