@@ -1830,6 +1830,16 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testCompleteCompletes() {
+        Database db = db(1);
+        db //
+                .update("update person set score=-3 where name='FRED'") //
+                .complete() //
+                .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .blockingAwait();
+    }
+
+    @Test
     public void testComplete() throws InterruptedException {
         Database db = db(1);
         Completable a = db //
@@ -2034,12 +2044,15 @@ public class DatabaseTest {
         assertEquals("fred", p.nameLower());
     }
 
-//    @Test
-//    public void testDefaultMethod() throws NoSuchMethodException, IllegalAccessException {
-//        MethodHandles.lookup().findSpecial(PersonWithDefaultMethod.class, "nameLower",
-//                MethodType.methodType(String.class, new Class[] {}), PersonWithDefaultMethod.class)
-////        .bindTo(x);
-//    }
+    // @Test
+    // public void testDefaultMethod() throws NoSuchMethodException,
+    // IllegalAccessException {
+    // MethodHandles.lookup().findSpecial(PersonWithDefaultMethod.class,
+    // "nameLower",
+    // MethodType.methodType(String.class, new Class[] {}),
+    // PersonWithDefaultMethod.class)
+    //// .bindTo(x);
+    // }
 
     @Test(expected = AutomappedInterfaceInaccessibleException.class)
     public void testAutomappedObjectsWhenDefaultMethodInvokedAndIsNonPublicThrows() {

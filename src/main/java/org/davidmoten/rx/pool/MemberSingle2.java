@@ -160,7 +160,10 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                         if (m2 == null) {
                             break;
                         } else {
-//                            e++;
+                            // incrementing e here will result in requested being decremented
+                            // (outside of this loop). After scheduled creation has occurred
+                            // requested will be incremented and drain called.
+                            e++;
                             scheduled.add(scheduleCreateValue(m2));
                         }
                     } else {
@@ -190,6 +193,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                     T value = pool.factory.call();
                     m.setValue(value);
                     initializedAvailable.offer(m);
+                    requested.incrementAndGet();
                     drain();
                 } catch (Throwable t) {
                     RxJavaPlugins.onError(t);
