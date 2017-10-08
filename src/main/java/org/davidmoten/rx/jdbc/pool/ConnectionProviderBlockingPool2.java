@@ -10,6 +10,8 @@ import org.davidmoten.rx.pool.Member2;
 import org.davidmoten.rx.pool.MemberWithValue2;
 import org.davidmoten.rx.pool.Pool2;
 
+import com.github.davidmoten.guavamini.Preconditions;
+
 import io.reactivex.Single;
 import io.reactivex.plugins.RxJavaPlugins;
 
@@ -49,6 +51,8 @@ public final class ConnectionProviderBlockingPool2 implements Pool2<Connection> 
             if (hasConnection.compareAndSet(false, true)) {
                 // blocking
                 connection = connectionProvider.get();
+                // TODO remove precondition
+                Preconditions.checkNotNull(connection, "connectionProvider should not return null");
             }
             return connection;
         }
@@ -64,7 +68,7 @@ public final class ConnectionProviderBlockingPool2 implements Pool2<Connection> 
 
         @Override
         public Connection value() {
-            return connection;
+            return con();
         }
 
         @Override
