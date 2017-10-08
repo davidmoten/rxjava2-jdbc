@@ -66,6 +66,7 @@ import org.hsqldb.jdbc.JDBCBlobFile;
 import org.hsqldb.jdbc.JDBCClobFile;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
@@ -970,6 +971,7 @@ public class DatabaseTest {
     }
 
     @Test
+    @Ignore
     public void testAutoMapForReadMe() {
         Database //
                 .test() //
