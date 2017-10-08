@@ -6,7 +6,11 @@ public final class Pools {
         //prevent instantiation
     }
     
-    public static NonBlockingConnectionPool.Builder nonBlocking() {
+    public static NonBlockingConnectionPool.Builder nonBlockingOld() {
         return NonBlockingConnectionPool.builder();
+    }
+    
+    public static NonBlockingConnectionPool2.Builder nonBlocking() {
+        return NonBlockingConnectionPool2.builder();
     }
 }

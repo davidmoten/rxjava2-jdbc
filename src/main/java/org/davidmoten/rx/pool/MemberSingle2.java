@@ -57,10 +57,11 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
 
     @SuppressWarnings("unchecked")
     MemberSingle2(NonBlockingPool2<T> pool) {
+        Preconditions.checkNotNull(pool);
         this.initializedAvailable = new MpscLinkedQueue<Member2Impl<T>>();
         this.notInitialized = new MpscLinkedQueue<Member2Impl<T>>();
         this.toBeReleased = new MpscLinkedQueue<Member2Impl<T>>();
-        this.members = createMembersArray();
+        this.members = createMembersArray(pool.maxSize);
         for (Member2Impl<T> m : members) {
             notInitialized.offer(m);
         }
@@ -68,11 +69,12 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
         this.checkoutRetryIntervalMs = pool.checkoutRetryIntervalMs;
         this.observers = new AtomicReference<>(EMPTY);
         this.pool = pool;
+
     }
 
-    private Member2Impl<T>[] createMembersArray() {
+    private Member2Impl<T>[] createMembersArray(int poolMaxSize) {
         @SuppressWarnings("unchecked")
-        Member2Impl<T>[] m = new Member2Impl[pool.maxSize];
+        Member2Impl<T>[] m = new Member2Impl[poolMaxSize];
         for (int i = 0; i < m.length; i++) {
             m[i] = new Member2Impl<T>(null, this);
         }
