@@ -9,7 +9,7 @@ import io.reactivex.plugins.RxJavaPlugins;
 
 public final class Member2Impl<T> implements Member2<T> {
 
-    private T value;
+    private volatile T value;
     private final MemberSingle2<T> memberSingle;
     private final SimplePlainQueue<Integer> queue = new MpscLinkedQueue<Integer>();
 

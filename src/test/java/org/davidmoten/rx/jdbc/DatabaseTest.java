@@ -1158,6 +1158,7 @@ public class DatabaseTest {
         List<Tuple2<String, Integer>> list = db.select("select name, score from person") //
                 .getAs(String.class, Integer.class) //
                 .toList() //
+                .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .blockingGet();
         assertTrue(list.contains(Tuple2.create("DAVE", 12)));
         assertTrue(list.contains(Tuple2.create("ANNE", 18)));
