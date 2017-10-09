@@ -9,6 +9,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.davidmoten.rx.jdbc.pool.PoolClosedException;
 import org.reactivestreams.Subscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
@@ -26,6 +28,8 @@ import io.reactivex.plugins.RxJavaPlugins;
 class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Closeable, Runnable {
 
     final AtomicReference<Observers<T>> observers;
+
+    private static final Logger log = LoggerFactory.getLogger(MemberSingle2.class);
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0);
@@ -96,10 +100,12 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
             remove(md);
         }
         requested.incrementAndGet();
+        log.debug("subscribed");
         drain();
     }
 
     public void checkin(Member2<T> member) {
+        log.debug("checking in {}", member);
         ((Member2Impl<T>) member).scheduleRelease();
         initializedAvailable.offer((Member2Impl<T>) member);
         drain();
@@ -112,6 +118,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
 
     @Override
     public void cancel() {
+        log.debug("cancel called");
         this.cancelled = true;
         closeNow();
     }
@@ -126,7 +133,9 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
     }
 
     private void drain() {
+        log.debug("drain called");
         if (wip.getAndIncrement() == 0) {
+            log.debug("drain loop starting");
             int missed = 1;
             while (true) {
                 // release any member queued for releasing
@@ -137,6 +146,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                         // but does not in theory happen often
                         // and is best to put in the drain loop to control
                         // concurrent access to the member resource
+                        log.debug("releasing {}", m);
                         m.release();
                     }
                 }
@@ -153,6 +163,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                     Observers<T> obs = observers.get();
                     // check for an already initialized available member
                     final Member2Impl<T> m = (Member2Impl<T>) initializedAvailable.poll();
+                    log.debug("poll of available members returns "+ m);
                     if (m == null) {
                         // no members available, check for a released member (that needs to be
                         // reinitialized before use)
@@ -164,12 +175,14 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                             // (outside of this loop). After scheduled creation has occurred
                             // requested will be incremented and drain called.
                             e++;
+                            log.debug("scheduling member creation");
                             scheduled.add(scheduleCreateValue(m2));
                         }
                     } else {
                         e++;
                         // this should not block because it just schedules emissions to observers
                         m.preCheckout();
+                        log.debug("emitting member");
                         emit(obs, m);
                     }
                 }

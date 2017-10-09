@@ -68,4 +68,11 @@ public final class Member2Impl<T> implements Member2<T> {
             scheduled = null;
         }
     }
+
+    @Override
+    public String toString() {
+        return "Member2Impl [value=" + value + "]";
+    }
+    
+    
 }

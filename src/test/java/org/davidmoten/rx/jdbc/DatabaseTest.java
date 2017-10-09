@@ -1837,6 +1837,12 @@ public class DatabaseTest {
                 .complete() //
                 .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .blockingAwait();
+
+        int score = db.select("select score from person where name='FRED'") //
+                .getAs(Integer.class) //
+                .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .blockingFirst();
+        assertEquals(-3, score);
     }
 
     @Test
