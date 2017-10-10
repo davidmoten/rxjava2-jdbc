@@ -196,6 +196,7 @@ abstract class DelegatedPreparedStatement implements PreparedStatement {
         ps.setAsciiStream(parameterIndex, x, length);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void setUnicodeStream(int parameterIndex, InputStream x, int length)
             throws SQLException {
