@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
@@ -25,6 +26,7 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
     final long checkoutRetryIntervalMs;
     final long returnToPoolDelayAfterHealthCheckFailureMs;
     final long releaseIntervalMs;
+    final BiFunction<T, Checkin, T> checkinDecorator;
     final Scheduler scheduler;
 
     private final AtomicReference<MemberSingle2<T>> member = new AtomicReference<>();
@@ -35,12 +37,14 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
     private NonBlockingPool2(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer,
             int maxSize, long returnToPoolDelayAfterHealthCheckFailureMs,
             long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs, long checkoutRetryIntervalMs,
-            long releaseIntervalMs, Scheduler scheduler) {
+            long releaseIntervalMs, BiFunction<T, Checkin, T> checkinDecorator,
+            Scheduler scheduler) {
         Preconditions.checkNotNull(factory);
         Preconditions.checkNotNull(healthy);
         Preconditions.checkNotNull(disposer);
         Preconditions.checkArgument(maxSize > 0);
         Preconditions.checkArgument(returnToPoolDelayAfterHealthCheckFailureMs >= 0);
+        Preconditions.checkNotNull(checkinDecorator);
         Preconditions.checkNotNull(scheduler);
         Preconditions.checkArgument(checkoutRetryIntervalMs >= 0,
                 "checkoutRetryIntervalMs must be >=0");
@@ -54,6 +58,7 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
         this.maxIdleTimeMs = maxIdleTimeMs;
         this.checkoutRetryIntervalMs = checkoutRetryIntervalMs;
         this.releaseIntervalMs = releaseIntervalMs;
+        this.checkinDecorator = checkinDecorator;
         this.scheduler = scheduler;// schedules retries
     }
 
@@ -78,7 +83,7 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
 
     public void checkin(Member2<T> m) {
         member.get().checkin(m);
-        
+
     }
 
     @Override
@@ -117,6 +122,7 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
         private Scheduler scheduler = Schedulers.computation();
         private long maxIdleTimeMs;
         private long releaseIntervalMs = TimeUnit.MINUTES.toMillis(30);
+        private BiFunction<T, Checkin, T> checkinDecorator;
 
         private Builder() {
         }
@@ -197,10 +203,16 @@ public final class NonBlockingPool2<T> implements Pool2<T> {
             return this;
         }
 
+        public Builder<T> checkinDecorator(BiFunction<T, Checkin, T> f) {
+            this.checkinDecorator = f;
+            return this;
+        }
+
         public NonBlockingPool2<T> build() {
             return new NonBlockingPool2<T>(factory, healthy, disposer, maxSize,
                     returnToPoolDelayAfterHealthCheckFailureMs, idleTimeBeforeHealthCheckMs,
-                    maxIdleTimeMs, checkoutRetryIntervalMs, releaseIntervalMs, scheduler);
+                    maxIdleTimeMs, checkoutRetryIntervalMs, releaseIntervalMs, checkinDecorator,
+                    scheduler);
         }
     }
 

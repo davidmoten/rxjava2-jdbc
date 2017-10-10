@@ -1,6 +1,7 @@
 package org.davidmoten.rx.pool;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 import io.reactivex.disposables.Disposable;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -9,13 +10,21 @@ public final class Member2Impl<T> implements Member2<T> {
 
     private volatile T value;
     private final MemberSingle2<T> memberSingle;
+    private final BiFunction<T, Checkin, T> checkinDecorator;
 
     // synchronized by MemberSingle.drain() wip
     private Disposable scheduled;
 
-    Member2Impl(T value, MemberSingle2<T> memberSingle) {
+    Member2Impl(T value, BiFunction<T, Checkin, T> checkinDecorator,
+            MemberSingle2<T> memberSingle) {
+        this.checkinDecorator = checkinDecorator;
         this.memberSingle = memberSingle;
         this.value = value;
+    }
+
+    @Override
+    public T value() {
+        return checkinDecorator.apply(value, () -> checkin());
     }
 
     @Override
@@ -38,11 +47,6 @@ public final class Member2Impl<T> implements Member2<T> {
     public void release() {
         disposeValue();
         memberSingle.release(this);
-    }
-
-    @Override
-    public T value() {
-        return value;
     }
 
     public void setValue(T value) {

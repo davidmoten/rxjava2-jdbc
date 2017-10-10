@@ -4,18 +4,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.davidmoten.rx.pool.Member2;
+import org.davidmoten.rx.pool.Checkin;
 
-public final class PooledConnection implements DelegatedConnection{
+public final class PooledConnection implements DelegatedConnection {
 
     private final Connection connection;
-    private final Member2<Connection> member;
+    private final Checkin checkin;
 
-    public PooledConnection(Connection connection, Member2<Connection> member) {
+    public PooledConnection(Connection connection, Checkin checkin) {
         this.connection = connection;
-        this.member = member;
+        this.checkin = checkin;
     }
-    
+
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
         return new ConnectionNonBlockingMemberPreparedStatement(con().prepareStatement(sql), this);
@@ -55,11 +55,10 @@ public final class PooledConnection implements DelegatedConnection{
                 con().prepareStatement(sql, resultSetType, resultSetConcurrency), this);
     }
 
-    
     @Override
     public void close() {
         // doesn't close the underlying connection, just releases it for reuse
-        member.checkin();
+        checkin.checkin();
     }
 
     @Override

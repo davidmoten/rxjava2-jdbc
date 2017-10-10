@@ -143,6 +143,7 @@ public final class NonBlockingConnectionPool2 implements Pool2<Connection> {
             }
             return new NonBlockingConnectionPool2(NonBlockingPool2 //
                     .factory(() -> cp.get()) //
+                    .checkinDecorator((con, checkin) -> new PooledConnection(con, checkin)) //
                     .idleTimeBeforeHealthCheckMs(idleTimeBeforeHealthCheckMs) //
                     .maxIdleTimeMs(maxIdleTimeMs) //
                     .checkoutRetryIntervalMs(checkoutRetryIntervalMs) //

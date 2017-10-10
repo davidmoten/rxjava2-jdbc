@@ -1,8 +1,8 @@
 package org.davidmoten.rx.pool;
 
-public interface Member2<T> {
-    
-    void checkin();
+public interface Member2<T> extends Checkin {
+
+    T value();
 
     /**
      * This method should not throw. Feel free to add logging so that you are aware
@@ -10,5 +10,4 @@ public interface Member2<T> {
      */
     void disposeValue();
 
-    T value();
 }

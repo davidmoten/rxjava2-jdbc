@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 
 import org.davidmoten.rx.jdbc.pool.PoolClosedException;
 import org.reactivestreams.Subscription;
@@ -65,7 +66,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
         this.initializedAvailable = new MpscLinkedQueue<Member2Impl<T>>();
         this.notInitialized = new MpscLinkedQueue<Member2Impl<T>>();
         this.toBeReleased = new MpscLinkedQueue<Member2Impl<T>>();
-        this.members = createMembersArray(pool.maxSize);
+        this.members = createMembersArray(pool.maxSize, pool.checkinDecorator);
         for (Member2Impl<T> m : members) {
             notInitialized.offer(m);
         }
@@ -76,11 +77,11 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
 
     }
 
-    private Member2Impl<T>[] createMembersArray(int poolMaxSize) {
+    private Member2Impl<T>[] createMembersArray(int poolMaxSize, BiFunction<T, Checkin, T> checkinDecorator) {
         @SuppressWarnings("unchecked")
         Member2Impl<T>[] m = new Member2Impl[poolMaxSize];
         for (int i = 0; i < m.length; i++) {
-            m[i] = new Member2Impl<T>(null, this);
+            m[i] = new Member2Impl<T>(null, checkinDecorator, this);
         }
         return m;
     }
@@ -163,7 +164,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                     Observers<T> obs = observers.get();
                     // check for an already initialized available member
                     final Member2Impl<T> m = (Member2Impl<T>) initializedAvailable.poll();
-                    log.debug("poll of available members returns "+ m);
+                    log.debug("poll of available members returns " + m);
                     if (m == null) {
                         // no members available, check for a released member (that needs to be
                         // reinitialized before use)
