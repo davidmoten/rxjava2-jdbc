@@ -24,7 +24,7 @@ public final class Member2Impl<T> implements Member2<T> {
 
     @Override
     public T value() {
-        return checkinDecorator.apply(value, () -> checkin());
+        return checkinDecorator.apply(value, this);
     }
 
     @Override
@@ -35,6 +35,10 @@ public final class Member2Impl<T> implements Member2<T> {
     @Override
     public void disposeValue() {
         try {
+            if (scheduled != null) {
+                scheduled.dispose();
+                scheduled = null;
+            }
             memberSingle.pool.disposer.accept(value);
             value = null;
         } catch (Throwable e) {
