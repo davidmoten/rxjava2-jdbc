@@ -3,22 +3,19 @@ package org.davidmoten.rx.pool;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.disposables.Disposable;
-import io.reactivex.internal.fuseable.SimplePlainQueue;
-import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.plugins.RxJavaPlugins;
 
 public final class Member2Impl<T> implements Member2<T> {
 
     private volatile T value;
     private final MemberSingle2<T> memberSingle;
-    private final SimplePlainQueue<Integer> queue = new MpscLinkedQueue<Integer>();
 
     // synchronized by MemberSingle.drain() wip
     private Disposable scheduled;
 
     Member2Impl(T value, MemberSingle2<T> memberSingle) {
-        this.value = value;
         this.memberSingle = memberSingle;
+        this.value = value;
     }
 
     @Override
@@ -73,6 +70,5 @@ public final class Member2Impl<T> implements Member2<T> {
     public String toString() {
         return "Member2Impl [value=" + value + "]";
     }
-    
-    
+
 }

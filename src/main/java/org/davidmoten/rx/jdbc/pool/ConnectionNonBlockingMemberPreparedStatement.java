@@ -35,7 +35,8 @@ public final class ConnectionNonBlockingMemberPreparedStatement implements Prepa
 
     @Override
     public Connection getConnection() throws SQLException {
-        // overriden!
+        // overriden so can return a connection that when close is called only returns
+        // the connection to the pool
         return con;
     }
 
