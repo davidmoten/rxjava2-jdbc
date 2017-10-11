@@ -252,14 +252,15 @@ public class DatabaseTest {
     @Test(timeout = 40000)
     public void testSelectUsingNonBlockingBuilderConcurrencyTest()
             throws InterruptedException, TimeoutException {
-        info();
+        debug();
         try {
             try (Database db = db(3)) {
                 Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(50));
-                int n = 10000;
+                int n = 50;
                 CountDownLatch latch = new CountDownLatch(n);
                 AtomicInteger count = new AtomicInteger();
                 for (int i = 0; i < n; i++) {
+                    final int iCopy = i;
                     db.select("select score from person where name=?") //
                             .parameters("FRED", "JOSEPH") //
                             .getAs(Integer.class) //
@@ -268,6 +269,8 @@ public class DatabaseTest {
                             .doOnSuccess(x -> {
                                 if (!x.equals(Lists.newArrayList(21, 34))) {
                                     throw new RuntimeException("run broken");
+                                } else {
+                                   System.out.println(iCopy + " succeeded");
                                 }
                             }) //
                             .doOnSuccess(x -> {

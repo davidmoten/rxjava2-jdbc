@@ -25,6 +25,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.plugins.RxJavaPlugins;
+import io.reactivex.schedulers.Schedulers;
 
 class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Closeable, Runnable {
 
@@ -77,7 +78,8 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
 
     }
 
-    private Member2Impl<T>[] createMembersArray(int poolMaxSize, BiFunction<T, Checkin, T> checkinDecorator) {
+    private Member2Impl<T>[] createMembersArray(int poolMaxSize,
+            BiFunction<T, Checkin, T> checkinDecorator) {
         @SuppressWarnings("unchecked")
         Member2Impl<T>[] m = new Member2Impl[poolMaxSize];
         for (int i = 0; i < m.length; i++) {
@@ -152,6 +154,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                     }
                 }
                 long r = requested.get();
+                log.debug("requested={}", r);
                 long e = 0;
                 while (e != r) {
                     if (cancelled) {
@@ -162,6 +165,9 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                         return;
                     }
                     Observers<T> obs = observers.get();
+                    if (obs.activeCount == 0) {
+                        break;
+                    }
                     // check for an already initialized available member
                     final Member2Impl<T> m = (Member2Impl<T>) initializedAvailable.poll();
                     log.debug("poll of available members returns " + m);
