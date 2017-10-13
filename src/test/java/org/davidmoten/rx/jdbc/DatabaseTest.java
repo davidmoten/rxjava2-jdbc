@@ -1398,7 +1398,7 @@ public class DatabaseTest {
                         .valuesOnly() //
                         .counts()) //
                 .count() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .test().awaitDone(20, TimeUnit.SECONDS) //
                 .assertValue((long) NAMES_COUNT_BIG) //
                 .assertComplete();
         debug();
