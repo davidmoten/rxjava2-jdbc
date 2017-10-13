@@ -6,7 +6,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,7 +28,7 @@ public class DatabaseCreator {
     public static Database createBlocking() {
         return Database.fromBlocking(connectionProvider());
     }
-    
+
     public static Database create(int maxSize) {
         return create(maxSize, false, Schedulers.from(Executors.newFixedThreadPool(maxSize)));
     }
@@ -86,25 +89,34 @@ public class DatabaseCreator {
     public static ConnectionProvider connectionProvider() {
         return connectionProvider(nextUrl(), false);
     }
-    
+
     private static ConnectionProvider connectionProvider(String url, boolean big) {
         return new ConnectionProvider() {
 
             private final AtomicBoolean once = new AtomicBoolean(false);
+            private final CountDownLatch latch = new CountDownLatch(1);
 
             @Override
             public Connection get() {
                 try {
-                    Connection c = DriverManager.getConnection(url);
-                    synchronized (this) {
-                        if (once.compareAndSet(false, true)) {
+                    if (once.compareAndSet(false, true)) {
+                        try {
+                            Connection c = DriverManager.getConnection(url);
                             createDatabase(c, big);
+                            return c;
+                        } finally {
+                            latch.countDown();
+                        }
+                    } else {
+                        if (latch.await(30, TimeUnit.SECONDS)) {
+                            return DriverManager.getConnection(url);
+                        } else {
+                            throw new TimeoutException("big database timed out on creation");
                         }
                     }
-                    return c;
-                } catch (SQLException e) {
+                } catch (SQLException | InterruptedException | TimeoutException e) {
                     throw new SQLRuntimeException(e);
-                }
+                } 
             }
 
             @Override

@@ -13,8 +13,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Connection;
