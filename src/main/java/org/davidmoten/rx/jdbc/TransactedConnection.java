@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class TransactedConnection implements Connection {
+final class TransactedConnection implements Connection {
 
     private static final Logger log = LoggerFactory.getLogger(TransactedConnection.class);
 

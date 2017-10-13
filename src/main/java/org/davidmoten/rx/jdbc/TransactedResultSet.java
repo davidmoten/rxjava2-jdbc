@@ -21,7 +21,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
 
-public final class TransactedResultSet implements ResultSet {
+final class TransactedResultSet implements ResultSet {
 
     private final ResultSet rs;
     private final TransactedPreparedStatement ps;
