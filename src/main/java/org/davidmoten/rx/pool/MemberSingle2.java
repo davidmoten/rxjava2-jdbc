@@ -167,6 +167,8 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                         return;
                     }
                     Observers<T> obs = observers.get();
+                    // the check below required so a tryEmit that returns false doesn't bring about
+                    // a spin on this loop
                     if (obs.activeCount == 0) {
                         break;
                     }
