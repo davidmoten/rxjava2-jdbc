@@ -145,6 +145,8 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                 {
                     Member2Impl<T> m;
                     while ((m = toBeReleased.poll()) != null) {
+                        // TODO schedule release as well to remove all blocking from this loop
+
                         // the action of releasing may block
                         // but does not in theory happen often
                         // and is best to put in the drain loop to control
