@@ -14,7 +14,6 @@ public final class Parameter {
      * Actual query parameter value to be encapsulated.
      */
     private final Object value;
-    private final boolean isForOutput;
 
     /**
      * Constructor.
@@ -28,7 +27,6 @@ public final class Parameter {
     Parameter(String name, Object value) {
         this.name = name;
         this.value = value;
-        this.isForOutput = false;
     }
 
     /**
@@ -46,10 +44,6 @@ public final class Parameter {
 
     String name() {
         return name;
-    }
-
-    boolean isForOutput() {
-        return isForOutput;
     }
 
     public static ParameterListBuilder named(String name, String value) {
