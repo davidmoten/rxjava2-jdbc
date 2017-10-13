@@ -1,7 +1,5 @@
 package org.davidmoten.rx.pool;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -30,8 +28,6 @@ public final class NonBlockingPool<T> implements Pool<T> {
     final Scheduler scheduler;
 
     private final AtomicReference<MemberSingle<T>> member = new AtomicReference<>();
-    private final AtomicReference<List<Member<T>>> list = new AtomicReference<>(
-            Collections.emptyList());
     private volatile boolean closed;
 
     private NonBlockingPool(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer,
