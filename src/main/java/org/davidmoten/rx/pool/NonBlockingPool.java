@@ -82,17 +82,22 @@ public final class NonBlockingPool<T> implements Pool<T> {
     }
 
     public void checkin(Member<T> m) {
-        member.get().checkin(m);
-
+        MemberSingle<T> mem = member.get();
+        if (mem != null) {
+            mem.checkin(m);
+        }
     }
 
     @Override
     public void close() {
         closed = true;
-        List<Member<T>> ms = list.getAndSet(null);
-        if (ms != null) {
-            for (Member<T> m : ms) {
-                m.disposeValue();
+        while (true) {
+            MemberSingle<T> m = member.get();
+            if (m == null) {
+                return;
+            } else if (member.compareAndSet(m, null)) {
+                m.close();
+                break;
             }
         }
     }

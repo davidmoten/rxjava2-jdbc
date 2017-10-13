@@ -274,7 +274,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         closeNow();
     }
 
