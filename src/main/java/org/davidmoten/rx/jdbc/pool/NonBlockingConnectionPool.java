@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Util;
+import org.davidmoten.rx.jdbc.pool.internal.PooledConnection;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;

@@ -15,8 +15,8 @@ import javax.annotation.Nullable;
 import javax.sql.DataSource;
 
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
-import org.davidmoten.rx.jdbc.pool.ConnectionProviderBlockingPool;
 import org.davidmoten.rx.jdbc.pool.Pools;
+import org.davidmoten.rx.jdbc.pool.internal.ConnectionProviderBlockingPool;
 import org.davidmoten.rx.pool.Pool;
 
 import com.github.davidmoten.guavamini.Preconditions;

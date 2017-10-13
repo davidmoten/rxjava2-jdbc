@@ -76,7 +76,7 @@ final class DecoratingMember<T> implements Member<T> {
 
     @Override
     public String toString() {
-        return "Member2Impl [value=" + value + "]";
+        return "DecoratingMember [value=" + value + "]";
     }
 
 }
