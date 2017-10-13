@@ -6,7 +6,7 @@ import java.util.function.BiFunction;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.plugins.RxJavaPlugins;
 
-public final class MemberImpl<T> implements Member<T> {
+final class DecoratingMember<T> implements Member<T> {
 
     private volatile T value;
     private final MemberSingle<T> memberSingle;
@@ -15,7 +15,7 @@ public final class MemberImpl<T> implements Member<T> {
     // synchronized by MemberSingle.drain() wip
     private Disposable scheduled;
 
-    MemberImpl(T value, BiFunction<T, Checkin, T> checkinDecorator,
+    DecoratingMember(T value, BiFunction<T, Checkin, T> checkinDecorator,
             MemberSingle<T> memberSingle) {
         this.checkinDecorator = checkinDecorator;
         this.memberSingle = memberSingle;

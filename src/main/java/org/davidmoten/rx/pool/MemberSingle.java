@@ -34,12 +34,12 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     @SuppressWarnings({ "rawtypes", "unchecked" })
     static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0);
 
-    private final SimplePlainQueue<MemberImpl<T>> initializedAvailable;
-    private final SimplePlainQueue<MemberImpl<T>> notInitialized;
-    private final SimplePlainQueue<MemberImpl<T>> toBeReleased;
+    private final SimplePlainQueue<DecoratingMember<T>> initializedAvailable;
+    private final SimplePlainQueue<DecoratingMember<T>> notInitialized;
+    private final SimplePlainQueue<DecoratingMember<T>> toBeReleased;
 
     private final AtomicInteger wip = new AtomicInteger();
-    private final MemberImpl<T>[] members;
+    private final DecoratingMember<T>[] members;
     private final Scheduler scheduler;
     private final long checkoutRetryIntervalMs;
 
@@ -62,11 +62,11 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     @SuppressWarnings("unchecked")
     MemberSingle(NonBlockingPool<T> pool) {
         Preconditions.checkNotNull(pool);
-        this.initializedAvailable = new MpscLinkedQueue<MemberImpl<T>>();
-        this.notInitialized = new MpscLinkedQueue<MemberImpl<T>>();
-        this.toBeReleased = new MpscLinkedQueue<MemberImpl<T>>();
+        this.initializedAvailable = new MpscLinkedQueue<DecoratingMember<T>>();
+        this.notInitialized = new MpscLinkedQueue<DecoratingMember<T>>();
+        this.toBeReleased = new MpscLinkedQueue<DecoratingMember<T>>();
         this.members = createMembersArray(pool.maxSize, pool.checkinDecorator);
-        for (MemberImpl<T> m : members) {
+        for (DecoratingMember<T> m : members) {
             notInitialized.offer(m);
         }
         this.scheduler = pool.scheduler;
@@ -76,12 +76,12 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
 
     }
 
-    private MemberImpl<T>[] createMembersArray(int poolMaxSize,
+    private DecoratingMember<T>[] createMembersArray(int poolMaxSize,
             BiFunction<T, Checkin, T> checkinDecorator) {
         @SuppressWarnings("unchecked")
-        MemberImpl<T>[] m = new MemberImpl[poolMaxSize];
+        DecoratingMember<T>[] m = new DecoratingMember[poolMaxSize];
         for (int i = 0; i < m.length; i++) {
-            m[i] = new MemberImpl<T>(null, checkinDecorator, this);
+            m[i] = new DecoratingMember<T>(null, checkinDecorator, this);
         }
         return m;
     }
@@ -107,8 +107,8 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
 
     public void checkin(Member<T> member) {
         log.debug("checking in {}", member);
-        ((MemberImpl<T>) member).scheduleRelease();
-        initializedAvailable.offer((MemberImpl<T>) member);
+        ((DecoratingMember<T>) member).scheduleRelease();
+        initializedAvailable.offer((DecoratingMember<T>) member);
         drain();
     }
 
@@ -141,7 +141,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
             while (true) {
                 // release any member queued for releasing
                 {
-                    MemberImpl<T> m;
+                    DecoratingMember<T> m;
                     while ((m = toBeReleased.poll()) != null) {
                         // TODO schedule release as well to remove all blocking from this loop
 
@@ -171,12 +171,12 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                         break;
                     }
                     // check for an already initialized available member
-                    final MemberImpl<T> m = (MemberImpl<T>) initializedAvailable.poll();
+                    final DecoratingMember<T> m = (DecoratingMember<T>) initializedAvailable.poll();
                     log.debug("poll of available members returns " + m);
                     if (m == null) {
                         // no members available, check for a released member (that needs to be
                         // reinitialized before use)
-                        final MemberImpl<T> m2 = (MemberImpl<T>) notInitialized.poll();
+                        final DecoratingMember<T> m2 = (DecoratingMember<T>) notInitialized.poll();
                         if (m2 == null) {
                             break;
                         } else {
@@ -207,7 +207,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         }
     }
 
-    private Disposable scheduleCreateValue(MemberImpl<T> m) {
+    private Disposable scheduleCreateValue(DecoratingMember<T> m) {
         // TODO use custom class to limit coupling to fields of `this`
         return scheduler.scheduleDirect(() -> {
             if (!cancelled) {
@@ -413,7 +413,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         }
     }
 
-    public void release(MemberImpl<T> m) {
+    public void release(DecoratingMember<T> m) {
         notInitialized.offer(m);
         drain();
     }
