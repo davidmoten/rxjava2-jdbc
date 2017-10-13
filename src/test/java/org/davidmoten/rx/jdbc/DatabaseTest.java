@@ -66,6 +66,7 @@ import org.hsqldb.jdbc.JDBCBlobFile;
 import org.hsqldb.jdbc.JDBCClobFile;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
@@ -267,6 +268,8 @@ public class DatabaseTest {
                             .doOnSuccess(x -> {
                                 if (!x.equals(Lists.newArrayList(21, 34))) {
                                     throw new RuntimeException("run broken");
+                                } else {
+//                                   System.out.println(iCopy + " succeeded");
                                 }
                             }) //
                             .doOnSuccess(x -> {
@@ -970,6 +973,7 @@ public class DatabaseTest {
     }
 
     @Test
+    @Ignore
     public void testAutoMapForReadMe() {
         Database //
                 .test() //
@@ -1156,6 +1160,7 @@ public class DatabaseTest {
         List<Tuple2<String, Integer>> list = db.select("select name, score from person") //
                 .getAs(String.class, Integer.class) //
                 .toList() //
+                .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .blockingGet();
         assertTrue(list.contains(Tuple2.create("DAVE", 12)));
         assertTrue(list.contains(Tuple2.create("ANNE", 18)));
@@ -1827,6 +1832,22 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testCompleteCompletes() {
+        Database db = db(1);
+        db //
+                .update("update person set score=-3 where name='FRED'") //
+                .complete() //
+                .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .blockingAwait();
+
+        int score = db.select("select score from person where name='FRED'") //
+                .getAs(Integer.class) //
+                .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .blockingFirst();
+        assertEquals(-3, score);
+    }
+
+    @Test
     public void testComplete() throws InterruptedException {
         Database db = db(1);
         Completable a = db //
@@ -2031,12 +2052,15 @@ public class DatabaseTest {
         assertEquals("fred", p.nameLower());
     }
 
-//    @Test
-//    public void testDefaultMethod() throws NoSuchMethodException, IllegalAccessException {
-//        MethodHandles.lookup().findSpecial(PersonWithDefaultMethod.class, "nameLower",
-//                MethodType.methodType(String.class, new Class[] {}), PersonWithDefaultMethod.class)
-////        .bindTo(x);
-//    }
+    // @Test
+    // public void testDefaultMethod() throws NoSuchMethodException,
+    // IllegalAccessException {
+    // MethodHandles.lookup().findSpecial(PersonWithDefaultMethod.class,
+    // "nameLower",
+    // MethodType.methodType(String.class, new Class[] {}),
+    // PersonWithDefaultMethod.class)
+    //// .bindTo(x);
+    // }
 
     @Test(expected = AutomappedInterfaceInaccessibleException.class)
     public void testAutomappedObjectsWhenDefaultMethodInvokedAndIsNonPublicThrows() {

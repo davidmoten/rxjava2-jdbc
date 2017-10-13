@@ -4,49 +4,16 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.davidmoten.rx.pool.MemberWithValue;
-import org.davidmoten.rx.pool.NonBlockingMember;
-import org.davidmoten.rx.pool.NonBlockingPool;
+import org.davidmoten.rx.pool.Checkin;
 
-public final class ConnectionNonBlockingMember
-        implements DelegatedConnection, MemberWithValue<Connection> {
+public final class PooledConnection implements DelegatedConnection {
 
-    private final MemberWithValue<Connection> member;
+    private final Connection connection;
+    private final Checkin checkin;
 
-    public ConnectionNonBlockingMember(NonBlockingPool<Connection> pool) {
-        member = new NonBlockingMember<Connection>(pool, this);
-    }
-
-    @Override
-    public Connection con() {
-        return member.value();
-    }
-
-    @Override
-    public MemberWithValue<Connection> checkout() {
-        return member.checkout();
-    }
-
-    @Override
-    public void checkin() {
-        member.checkin();
-    }
-
-    @Override
-    public Connection value() {
-        // must return this rather than delegated member.value because close
-        // will check it in rather than close the connection properly
-        return this;
-    }
-
-    @Override
-    public void shutdown() {
-        member.shutdown();
-    }
-
-    @Override
-    public boolean isShutdown() {
-        return member.isShutdown();
+    public PooledConnection(Connection connection, Checkin checkin) {
+        this.connection = connection;
+        this.checkin = checkin;
     }
 
     @Override
@@ -88,11 +55,23 @@ public final class ConnectionNonBlockingMember
                 con().prepareStatement(sql, resultSetType, resultSetConcurrency), this);
     }
 
-    
     @Override
     public void close() {
         // doesn't close the underlying connection, just releases it for reuse
-        member.checkin();
+        checkin.checkin();
+    }
+
+    @Override
+    public Connection con() {
+        return connection;
+    }
+
+    // override hashcode so that we can do mostly reliable unit tests for the
+    // repeated appearance of connections from pool. Protecting the unit tests
+    // against hashCode collision is not really that necessary as it will be rare
+    @Override
+    public int hashCode() {
+        return con().hashCode();
     }
 
 }

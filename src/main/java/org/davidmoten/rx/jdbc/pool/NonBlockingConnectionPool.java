@@ -23,11 +23,11 @@ import io.reactivex.schedulers.Schedulers;
 
 public final class NonBlockingConnectionPool implements Pool<Connection> {
 
-    private final AtomicReference<NonBlockingPool<Connection>> pool = new AtomicReference<NonBlockingPool<Connection>>();
+    private final AtomicReference<NonBlockingPool<Connection>> pool = new AtomicReference<>();
 
     public NonBlockingConnectionPool(
             org.davidmoten.rx.pool.NonBlockingPool.Builder<Connection> builder) {
-        pool.set(builder.memberFactory(p -> new ConnectionNonBlockingMember(pool.get())).build());
+        pool.set(builder.build());
     }
 
     public static Builder builder() {
@@ -143,6 +143,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             }
             return new NonBlockingConnectionPool(NonBlockingPool //
                     .factory(() -> cp.get()) //
+                    .checkinDecorator((con, checkin) -> new PooledConnection(con, checkin)) //
                     .idleTimeBeforeHealthCheckMs(idleTimeBeforeHealthCheckMs) //
                     .maxIdleTimeMs(maxIdleTimeMs) //
                     .checkoutRetryIntervalMs(checkoutRetryIntervalMs) //

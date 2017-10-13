@@ -13,42 +13,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.pool.Member;
-import org.davidmoten.rx.pool.MemberFactory;
-import org.davidmoten.rx.pool.NonBlockingMember;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
-import io.reactivex.observers.TestObserver;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
 
 public class PoolTest {
-
-    @Test
-    public void testSimplePool() throws InterruptedException {
-        TestScheduler s = new TestScheduler();
-        AtomicInteger count = new AtomicInteger();
-        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(
-                pool, null);
-        Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet()) //
-                .healthy(n -> true) //
-                .disposer(n -> {
-                }) //
-                .maxSize(3) //
-                .returnToPoolDelayAfterHealthCheckFailureMs(1000) //
-                .memberFactory(memberFactory) //
-                .scheduler(s) //
-                .build();
-        TestObserver<Member<Integer>> ts = pool.member() //
-                .doOnSuccess(m -> m.checkin()) //
-                .test();
-        s.triggerActions();
-        ts.assertValueCount(1) //
-                .assertComplete();
-    }
 
     @Test
     @Ignore
@@ -57,8 +31,6 @@ public class PoolTest {
         TestScheduler s = new TestScheduler();
         AtomicInteger count = new AtomicInteger();
         AtomicInteger disposed = new AtomicInteger();
-        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(
-                pool, null);
         Pool<Integer> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
                 .healthy(n -> true) //
@@ -68,7 +40,6 @@ public class PoolTest {
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) //
                 .disposer(n -> disposed.incrementAndGet()) //
-                .memberFactory(memberFactory) //
                 .scheduler(s) //
                 .build();
         TestSubscriber<Member<Integer>> ts = pool //
@@ -104,9 +75,9 @@ public class PoolTest {
         List<Object> list = ts.getEvents().get(0);
         // all 4 connections released were the same
         System.out.println(list);
-        assertTrue(list.get(0) == list.get(1));
-        assertTrue(list.get(1) == list.get(2));
-        assertTrue(list.get(2) == list.get(3));
+        assertTrue(list.get(0).hashCode() == list.get(1).hashCode());
+        assertTrue(list.get(1).hashCode() == list.get(2).hashCode());
+        assertTrue(list.get(2).hashCode() == list.get(3).hashCode());
     }
 
     @Test
@@ -129,14 +100,27 @@ public class PoolTest {
         List<Connection> list = new ArrayList<>(ts.values());
         list.get(1).close(); // should release a connection
         s.triggerActions();
-        ts.assertValueCount(3) //
-                .assertNotTerminated() //
-                .assertValues(list.get(0), list.get(1), list.get(1));
+        {
+            List<Object> values = ts.assertValueCount(3) //
+                    .assertNotTerminated() //
+                    .getEvents().get(0);
+            assertEquals(list.get(0).hashCode(), values.get(0).hashCode());
+            assertEquals(list.get(1).hashCode(), values.get(1).hashCode());
+            assertEquals(list.get(1).hashCode(), values.get(2).hashCode());
+        }
+        // .assertValues(list.get(0), list.get(1), list.get(1));
         list.get(0).close();
         s.triggerActions();
-        ts.assertValues(list.get(0), list.get(1), list.get(1), list.get(0)) //
-                .assertValueCount(4) //
-                .assertNotTerminated();
+
+        {
+            List<Object> values = ts.assertValueCount(4) //
+                    .assertNotTerminated() //
+                    .getEvents().get(0);
+            assertEquals(list.get(0).hashCode(), values.get(0).hashCode());
+            assertEquals(list.get(1).hashCode(), values.get(1).hashCode());
+            assertEquals(list.get(1).hashCode(), values.get(2).hashCode());
+            assertEquals(list.get(0).hashCode(), values.get(3).hashCode());
+        }
     }
 
 }
