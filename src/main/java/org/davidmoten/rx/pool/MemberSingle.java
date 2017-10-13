@@ -123,7 +123,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     public void cancel() {
         log.debug("cancel called");
         this.cancelled = true;
-        closeNow();
+        disposeValues();
     }
 
     @Override
@@ -163,7 +163,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                         initializedAvailable.clear();
                         toBeReleased.clear();
                         notInitialized.clear();
-                        closeNow();
+                        disposeValues();
                         return;
                     }
                     Observers<T> obs = observers.get();
@@ -275,10 +275,10 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
 
     @Override
     public void close() {
-        closeNow();
+        cancel();
     }
 
-    private void closeNow() {
+    private void disposeValues() {
         scheduled.dispose();
         for (Member<T> member : members) {
             member.disposeValue();
