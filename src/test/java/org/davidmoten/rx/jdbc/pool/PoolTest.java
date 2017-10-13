@@ -149,7 +149,6 @@ public class PoolTest {
             assertEquals(list.get(1).hashCode(), values.get(1).hashCode());
             assertEquals(list.get(1).hashCode(), values.get(2).hashCode());
             assertEquals(list.get(0).hashCode(), values.get(3).hashCode());
-            // .assertValues(list.get(0), list.get(1), list.get(1), list.get(0));
         }
     }
 
