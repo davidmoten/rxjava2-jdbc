@@ -1378,7 +1378,7 @@ public class DatabaseTest {
         info();
         big(5).select("select count(*) from person") //
                 .getAs(Integer.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .test().awaitDone(20, TimeUnit.SECONDS) //
                 .assertValue(5163) //
                 .assertComplete();
         debug();
@@ -1418,7 +1418,7 @@ public class DatabaseTest {
                         .valuesOnly() //
                         .counts()) //
                 .count() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .test().awaitDone(20, TimeUnit.SECONDS) //
                 .assertValue((long) NAMES_COUNT_BIG) //
                 .assertComplete();
         debug();
