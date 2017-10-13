@@ -66,4 +66,12 @@ public final class PooledConnection implements DelegatedConnection {
         return connection;
     }
 
+    // override hashcode so that we can do mostly reliable unit tests for the
+    // repeated appearance of connections from pool. Protecting the unit tests
+    // against hashCode collision is not really that necessary as it will be rare
+    @Override
+    public int hashCode() {
+        return con().hashCode();
+    }
+
 }

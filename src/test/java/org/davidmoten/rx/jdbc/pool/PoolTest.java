@@ -104,9 +104,9 @@ public class PoolTest {
         List<Object> list = ts.getEvents().get(0);
         // all 4 connections released were the same
         System.out.println(list);
-        assertTrue(list.get(0) == list.get(1));
-        assertTrue(list.get(1) == list.get(2));
-        assertTrue(list.get(2) == list.get(3));
+        assertTrue(list.get(0).hashCode() == list.get(1).hashCode());
+        assertTrue(list.get(1).hashCode() == list.get(2).hashCode());
+        assertTrue(list.get(2).hashCode() == list.get(3).hashCode());
     }
 
     @Test
@@ -129,14 +129,28 @@ public class PoolTest {
         List<Connection> list = new ArrayList<>(ts.values());
         list.get(1).close(); // should release a connection
         s.triggerActions();
-        ts.assertValueCount(3) //
-                .assertNotTerminated() //
-                .assertValues(list.get(0), list.get(1), list.get(1));
+        {
+            List<Object> values = ts.assertValueCount(3) //
+                    .assertNotTerminated() //
+                    .getEvents().get(0);
+            assertEquals(list.get(0).hashCode(), values.get(0).hashCode());
+            assertEquals(list.get(1).hashCode(), values.get(1).hashCode());
+            assertEquals(list.get(1).hashCode(), values.get(2).hashCode());
+        }
+        // .assertValues(list.get(0), list.get(1), list.get(1));
         list.get(0).close();
         s.triggerActions();
-        ts.assertValues(list.get(0), list.get(1), list.get(1), list.get(0)) //
-                .assertValueCount(4) //
-                .assertNotTerminated();
+
+        {
+            List<Object> values = ts.assertValueCount(4) //
+                    .assertNotTerminated() //
+                    .getEvents().get(0);
+            assertEquals(list.get(0).hashCode(), values.get(0).hashCode());
+            assertEquals(list.get(1).hashCode(), values.get(1).hashCode());
+            assertEquals(list.get(1).hashCode(), values.get(2).hashCode());
+            assertEquals(list.get(0).hashCode(), values.get(3).hashCode());
+            // .assertValues(list.get(0), list.get(1), list.get(1), list.get(0));
+        }
     }
 
 }

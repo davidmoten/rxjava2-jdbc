@@ -260,7 +260,6 @@ public class DatabaseTest {
                 CountDownLatch latch = new CountDownLatch(n);
                 AtomicInteger count = new AtomicInteger();
                 for (int i = 0; i < n; i++) {
-                    final int iCopy = i;
                     db.select("select score from person where name=?") //
                             .parameters("FRED", "JOSEPH") //
                             .getAs(Integer.class) //
@@ -270,7 +269,7 @@ public class DatabaseTest {
                                 if (!x.equals(Lists.newArrayList(21, 34))) {
                                     throw new RuntimeException("run broken");
                                 } else {
-                                   System.out.println(iCopy + " succeeded");
+//                                   System.out.println(iCopy + " succeeded");
                                 }
                             }) //
                             .doOnSuccess(x -> {
