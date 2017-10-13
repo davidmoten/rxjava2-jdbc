@@ -252,11 +252,11 @@ public class DatabaseTest {
     @Test(timeout = 40000)
     public void testSelectUsingNonBlockingBuilderConcurrencyTest()
             throws InterruptedException, TimeoutException {
-        debug();
+        info();
         try {
             try (Database db = db(3)) {
                 Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(50));
-                int n = 50;
+                int n = 10000;
                 CountDownLatch latch = new CountDownLatch(n);
                 AtomicInteger count = new AtomicInteger();
                 for (int i = 0; i < n; i++) {

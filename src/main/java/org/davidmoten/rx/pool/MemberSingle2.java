@@ -186,11 +186,12 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                             scheduled.add(scheduleCreateValue(m2));
                         }
                     } else {
-                        e++;
                         // this should not block because it just schedules emissions to observers
                         m.preCheckout();
                         log.debug("emitting member");
-                        emit(obs, m);
+                        if (tryEmit(obs, m)) {
+                            e++;
+                        }
                     }
                 }
                 if (e != 0L && r != Long.MAX_VALUE) {
@@ -229,7 +230,7 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
         });
     }
 
-    private void emit(Observers<T> obs, Member2<T> m) {
+    private boolean tryEmit(Observers<T> obs, Member2<T> m) {
         // get a fresh worker each time so we jump threads to
         // break the stack-trace (a long-enough chain of
         // checkout-checkins could otherwise provoke stack
@@ -258,13 +259,14 @@ class MemberSingle2<T> extends Single<Member2<T>> implements Subscription, Close
                     break;
                 }
             } else {
+                // checkin because no active observers
                 m.checkin();
-                return;
+                return false;
             }
         }
         Worker worker = scheduler.createWorker();
         worker.schedule(new Emitter<T>(worker, oNext, m));
-        return;
+        return true;
     }
 
     @Override
