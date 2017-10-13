@@ -4,10 +4,14 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 
 import org.davidmoten.rx.jdbc.pool.PoolClosedException;
 import org.reactivestreams.Subscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
@@ -16,63 +20,97 @@ import io.reactivex.Scheduler.Worker;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.plugins.RxJavaPlugins;
+import io.reactivex.schedulers.Schedulers;
 
 class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeable, Runnable {
 
     final AtomicReference<Observers<T>> observers;
 
+    private static final Logger log = LoggerFactory.getLogger(MemberSingle.class);
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0);
 
-    private final SimplePlainQueue<Member<T>> queue;
+    private final SimplePlainQueue<MemberImpl<T>> initializedAvailable;
+    private final SimplePlainQueue<MemberImpl<T>> notInitialized;
+    private final SimplePlainQueue<MemberImpl<T>> toBeReleased;
+
     private final AtomicInteger wip = new AtomicInteger();
-    private final Member<T>[] members;
+    private final MemberImpl<T>[] members;
     private final Scheduler scheduler;
-    private final int maxSize;
     private final long checkoutRetryIntervalMs;
 
     // mutable
 
     private volatile boolean cancelled;
 
-    // number of members in the pool at the moment
     // synchronized by `wip`
-    private int count;
+    private CompositeDisposable scheduled = new CompositeDisposable();
 
-    // synchronized by `wip`
-    private Disposable scheduledDrain;
+    final NonBlockingPool<T> pool;
 
-    private final NonBlockingPool<T> pool;
-
+    // represents the number of outstanding member requests.
+    // the number is decremented when a new member value is
+    // initialized (a scheduled action with a subsequent drain call)
+    // or an existing value is available from the pool (queue) (and is then
+    // emitted).
+    private AtomicLong requested = new AtomicLong();
 
     @SuppressWarnings("unchecked")
     MemberSingle(NonBlockingPool<T> pool) {
-        this.queue = new MpscLinkedQueue<Member<T>>();
-        this.members = createMembersArray(pool);
+        Preconditions.checkNotNull(pool);
+        this.initializedAvailable = new MpscLinkedQueue<MemberImpl<T>>();
+        this.notInitialized = new MpscLinkedQueue<MemberImpl<T>>();
+        this.toBeReleased = new MpscLinkedQueue<MemberImpl<T>>();
+        this.members = createMembersArray(pool.maxSize, pool.checkinDecorator);
+        for (MemberImpl<T> m : members) {
+            notInitialized.offer(m);
+        }
         this.scheduler = pool.scheduler;
         this.checkoutRetryIntervalMs = pool.checkoutRetryIntervalMs;
-        this.maxSize = pool.maxSize;
         this.observers = new AtomicReference<>(EMPTY);
-        this.count = 1;
         this.pool = pool;
-        queue.offer(members[0]);
+
     }
 
-    private static <T> Member<T>[] createMembersArray(NonBlockingPool<T> pool) {
+    private MemberImpl<T>[] createMembersArray(int poolMaxSize,
+            BiFunction<T, Checkin, T> checkinDecorator) {
         @SuppressWarnings("unchecked")
-        Member<T>[] m = new Member[pool.maxSize];
+        MemberImpl<T>[] m = new MemberImpl[poolMaxSize];
         for (int i = 0; i < m.length; i++) {
-            m[i] = pool.memberFactory.create(pool);
+            m[i] = new MemberImpl<T>(null, checkinDecorator, this);
         }
         return m;
     }
 
+    @Override
+    protected void subscribeActual(SingleObserver<? super Member<T>> observer) {
+        // the action of checking out a member from the pool is implemented as a
+        // subscription to the singleton MemberSingle
+        MemberSingleObserver<T> md = new MemberSingleObserver<T>(observer, this);
+        observer.onSubscribe(md);
+        if (pool.isClosed()) {
+            observer.onError(new PoolClosedException());
+            return;
+        }
+        add(md);
+        if (md.isDisposed()) {
+            remove(md);
+        }
+        requested.incrementAndGet();
+        log.debug("subscribed");
+        drain();
+    }
+
     public void checkin(Member<T> member) {
-        queue.offer(member);
+        log.debug("checking in {}", member);
+        ((MemberImpl<T>) member).scheduleRelease();
+        initializedAvailable.offer((MemberImpl<T>) member);
         drain();
     }
 
@@ -83,7 +121,9 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
 
     @Override
     public void cancel() {
+        log.debug("cancel called");
         this.cancelled = true;
+        closeNow();
     }
 
     @Override
@@ -96,53 +136,70 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     }
 
     private void drain() {
+        log.debug("drain called");
         if (wip.getAndIncrement() == 0) {
+            log.debug("drain loop starting");
             int missed = 1;
             while (true) {
-                Member<T> couldNotCheckout = null;
-                if (scheduledDrain != null) {
-                    // if a drain has been scheduled then cancel it because we are draining now
-                    scheduledDrain.dispose();
-                    scheduledDrain = null;
+                // release any member queued for releasing
+                {
+                    MemberImpl<T> m;
+                    while ((m = toBeReleased.poll()) != null) {
+                        // TODO schedule release as well to remove all blocking from this loop
+
+                        // the action of releasing may block
+                        // but does not in theory happen often
+                        // and is best to put in the drain loop to control
+                        // concurrent access to the member resource
+                        log.debug("releasing {}", m);
+                        m.release();
+                    }
                 }
-                while (true) {
+                long r = requested.get();
+                log.debug("requested={}", r);
+                long e = 0;
+                while (e != r) {
                     if (cancelled) {
-                        queue.clear();
+                        initializedAvailable.clear();
+                        toBeReleased.clear();
+                        notInitialized.clear();
+                        closeNow();
                         return;
                     }
                     Observers<T> obs = observers.get();
+                    // the check below required so a tryEmit that returns false doesn't bring about
+                    // a spin on this loop
                     if (obs.activeCount == 0) {
                         break;
                     }
-                    final Member<T> m = queue.poll();
+                    // check for an already initialized available member
+                    final MemberImpl<T> m = (MemberImpl<T>) initializedAvailable.poll();
+                    log.debug("poll of available members returns " + m);
                     if (m == null) {
-                        if (count < maxSize) {
-                            // haven't used all the members of the pool yet
-                            queue.offer(members[count]);
-                            count++;
-                        } else {
+                        // no members available, check for a released member (that needs to be
+                        // reinitialized before use)
+                        final MemberImpl<T> m2 = (MemberImpl<T>) notInitialized.poll();
+                        if (m2 == null) {
                             break;
+                        } else {
+                            // incrementing e here will result in requested being decremented
+                            // (outside of this loop). After scheduled creation has occurred
+                            // requested will be incremented and drain called.
+                            e++;
+                            log.debug("scheduling member creation");
+                            scheduled.add(scheduleCreateValue(m2));
                         }
                     } else {
-                        Member<T> m2;
-                        if ((m2 = m.checkout()) != null) {
-                            emit(obs, m2);
-                        } else if (!m.isShutdown()) {
-                            // put back on the queue for consideration later
-                            // if not shutdown
-                            queue.offer(m);
-                            if (couldNotCheckout == null) {
-                                couldNotCheckout = m;
-                            } else if (couldNotCheckout == m) {
-                                // this m has failed to checkout before in this loop
-                                // which could happen if database is not available for instance
-                                // so let's try again after an interval
-                                scheduledDrain = scheduler.scheduleDirect(this,
-                                        checkoutRetryIntervalMs, TimeUnit.MILLISECONDS);
-                                break;
-                            }
+                        // this should not block because it just schedules emissions to observers
+                        m.preCheckout();
+                        log.debug("emitting member");
+                        if (tryEmit(obs, m)) {
+                            e++;
                         }
                     }
+                }
+                if (e != 0L && r != Long.MAX_VALUE) {
+                    requested.addAndGet(-e);
                 }
                 missed = wip.addAndGet(-missed);
                 if (missed == 0) {
@@ -152,7 +209,32 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         }
     }
 
-    private void emit(Observers<T> obs, Member<T> m) {
+    private Disposable scheduleCreateValue(MemberImpl<T> m) {
+        // TODO use custom class to limit coupling to fields of `this`
+        return scheduler.scheduleDirect(() -> {
+            if (!cancelled) {
+                try {
+                    // this action might block so is scheduled
+                    T value = pool.factory.call();
+                    m.setValue(value);
+                    initializedAvailable.offer(m);
+                    requested.incrementAndGet();
+                    drain();
+                } catch (Throwable t) {
+                    RxJavaPlugins.onError(t);
+                    // check cancelled again because factory.call() is user specified and could have
+                    // taken a significant time to complete
+                    if (!cancelled) {
+                        // schedule a retry
+                        scheduler.scheduleDirect(this, checkoutRetryIntervalMs,
+                                TimeUnit.MILLISECONDS);
+                    }
+                }
+            }
+        });
+    }
+
+    private boolean tryEmit(Observers<T> obs, Member<T> m) {
         // get a fresh worker each time so we jump threads to
         // break the stack-trace (a long-enough chain of
         // checkout-checkins could otherwise provoke stack
@@ -181,40 +263,26 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                     break;
                 }
             } else {
+                // checkin because no active observers
                 m.checkin();
-                return;
+                return false;
             }
         }
         Worker worker = scheduler.createWorker();
         worker.schedule(new Emitter<T>(worker, oNext, m));
-        return;
+        return true;
     }
 
     @Override
     public void close() throws IOException {
-        for (Member<T> member : members) {
-            try {
-                member.close();
-            } catch (Exception e) {
-                // TODO accumulate and throw?
-                e.printStackTrace();
-            }
-        }
+        closeNow();
     }
 
-    @Override
-    protected void subscribeActual(SingleObserver<? super Member<T>> observer) {
-        MemberSingleObserver<T> md = new MemberSingleObserver<T>(observer, this);
-        observer.onSubscribe(md);
-        if (pool.isClosed()) {
-            observer.onError(new PoolClosedException());
-            return;
+    private void closeNow() {
+        scheduled.dispose();
+        for (Member<T> member : members) {
+            member.disposeValue();
         }
-        add(md);
-        if (md.isDisposed()) {
-            remove(md);
-        }
-        drain();
     }
 
     void add(@NonNull MemberSingleObserver<T> inner) {
@@ -345,6 +413,11 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         public boolean isDisposed() {
             return get() == null;
         }
+    }
+
+    public void release(MemberImpl<T> m) {
+        notInitialized.offer(m);
+        drain();
     }
 
 }

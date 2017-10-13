@@ -1,12 +1,13 @@
 package org.davidmoten.rx.pool;
 
-public interface Member<T> extends AutoCloseable {
+public interface Member<T> extends Checkin {
 
-    MemberWithValue<T> checkout();
+    T value();
 
-    void checkin();
+    /**
+     * This method should not throw. Feel free to add logging so that you are aware
+     * of a problem with disposal.
+     */
+    void disposeValue();
 
-    void shutdown();
-
-    boolean isShutdown();
 }

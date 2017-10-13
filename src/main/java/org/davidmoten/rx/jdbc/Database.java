@@ -15,9 +15,9 @@ import javax.annotation.Nullable;
 import javax.sql.DataSource;
 
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
-import org.davidmoten.rx.jdbc.pool.ConnectionProviderBlockingPool2;
+import org.davidmoten.rx.jdbc.pool.ConnectionProviderBlockingPool;
 import org.davidmoten.rx.jdbc.pool.Pools;
-import org.davidmoten.rx.pool.Pool2;
+import org.davidmoten.rx.pool.Pool;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
@@ -70,7 +70,7 @@ public final class Database implements AutoCloseable {
                         .build());
     }
 
-    public static Database from(@Nonnull Pool2<Connection> pool) {
+    public static Database from(@Nonnull Pool<Connection> pool) {
         Preconditions.checkNotNull(pool, "pool canot be null");
         return new Database(pool.member().map(x -> {
             if (x.value() == null) {
@@ -81,7 +81,7 @@ public final class Database implements AutoCloseable {
     }
 
     public static Database fromBlocking(@Nonnull ConnectionProvider cp) {
-        return Database.from(new ConnectionProviderBlockingPool2(cp));
+        return Database.from(new ConnectionProviderBlockingPool(cp));
     }
 
     public static Database fromBlocking(@Nonnull DataSource dataSource) {

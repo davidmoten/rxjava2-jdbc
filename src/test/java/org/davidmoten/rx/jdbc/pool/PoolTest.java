@@ -13,42 +13,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.pool.Member;
-import org.davidmoten.rx.pool.MemberFactory;
-import org.davidmoten.rx.pool.NonBlockingMember;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
-import io.reactivex.observers.TestObserver;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
 
 public class PoolTest {
-
-    @Test
-    public void testSimplePool() throws InterruptedException {
-        TestScheduler s = new TestScheduler();
-        AtomicInteger count = new AtomicInteger();
-        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(
-                pool, null);
-        Pool<Integer> pool = NonBlockingPool.factory(() -> count.incrementAndGet()) //
-                .healthy(n -> true) //
-                .disposer(n -> {
-                }) //
-                .maxSize(3) //
-                .returnToPoolDelayAfterHealthCheckFailureMs(1000) //
-                .memberFactory(memberFactory) //
-                .scheduler(s) //
-                .build();
-        TestObserver<Member<Integer>> ts = pool.member() //
-                .doOnSuccess(m -> m.checkin()) //
-                .test();
-        s.triggerActions();
-        ts.assertValueCount(1) //
-                .assertComplete();
-    }
 
     @Test
     @Ignore
@@ -57,8 +31,6 @@ public class PoolTest {
         TestScheduler s = new TestScheduler();
         AtomicInteger count = new AtomicInteger();
         AtomicInteger disposed = new AtomicInteger();
-        MemberFactory<Integer, NonBlockingPool<Integer>> memberFactory = pool -> new NonBlockingMember<Integer>(
-                pool, null);
         Pool<Integer> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
                 .healthy(n -> true) //
@@ -68,7 +40,6 @@ public class PoolTest {
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) //
                 .disposer(n -> disposed.incrementAndGet()) //
-                .memberFactory(memberFactory) //
                 .scheduler(s) //
                 .build();
         TestSubscriber<Member<Integer>> ts = pool //
