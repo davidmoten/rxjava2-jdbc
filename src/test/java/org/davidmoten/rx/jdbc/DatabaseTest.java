@@ -1375,7 +1375,7 @@ public class DatabaseTest {
     }
 
     private static void debug() {
-        LogManager.getRootLogger().setLevel(Level.DEBUG);
+        LogManager.getRootLogger().setLevel(Level.INFO);
     }
 
     @Test
