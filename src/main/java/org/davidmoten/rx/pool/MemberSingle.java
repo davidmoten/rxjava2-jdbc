@@ -216,7 +216,6 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     }
 
     private Disposable scheduleCreateValue(DecoratingMember<T> m) {
-        // TODO use custom class to limit coupling to fields of `this`
         return scheduler.scheduleDirect(() -> {
             if (!cancelled) {
                 try {
