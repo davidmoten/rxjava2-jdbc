@@ -38,13 +38,13 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
     public static final class Builder {
 
         private ConnectionProvider cp;
-        private Predicate<Connection> healthy = c -> true;
+        private Predicate<? super Connection> healthy = c -> true;
         private int maxPoolSize = 5;
         private long returnToPoolDelayAfterHealthCheckFailureMs = 1000;
         private long idleTimeBeforeHealthCheckMs = 60000;
         private long maxIdleTimeMs = 30 * 60000;
         private long checkoutRetryIntervalMs = 30000;
-        private Consumer<Connection> disposer = Util::closeSilently;
+        private Consumer<? super Connection> disposer = Util::closeSilently;
         private Scheduler scheduler = null;
 
         public Builder connectionProvider(ConnectionProvider cp) {
@@ -89,7 +89,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             return idleTimeBeforeHealthCheckMs(unit.toMillis(value));
         }
 
-        public Builder healthy(Predicate<Connection> healthy) {
+        public Builder healthy(Predicate<? super Connection> healthy) {
             this.healthy = healthy;
             return this;
         }
