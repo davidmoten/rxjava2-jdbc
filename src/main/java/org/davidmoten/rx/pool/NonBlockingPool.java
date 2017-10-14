@@ -15,25 +15,26 @@ import io.reactivex.schedulers.Schedulers;
 
 public final class NonBlockingPool<T> implements Pool<T> {
 
-    final Callable<T> factory;
-    final Predicate<T> healthy;
+    final Callable<? extends T> factory;
+    final Predicate<? super T> healthy;
     final long idleTimeBeforeHealthCheckMs;
-    final Consumer<T> disposer;
+    final Consumer<? super T> disposer;
     final int maxSize;
     final long maxIdleTimeMs;
     final long checkoutRetryIntervalMs;
     final long returnToPoolDelayAfterHealthCheckFailureMs;
     final long releaseIntervalMs;
-    final BiFunction<T, Checkin, T> checkinDecorator;
+    final BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator;
     final Scheduler scheduler;
 
     private final AtomicReference<MemberSingle<T>> member = new AtomicReference<>();
     private volatile boolean closed;
 
-    private NonBlockingPool(Callable<T> factory, Predicate<T> healthy, Consumer<T> disposer,
-            int maxSize, long returnToPoolDelayAfterHealthCheckFailureMs,
-            long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs, long checkoutRetryIntervalMs,
-            long releaseIntervalMs, BiFunction<T, Checkin, T> checkinDecorator,
+    private NonBlockingPool(Callable<? extends T> factory, Predicate<? super T> healthy,
+            Consumer<? super T> disposer, int maxSize,
+            long returnToPoolDelayAfterHealthCheckFailureMs, long idleTimeBeforeHealthCheckMs,
+            long maxIdleTimeMs, long checkoutRetryIntervalMs, long releaseIntervalMs,
+            BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator,
             Scheduler scheduler) {
         Preconditions.checkNotNull(factory);
         Preconditions.checkNotNull(healthy);
@@ -110,15 +111,10 @@ public final class NonBlockingPool<T> implements Pool<T> {
 
         private static final BiFunction<Object, Checkin, Object> DEFAULT_CHECKIN_DECORATOR = (x,
                 y) -> x;
-        private Callable<T> factory;
-        private Predicate<T> healthy = x -> true;
+        private Callable<? extends T> factory;
+        private Predicate<? super T> healthy = x -> true;
         private long idleTimeBeforeHealthCheckMs = 30;
-        private Consumer<T> disposer = new Consumer<T>() {
-            @Override
-            public void accept(T t) throws Exception {
-                // do nothing
-            }
-        };
+        private Consumer<? super T> disposer = Consumers.doNothing();
         private int maxSize = 10;
         private long returnToPoolDelayAfterHealthCheckFailureMs = 30000;
         private long checkoutRetryIntervalMs = 30000;
@@ -126,18 +122,18 @@ public final class NonBlockingPool<T> implements Pool<T> {
         private long maxIdleTimeMs;
         private long releaseIntervalMs = TimeUnit.MINUTES.toMillis(30);
         @SuppressWarnings("unchecked")
-        private BiFunction<T, Checkin, T> checkinDecorator = (BiFunction<T, Checkin, T>) DEFAULT_CHECKIN_DECORATOR;
+        private BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator = (BiFunction<T, Checkin, T>) DEFAULT_CHECKIN_DECORATOR;
 
         private Builder() {
         }
 
-        public Builder<T> factory(Callable<T> factory) {
+        public Builder<T> factory(Callable<? extends T> factory) {
             Preconditions.checkNotNull(factory);
             this.factory = factory;
             return this;
         }
 
-        public Builder<T> healthy(Predicate<T> healthy) {
+        public Builder<T> healthy(Predicate<? super T> healthy) {
             Preconditions.checkNotNull(healthy);
             this.healthy = healthy;
             return this;
@@ -171,7 +167,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
             return checkoutRetryIntervalMs(unit.toMillis(value));
         }
 
-        public Builder<T> disposer(Consumer<T> disposer) {
+        public Builder<T> disposer(Consumer<? super T> disposer) {
             Preconditions.checkNotNull(disposer);
             this.disposer = disposer;
             return this;
@@ -207,7 +203,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
             return this;
         }
 
-        public Builder<T> checkinDecorator(BiFunction<T, Checkin, T> f) {
+        public Builder<T> checkinDecorator(BiFunction<? super T, ? super Checkin, ? extends T> f) {
             this.checkinDecorator = f;
             return this;
         }

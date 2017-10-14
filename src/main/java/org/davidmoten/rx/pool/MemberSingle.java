@@ -77,7 +77,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     }
 
     private DecoratingMember<T>[] createMembersArray(int poolMaxSize,
-            BiFunction<T, Checkin, T> checkinDecorator) {
+            BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator) {
         @SuppressWarnings("unchecked")
         DecoratingMember<T>[] m = new DecoratingMember[poolMaxSize];
         for (int i = 0; i < m.length; i++) {
