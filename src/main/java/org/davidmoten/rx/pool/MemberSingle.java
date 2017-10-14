@@ -139,18 +139,15 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
             log.debug("drain loop starting");
             int missed = 1;
             while (true) {
-                // release any member queued for releasing
+                // schedule release of any member queued for releasing
                 {
                     DecoratingMember<T> m;
                     while ((m = toBeReleased.poll()) != null) {
-                        // TODO schedule release as well to remove all blocking from this loop
-
-                        // the action of releasing may block
-                        // but does not in theory happen often
-                        // and is best to put in the drain loop to control
-                        // concurrent access to the member resource
-                        log.debug("releasing {}", m);
-                        m.release();
+                        log.debug("scheduling release of {}", m);
+                        m.markAsReleasing();
+                        final DecoratingMember<T> mCopy = m;
+                        // TODO convert lambda to class to decouple from `this`
+                        scheduler.scheduleDirect(() -> mCopy.release());
                     }
                 }
                 long r = requested.get();
@@ -187,7 +184,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                             log.debug("scheduling member creation");
                             scheduled.add(scheduleCreateValue(m2));
                         }
-                    } else {
+                    } else if (!m.isReleasing()) {
                         // this should not block because it just schedules emissions to observers
                         log.debug("emitting member");
                         if (tryEmit(obs, m)) {
@@ -213,7 +210,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                 try {
                     // this action might block so is scheduled
                     T value = pool.factory.call();
-                    m.setValue(value);
+                    m.setValueAndClearReleasingFlag(value);
                     initializedAvailable.offer(m);
                     requested.incrementAndGet();
                     drain();
@@ -231,7 +228,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         });
     }
 
-    private boolean tryEmit(Observers<T> obs, Member<T> m) {
+    private boolean tryEmit(Observers<T> obs, DecoratingMember<T> m) {
         // get a fresh worker each time so we jump threads to
         // break the stack-trace (a long-enough chain of
         // checkout-checkins could otherwise provoke stack
@@ -265,9 +262,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                 return false;
             }
         }
-        if (m instanceof DecoratingMember) {
-            ((DecoratingMember<T>) m).preCheckout();
-        }
+        m.preCheckout();
         Worker worker = scheduler.createWorker();
         worker.schedule(new Emitter<T>(worker, oNext, m));
         return true;

@@ -15,6 +15,9 @@ final class DecoratingMember<T> implements Member<T> {
     // synchronized by MemberSingle.drain() wip
     private Disposable scheduled;
 
+    // synchronized by MemberSingle.drain() wip
+    private boolean releasing;
+
     DecoratingMember(T value, BiFunction<T, Checkin, T> checkinDecorator,
             MemberSingle<T> memberSingle) {
         this.checkinDecorator = checkinDecorator;
@@ -30,6 +33,14 @@ final class DecoratingMember<T> implements Member<T> {
     @Override
     public void checkin() {
         memberSingle.pool.checkin(this);
+    }
+
+    public void markAsReleasing() {
+        this.releasing = true;
+    }
+
+    public boolean isReleasing() {
+        return releasing;
     }
 
     @Override
@@ -53,8 +64,9 @@ final class DecoratingMember<T> implements Member<T> {
         memberSingle.release(this);
     }
 
-    public void setValue(T value) {
+    public void setValueAndClearReleasingFlag(T value) {
         this.value = value;
+        this.releasing = false;
     }
 
     void scheduleRelease() {
