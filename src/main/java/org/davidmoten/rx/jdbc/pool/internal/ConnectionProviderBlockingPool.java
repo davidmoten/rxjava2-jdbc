@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.davidmoten.rx.pool.Member;
-import org.davidmoten.rx.pool.MemberWithValue;
 import org.davidmoten.rx.pool.Pool;
 
 import com.github.davidmoten.guavamini.Preconditions;
@@ -34,7 +33,7 @@ public final class ConnectionProviderBlockingPool implements Pool<Connection> {
     }
 
     static final class MemberWithValueConnection
-            implements MemberWithValue<Connection>, DelegatedConnection {
+            implements Member<Connection>, DelegatedConnection {
 
         private final ConnectionProvider connectionProvider;
 
