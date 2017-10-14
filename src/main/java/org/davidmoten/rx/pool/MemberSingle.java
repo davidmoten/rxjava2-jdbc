@@ -145,7 +145,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                     while ((m = toBeReleased.poll()) != null) {
                         log.debug("scheduling release of {}", m);
                         m.markAsReleasing();
-                        scheduler.scheduleDirect(new Releaser<T>(m));
+                        scheduled.add(scheduler.scheduleDirect(new Releaser<T>(m)));
                     }
                 }
                 long r = requested.get();
@@ -211,7 +211,11 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
 
         @Override
         public void run() {
-            m.release();
+            try {
+                m.release();
+            } catch (Throwable t) {
+                RxJavaPlugins.onError(t);
+            }
         }
     }
 
@@ -231,8 +235,8 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                     // taken a significant time to complete
                     if (!cancelled) {
                         // schedule a retry
-                        scheduler.scheduleDirect(this, checkoutRetryIntervalMs,
-                                TimeUnit.MILLISECONDS);
+                        scheduled.add(scheduler.scheduleDirect(this, checkoutRetryIntervalMs,
+                                TimeUnit.MILLISECONDS));
                     }
                 }
             }
