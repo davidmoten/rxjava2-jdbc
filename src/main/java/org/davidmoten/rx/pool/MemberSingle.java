@@ -145,9 +145,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                     while ((m = toBeReleased.poll()) != null) {
                         log.debug("scheduling release of {}", m);
                         m.markAsReleasing();
-                        final DecoratingMember<T> mCopy = m;
-                        // TODO convert lambda to class to decouple from `this`
-                        scheduler.scheduleDirect(() -> mCopy.release());
+                        scheduler.scheduleDirect(new Releaser<T>(m));
                     }
                 }
                 long r = requested.get();
@@ -200,6 +198,20 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                     return;
                 }
             }
+        }
+    }
+
+    static final class Releaser<T> implements Runnable {
+
+        private DecoratingMember<T> m;
+
+        Releaser(DecoratingMember<T> m) {
+            this.m = m;
+        }
+
+        @Override
+        public void run() {
+            m.release();
         }
     }
 
