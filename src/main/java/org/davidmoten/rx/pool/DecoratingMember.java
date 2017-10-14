@@ -73,10 +73,12 @@ final class DecoratingMember<T> implements Member<T> {
         if (scheduled != null) {
             scheduled.dispose();
         }
-        // TODO make `this` runnable to save lambda allocation
-        scheduled = memberSingle.pool.scheduler.scheduleDirect(() -> {
-            release();
-        }, memberSingle.pool.releaseIntervalMs, TimeUnit.MILLISECONDS);
+        if (memberSingle.pool.maxIdleTimeMs > 0) {
+            // TODO make `this` runnable to save lambda allocation
+            scheduled = memberSingle.pool.scheduler.scheduleDirect(() -> {
+                release();
+            }, memberSingle.pool.maxIdleTimeMs, TimeUnit.MILLISECONDS);
+        }
     }
 
     void preCheckout() {
