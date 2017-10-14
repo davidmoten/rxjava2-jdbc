@@ -108,6 +108,8 @@ public final class NonBlockingPool<T> implements Pool<T> {
 
     public static class Builder<T> {
 
+        private static final BiFunction<Object, Checkin, Object> DEFAULT_CHECKIN_DECORATOR = (x,
+                y) -> x;
         private Callable<T> factory;
         private Predicate<T> healthy = x -> true;
         private long idleTimeBeforeHealthCheckMs = 30;
@@ -123,7 +125,8 @@ public final class NonBlockingPool<T> implements Pool<T> {
         private Scheduler scheduler = Schedulers.computation();
         private long maxIdleTimeMs;
         private long releaseIntervalMs = TimeUnit.MINUTES.toMillis(30);
-        private BiFunction<T, Checkin, T> checkinDecorator;
+        @SuppressWarnings("unchecked")
+        private BiFunction<T, Checkin, T> checkinDecorator = (BiFunction<T, Checkin, T>) DEFAULT_CHECKIN_DECORATOR;
 
         private Builder() {
         }
