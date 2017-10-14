@@ -189,7 +189,6 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                         }
                     } else {
                         // this should not block because it just schedules emissions to observers
-                        m.preCheckout();
                         log.debug("emitting member");
                         if (tryEmit(obs, m)) {
                             e++;
@@ -265,6 +264,9 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                 m.checkin();
                 return false;
             }
+        }
+        if (m instanceof DecoratingMember) {
+            ((DecoratingMember<T>) m).preCheckout();
         }
         Worker worker = scheduler.createWorker();
         worker.schedule(new Emitter<T>(worker, oNext, m));
