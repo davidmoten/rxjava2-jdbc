@@ -21,7 +21,7 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> implem
     Flowable<?> dependsOn;
     int batchSize = DEFAULT_BATCH_SIZE;
 
-    public UpdateBuilder(String sql, Single<Connection> connections, Database db) {
+    UpdateBuilder(String sql, Single<Connection> connections, Database db) {
         super(sql);
         this.sql = sql;
         this.connections = connections;

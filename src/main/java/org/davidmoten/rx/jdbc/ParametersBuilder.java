@@ -11,7 +11,7 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
 
-class ParametersBuilder<T> {
+abstract class ParametersBuilder<T> {
 
     private static final Flowable<List<Object>> SINGLE_EMPTY_LIST = Flowable
             .just(Collections.emptyList());
