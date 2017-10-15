@@ -73,7 +73,6 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         this.checkoutRetryIntervalMs = pool.checkoutRetryIntervalMs;
         this.observers = new AtomicReference<>(EMPTY);
         this.pool = pool;
-
     }
 
     private DecoratingMember<T>[] createMembersArray(int poolMaxSize,
@@ -126,7 +125,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     public void cancel() {
         log.debug("cancel called");
         this.cancelled = true;
-        disposeValues();
+        disposeAll();
     }
 
     @Override
@@ -158,10 +157,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                 long e = 0;
                 while (e != r) {
                     if (cancelled) {
-                        initializedAvailable.clear();
-                        toBeReleased.clear();
-                        notInitialized.clear();
-                        disposeValues();
+                        disposeAll();
                         return;
                     }
                     Observers<T> obs = observers.get();
@@ -204,6 +200,14 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                 }
             }
         }
+    }
+
+    private void disposeAll() {
+        initializedAvailable.clear();
+        toBeReleased.clear();
+        notInitialized.clear();
+        disposeValues();
+        removeAllObservers();
     }
 
     static final class Releaser<T> implements Runnable {
@@ -294,7 +298,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
 
     private void disposeValues() {
         scheduled.dispose();
-        for (Member<T> member : members) {
+        for (DecoratingMember<T> member : members) {
             member.disposeValue();
         }
     }
@@ -312,6 +316,16 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
             active[n] = true;
             if (observers.compareAndSet(a,
                     new Observers<T>(b, active, a.activeCount + 1, a.index))) {
+                return;
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void removeAllObservers() {
+        while (true) {
+            Observers<T> a = observers.get();
+            if (observers.compareAndSet(a, EMPTY)) {
                 return;
             }
         }
