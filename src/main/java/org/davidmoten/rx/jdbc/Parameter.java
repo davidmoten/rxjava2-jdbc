@@ -53,7 +53,7 @@ public final class Parameter {
     public static class ParameterListBuilder {
         private final List<Parameter> list;
 
-        public ParameterListBuilder(List<Parameter> list) {
+        ParameterListBuilder(List<Parameter> list) {
             this.list = list;
         }
 
