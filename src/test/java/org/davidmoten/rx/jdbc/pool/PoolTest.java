@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc.pool;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.Connection;
@@ -9,13 +10,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
@@ -25,7 +26,7 @@ import io.reactivex.subscribers.TestSubscriber;
 public class PoolTest {
 
     @Test
-    @Ignore
+    // @Ignore
     // TODO fix test
     public void testMaxIdleTime() throws InterruptedException {
         TestScheduler s = new TestScheduler();
@@ -55,6 +56,18 @@ public class PoolTest {
         s.advanceTimeBy(1, TimeUnit.MINUTES);
         s.triggerActions();
         assertEquals(1, disposed.get());
+    }
+
+    @Test
+    public void testDirectSchedule() {
+        TestScheduler s = new TestScheduler();
+        AtomicBoolean b = new AtomicBoolean();
+        s.scheduleDirect(() -> b.set(true), 1, TimeUnit.MINUTES);
+        s.scheduleDirect(() -> b.set(false), 2, TimeUnit.MINUTES);
+        s.advanceTimeBy(1, TimeUnit.MINUTES);
+        assertTrue(b.get());
+        s.advanceTimeBy(1, TimeUnit.MINUTES);
+        assertFalse(b.get());
     }
 
     @Test

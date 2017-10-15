@@ -3,10 +3,15 @@ package org.davidmoten.rx.pool;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.reactivex.disposables.Disposable;
 import io.reactivex.plugins.RxJavaPlugins;
 
 final class DecoratingMember<T> implements Member<T> {
+
+    private static final Logger log = LoggerFactory.getLogger(DecoratingMember.class);
 
     private volatile T value;
     private final MemberSingle<T> memberSingle;
@@ -50,6 +55,7 @@ final class DecoratingMember<T> implements Member<T> {
                 scheduled.dispose();
                 scheduled = null;
             }
+            log.debug("disposing value {}", value);
             memberSingle.pool.disposer.accept(value);
             value = null;
         } catch (Throwable e) {

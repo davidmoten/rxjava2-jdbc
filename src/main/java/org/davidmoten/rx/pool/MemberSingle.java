@@ -223,12 +223,12 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         return scheduler.scheduleDirect(() -> {
             if (!cancelled) {
                 try {
+                    log.debug("creating value");
                     // this action might block so is scheduled
                     T value = pool.factory.call();
                     m.setValueAndClearReleasingFlag(value);
-                    initializedAvailable.offer(m);
                     requested.incrementAndGet();
-                    drain();
+                    checkin(m);
                 } catch (Throwable t) {
                     RxJavaPlugins.onError(t);
                     // check cancelled again because factory.call() is user specified and could have
@@ -426,6 +426,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     }
 
     public void release(DecoratingMember<T> m) {
+        log.debug("adding released member to notInitialized queue {}", m);
         notInitialized.offer(m);
         drain();
     }
