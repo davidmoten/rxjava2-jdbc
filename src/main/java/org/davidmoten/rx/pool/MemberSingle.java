@@ -190,7 +190,10 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                         }
                     }
                 }
-                if (e != 0L && r != Long.MAX_VALUE) {
+                // normally we don't reduce requested if it is Long.MAX_VALUE
+                // but given that the only way to increase requested is by subscribing
+                // (which increases it by one only) then requested will never be Long.MAX_VALUE
+                if (e != 0L) {
                     requested.addAndGet(-e);
                 }
                 missed = wip.addAndGet(-missed);
