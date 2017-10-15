@@ -53,8 +53,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         }
 
         public Builder connectionProvider(DataSource d) {
-            this.cp = Util.connectionProvider(d);
-            return this;
+            return connectionProvider(Util.connectionProvider(d));
         }
 
         public Builder url(String url) {
