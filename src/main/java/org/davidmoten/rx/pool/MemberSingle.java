@@ -166,12 +166,12 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                         break;
                     }
                     // check for an already initialized available member
-                    final DecoratingMember<T> m = (DecoratingMember<T>) initializedAvailable.poll();
+                    final DecoratingMember<T> m = initializedAvailable.poll();
                     log.debug("poll of available members returns " + m);
                     if (m == null) {
                         // no members available, check for a released member (that needs to be
                         // reinitialized before use)
-                        final DecoratingMember<T> m2 = (DecoratingMember<T>) notInitialized.poll();
+                        final DecoratingMember<T> m2 = notInitialized.poll();
                         if (m2 == null) {
                             break;
                         } else {
