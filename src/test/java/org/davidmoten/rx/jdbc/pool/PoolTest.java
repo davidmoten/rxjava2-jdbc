@@ -103,6 +103,7 @@ public class PoolTest {
             s.triggerActions();
             assertEquals(2, disposed.get());
         }
+        // check Pool.close() disposes value
         {
             TestSubscriber<Member<Integer>> ts = pool //
                     .member() //
