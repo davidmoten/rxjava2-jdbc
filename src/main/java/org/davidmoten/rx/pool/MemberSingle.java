@@ -111,7 +111,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         initializedAvailable.offer((DecoratingMember<T>) member);
         drain();
     }
-    
+
     public void addToBeReleased(DecoratingMember<T> member) {
         toBeReleased.offer(member);
         drain();
@@ -397,11 +397,18 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
             worker.dispose();
             try {
                 observer.child.onSuccess(m);
-                observer.dispose();
             } catch (Throwable e) {
                 RxJavaPlugins.onError(e);
+            } finally {
+                observer.dispose();
             }
         }
+    }
+
+    public void release(DecoratingMember<T> m) {
+        log.debug("adding released member to notInitialized queue {}", m);
+        notInitialized.offer(m);
+        drain();
     }
 
     static final class MemberSingleObserver<T> extends AtomicReference<MemberSingle<T>>
@@ -427,12 +434,6 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         public boolean isDisposed() {
             return get() == null;
         }
-    }
-
-    public void release(DecoratingMember<T> m) {
-        log.debug("adding released member to notInitialized queue {}", m);
-        notInitialized.offer(m);
-        drain();
     }
 
 }
