@@ -147,6 +147,8 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                     DecoratingMember<T> m;
                     while ((m = toBeReleased.poll()) != null) {
                         log.debug("scheduling release of {}", m);
+                        // we mark as releasing so that we can ignore it if already in the
+                        // initializedAvailable queue after concurrent checkin
                         m.markAsReleasing();
                         scheduled.add(scheduler.scheduleDirect(new Releaser<T>(m)));
                     }
