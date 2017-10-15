@@ -21,7 +21,7 @@ import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
 
-public class DatabaseCreator {
+public final class DatabaseCreator {
 
     private static final AtomicInteger dbNumber = new AtomicInteger();
 
