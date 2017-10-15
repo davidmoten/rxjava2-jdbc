@@ -47,7 +47,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     private volatile boolean cancelled;
 
     // synchronized by `wip`
-    private CompositeDisposable scheduled = new CompositeDisposable();
+    private final CompositeDisposable scheduled = new CompositeDisposable();
 
     final NonBlockingPool<T> pool;
 
@@ -56,7 +56,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
     // initialized (a scheduled action with a subsequent drain call)
     // or an existing value is available from the pool (queue) (and is then
     // emitted).
-    private AtomicLong requested = new AtomicLong();
+    private final AtomicLong requested = new AtomicLong();
 
     @SuppressWarnings("unchecked")
     MemberSingle(NonBlockingPool<T> pool) {
@@ -184,7 +184,7 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                         }
                     } else if (!m.isReleasing()) {
                         // this should not block because it just schedules emissions to observers
-                        log.debug("emitting member");
+                        log.debug("trying to emit member");
                         if (tryEmit(obs, m)) {
                             e++;
                         }
