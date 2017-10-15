@@ -57,7 +57,7 @@ public class PoolTest {
     }
 
     @Test
-    public void testReleasedMemberIsRecreated() throws InterruptedException {
+    public void testReleasedMemberIsRecreated() throws Exception {
         TestScheduler s = new TestScheduler();
         AtomicInteger count = new AtomicInteger();
         AtomicInteger disposed = new AtomicInteger();
@@ -103,7 +103,20 @@ public class PoolTest {
             s.triggerActions();
             assertEquals(2, disposed.get());
         }
-
+        {
+            TestSubscriber<Member<Integer>> ts = pool //
+                    .member() //
+                    .repeat() //
+                    .doOnNext(m -> m.checkin()) //
+                    .doOnNext(System.out::println) //
+                    .doOnRequest(t -> System.out.println("test request=" + t)) //
+                    .test(1);
+            s.triggerActions();
+            ts.assertValueCount(1);
+            assertEquals(2, disposed.get());
+        }
+        pool.close();
+        assertEquals(3, disposed.get());
     }
 
     @Test
