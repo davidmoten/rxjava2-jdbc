@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
+import org.davidmoten.rx.pool.Consumers;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
@@ -33,8 +34,7 @@ public class PoolTest {
         Pool<Integer> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
                 .healthy(n -> true) //
-                .disposer(n -> {
-                }) //
+                .disposer(Consumers.doNothing()) //
                 .maxSize(3) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) //
@@ -54,6 +54,56 @@ public class PoolTest {
         s.advanceTimeBy(1, TimeUnit.MINUTES);
         s.triggerActions();
         assertEquals(1, disposed.get());
+    }
+
+    @Test
+    public void testReleasedMemberIsRecreated() throws InterruptedException {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger count = new AtomicInteger();
+        AtomicInteger disposed = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthy(n -> true) //
+                .disposer(Consumers.doNothing()) //
+                .maxSize(1) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) //
+                .disposer(n -> disposed.incrementAndGet()) //
+                .scheduler(s) //
+                .build();
+        {
+            TestSubscriber<Member<Integer>> ts = pool //
+                    .member() //
+                    .repeat() //
+                    .doOnNext(m -> m.checkin()) //
+                    .doOnNext(System.out::println) //
+                    .doOnRequest(t -> System.out.println("test request=" + t)) //
+                    .test(1);
+            s.triggerActions();
+            ts.assertValueCount(1);
+            assertEquals(0, disposed.get());
+            s.advanceTimeBy(1, TimeUnit.MINUTES);
+            s.triggerActions();
+            assertEquals(1, disposed.get());
+            ts.cancel();
+            assertEquals(1, disposed.get());
+        }
+        {
+            TestSubscriber<Member<Integer>> ts = pool //
+                    .member() //
+                    .repeat() //
+                    .doOnNext(m -> m.checkin()) //
+                    .doOnNext(System.out::println) //
+                    .doOnRequest(t -> System.out.println("test request=" + t)) //
+                    .test(1);
+            s.triggerActions();
+            ts.assertValueCount(1);
+            assertEquals(1, disposed.get());
+            s.advanceTimeBy(1, TimeUnit.MINUTES);
+            s.triggerActions();
+            assertEquals(2, disposed.get());
+        }
+
     }
 
     @Test

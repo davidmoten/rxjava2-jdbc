@@ -111,6 +111,11 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
         initializedAvailable.offer((DecoratingMember<T>) member);
         drain();
     }
+    
+    public void addToBeReleased(DecoratingMember<T> member) {
+        toBeReleased.offer(member);
+        drain();
+    }
 
     @Override
     public void request(long n) {
