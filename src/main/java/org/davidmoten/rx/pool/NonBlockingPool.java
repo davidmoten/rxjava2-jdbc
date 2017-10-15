@@ -29,7 +29,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
     private final AtomicReference<MemberSingle<T>> member = new AtomicReference<>();
     private volatile boolean closed;
 
-    private NonBlockingPool(Callable<? extends T> factory, Predicate<? super T> healthy,
+    NonBlockingPool(Callable<? extends T> factory, Predicate<? super T> healthy,
             Consumer<? super T> disposer, int maxSize,
             long returnToPoolDelayAfterHealthCheckFailureMs, long idleTimeBeforeHealthCheckMs,
             long maxIdleTimeMs, long checkoutRetryIntervalMs,

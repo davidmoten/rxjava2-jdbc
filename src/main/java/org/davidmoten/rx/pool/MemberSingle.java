@@ -24,7 +24,7 @@ import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.plugins.RxJavaPlugins;
 
-class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeable, Runnable {
+final class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeable, Runnable {
 
     final AtomicReference<Observers<T>> observers;
 
