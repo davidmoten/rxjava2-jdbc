@@ -277,7 +277,6 @@ class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeab
                 return false;
             }
         }
-        m.preCheckout();
         Worker worker = scheduler.createWorker();
         worker.schedule(new Emitter<T>(worker, oNext, m));
         return true;

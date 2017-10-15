@@ -26,8 +26,6 @@ import io.reactivex.subscribers.TestSubscriber;
 public class PoolTest {
 
     @Test
-    // @Ignore
-    // TODO fix test
     public void testMaxIdleTime() throws InterruptedException {
         TestScheduler s = new TestScheduler();
         AtomicInteger count = new AtomicInteger();
