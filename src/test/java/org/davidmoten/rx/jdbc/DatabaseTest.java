@@ -482,104 +482,118 @@ public class DatabaseTest {
     @Test
     public void testUpdateBlobWithBlob() throws SQLException {
         try (Database db = db()) {
-        Blob blob = new JDBCBlobFile(new File("src/test/resources/big.txt"));
-        insertPersonBlob(db);
-        db //
-                .update("update person_blob set document = :doc") //
-                .parameter("doc", blob) //
-                .counts() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
+            Blob blob = new JDBCBlobFile(new File("src/test/resources/big.txt"));
+            insertPersonBlob(db);
+            db //
+                    .update("update person_blob set document = :doc") //
+                    .parameter("doc", blob) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
         }
     }
 
     @Test
     public void testUpdateBlobWithNull() {
-        Database db = db();
-        insertPersonBlob(db);
-        db //
-                .update("update person_blob set document = :doc") //
-                .parameter("doc", Database.NULL_BLOB) //
-                .counts() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
+        try (Database db = db()) {
+            insertPersonBlob(db);
+            db //
+                    .update("update person_blob set document = :doc") //
+                    .parameter("doc", Database.NULL_BLOB) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+        }
     }
 
     @Test(expected = NullPointerException.class)
     public void testSelectUsingNullNameInParameter() {
-        db() //
-                .select("select score from person where name=:name") //
-                .parameter(null, "FRED"); //
+        try (Database db = db()) {
+            db //
+                    .select("select score from person where name=:name") //
+                    .parameter(null, "FRED"); //
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testSelectUsingNameDoesNotExist() {
-        db() //
-                .select("select score from person where name=:name") //
-                .parameters("nam", "FRED");
+        try (Database db = db()) {
+            db //
+                    .select("select score from person where name=:name") //
+                    .parameters("nam", "FRED");
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testSelectUsingNameWithoutSpecifyingNameThrowsImmediately() {
-        db() //
-                .select("select score from person where name=:name") //
-                .parameters("FRED", "JOSEPH");
+        try (Database db = db()) {
+            db //
+                    .select("select score from person where name=:name") //
+                    .parameters("FRED", "JOSEPH");
+        }
     }
 
     @Test
     public void testSelectTransacted() {
-        System.out.println("testSelectTransacted");
-        db() //
-                .select("select score from person where name=?") //
-                .parameters("FRED", "JOSEPH") //
-                .transacted() //
-                .getAs(Integer.class) //
-                .doOnNext(tx -> System.out.println(tx.isComplete() ? "complete" : tx.value())) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(3) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .transacted() //
+                    .getAs(Integer.class) //
+                    .doOnNext(tx -> System.out.println(tx.isComplete() ? "complete" : tx.value())) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(3) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectAutomappedAnnotatedTransacted() {
-        db() //
-                .select(Person10.class) //
-                .transacted() //
-                .valuesOnly() //
-                .get().test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(3) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select(Person10.class) //
+                    .transacted() //
+                    .valuesOnly() //
+                    .get().test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(3) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectAutomappedTransactedValuesOnly() {
-        db() //
-                .select("select name, score from person") //
-                .transacted() //
-                .valuesOnly() //
-                .autoMap(Person2.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(3) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select name, score from person") //
+                    .transacted() //
+                    .valuesOnly() //
+                    .autoMap(Person2.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(3) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectAutomappedTransacted() {
-        db() //
-                .select("select name, score from person") //
-                .transacted() //
-                .autoMap(Person2.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(4) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select name, score from person") //
+                    .transacted() //
+                    .autoMap(Person2.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(4) //
+                    .assertComplete();
+        }
     }
 
     @Test
