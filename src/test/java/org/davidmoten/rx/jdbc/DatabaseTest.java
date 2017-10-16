@@ -304,7 +304,7 @@ public class DatabaseTest {
                                 if (!x.equals(Lists.newArrayList(21, 34))) {
                                     throw new RuntimeException("run broken");
                                 } else {
-                                    // System.out.println(iCopy + " succeeded");
+                                    // log.debug(iCopy + " succeeded");
                                 }
                             }) //
                             .doOnSuccess(x -> {
@@ -545,7 +545,8 @@ public class DatabaseTest {
                     .parameters("FRED", "JOSEPH") //
                     .transacted() //
                     .getAs(Integer.class) //
-                    .doOnNext(tx -> System.out.println(tx.isComplete() ? "complete" : tx.value())) //
+                    .doOnNext(tx -> log
+                            .debug(tx.isComplete() ? "complete" : String.valueOf(tx.value()))) //
                     .test() //
                     .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                     .assertValueCount(3) //
@@ -801,7 +802,8 @@ public class DatabaseTest {
                 .transacted() //
                 .transactedValuesOnly() //
                 .getAs(Integer.class) //
-                .doOnNext(tx -> System.out.println(tx.isComplete() ? "complete" : tx.value()))//
+                .doOnNext(
+                        tx -> log.debug(tx.isComplete() ? "complete" : String.valueOf(tx.value())))//
                 .flatMap(tx -> tx //
                         .select("select name from person where score = ?") //
                         .parameter(tx.value()) //
@@ -823,7 +825,7 @@ public class DatabaseTest {
 
     @Test
     public void testSelectChained() {
-        System.out.println("testSelectChained");
+        log.debug("testSelectChained");
         // we can do this with 1 connection only!
         Database db = db(1);
         db.select("select score from person where name=?") //
@@ -900,7 +902,7 @@ public class DatabaseTest {
                 .parameter("FRED") //
                 .getAs(Integer.class) //
                 .doOnNext(x -> list.add("emitted")) //
-                .doOnNext(x -> System.out.println("emitted on " + Thread.currentThread().getName())) //
+                .doOnNext(x -> log.debug("emitted on " + Thread.currentThread().getName())) //
                 .doOnNext(x -> latch.countDown()) //
                 .subscribe();
         list.add("subscribed");
@@ -1688,7 +1690,7 @@ public class DatabaseTest {
                     .getAs(Integer.class) //
                     .test() //
                     .assertValueCount(0);
-            System.out.println("done2");
+            log.debug("done2");
             scheduler.advanceTimeBy(1, TimeUnit.MINUTES);
             Thread.sleep(200);
             ts.assertValueCount(1);
@@ -1963,15 +1965,15 @@ public class DatabaseTest {
                 .transaction();
 
         transaction //
-                .doOnDispose(() -> System.out.println("disposing")) //
+                .doOnDispose(() -> log.debug("disposing")) //
                 .doOnSuccess(System.out::println) //
                 .flatMapPublisher(tx -> {
-                    System.out.println("flatmapping");
+                    log.debug("flatmapping");
                     return tx //
                             .update("update person set score = -4 where score = -3") //
                             .countsOnly() //
-                            .doOnSubscribe(s -> System.out.println("subscribed")) //
-                            .doOnNext(num -> System.out.println("num=" + num));
+                            .doOnSubscribe(s -> log.debug("subscribed")) //
+                            .doOnNext(num -> log.debug("num=" + num));
                 }) //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
@@ -1989,16 +1991,16 @@ public class DatabaseTest {
                 .firstOrError();
 
         transaction //
-                .doOnDispose(() -> System.out.println("disposing")) //
+                .doOnDispose(() -> log.debug("disposing")) //
                 .doOnSuccess(System.out::println) //
                 .flatMapPublisher(tx -> {
-                    System.out.println("flatmapping");
+                    log.debug("flatmapping");
                     return tx //
                             .update("update person set score = -4 where score = ?") //
                             .parameter(tx.value()) //
                             .countsOnly() //
-                            .doOnSubscribe(s -> System.out.println("subscribed")) //
-                            .doOnNext(num -> System.out.println("num=" + num));
+                            .doOnSubscribe(s -> log.debug("subscribed")) //
+                            .doOnNext(num -> log.debug("num=" + num));
                 }) //
                 .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
