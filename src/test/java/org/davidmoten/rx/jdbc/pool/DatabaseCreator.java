@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.IOUtils;
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Database;
+import org.davidmoten.rx.jdbc.ExecutorScheduler;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 
 import io.reactivex.Scheduler;
@@ -83,11 +84,15 @@ public final class DatabaseCreator {
     }
 
     public static Database create(int maxSize, boolean big, Scheduler scheduler) {
-        return Database.from(Pools.nonBlocking() //
+        NonBlockingConnectionPool pool = Pools.nonBlocking() //
                 .connectionProvider(connectionProvider(nextUrl(), big)) //
                 .maxPoolSize(maxSize) //
                 .scheduler(scheduler) //
-                .build(), () -> scheduler.shutdown());
+                .build();
+        return Database.from(pool, () -> {
+                    pool.close();
+                    scheduler.shutdown();
+                });
     }
 
     public static ConnectionProvider connectionProvider() {

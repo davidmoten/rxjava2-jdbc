@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc.pool;
 
 import java.sql.Connection;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -20,6 +21,7 @@ import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
+import io.reactivex.internal.schedulers.ExecutorScheduler;
 import io.reactivex.schedulers.Schedulers;
 
 public final class NonBlockingConnectionPool implements Pool<Connection> {
@@ -139,7 +141,8 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
 
         public NonBlockingConnectionPool build() {
             if (scheduler == null) {
-                scheduler = Schedulers.from(Executors.newFixedThreadPool(maxPoolSize));
+                ExecutorService executor = Executors.newFixedThreadPool(maxPoolSize);
+                scheduler = new ExecutorScheduler(executor);
             }
             return new NonBlockingConnectionPool(NonBlockingPool //
                     .factory(() -> cp.get()) //

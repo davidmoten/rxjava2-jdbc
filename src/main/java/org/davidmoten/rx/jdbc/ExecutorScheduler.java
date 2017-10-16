@@ -1,4 +1,4 @@
-package org.davidmoten.rx.jdbc.pool;
+package org.davidmoten.rx.jdbc;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
