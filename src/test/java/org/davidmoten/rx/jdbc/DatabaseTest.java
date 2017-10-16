@@ -919,26 +919,30 @@ public class DatabaseTest {
 
     @Test
     public void testAutoMapToInterface() {
-        db() //
-                .select("select name from person") //
-                .autoMap(Person.class) //
-                .map(p -> p.name()) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(3) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select name from person") //
+                    .autoMap(Person.class) //
+                    .map(p -> p.name()) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(3) //
+                    .assertComplete();
+        }
     }
 
     @Test
-    public void testAutoMapToInterfaceWithoutAnnotationsEmitsError() {
-        db() //
-                .select("select name from person") //
-                .autoMap(PersonNoAnnotation.class) //
-                .map(p -> p.name()) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoValues() //
-                .assertError(AnnotationsNotFoundException.class);
+    public void testAutoMapToInterfaceWithoutAnnotationstsError() {
+        try (Database db = db()) {
+            db //
+                    .select("select name from person") //
+                    .autoMap(PersonNoAnnotation.class) //
+                    .map(p -> p.name()) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoValues() //
+                    .assertError(AnnotationsNotFoundException.class);
+        }
     }
 
     @Test
