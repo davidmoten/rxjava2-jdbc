@@ -3,7 +3,6 @@ package org.davidmoten.rx.jdbc;
 import java.util.List;
 
 import com.github.davidmoten.guavamini.Lists;
-import com.github.davidmoten.guavamini.Preconditions;
 
 /**
  * Encapsulates a query parameter.
@@ -76,13 +75,14 @@ public final class Parameter {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        if (value instanceof String)
-            builder.append("'");
-        builder.append(value);
-        if (value instanceof String)
-            builder.append("'");
-        return builder.toString();
+        StringBuilder b = new StringBuilder();
+        b.append("Parameter[");
+        b.append("name=");
+        b.append(name);
+        b.append(", value=");
+        b.append(String.valueOf(value));
+        b.append("]");
+        return b.toString();
     }
 
     public static Parameter create(String name, Object value) {
