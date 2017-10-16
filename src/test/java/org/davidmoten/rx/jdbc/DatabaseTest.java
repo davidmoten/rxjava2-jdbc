@@ -825,89 +825,96 @@ public class DatabaseTest {
 
     @Test
     public void testSelectChained() {
-        log.debug("testSelectChained");
-        // we can do this with 1 connection only!
-        Database db = db(1);
-        db.select("select score from person where name=?") //
-                .parameters("FRED", "JOSEPH") //
-                .getAs(Integer.class) //
-                .doOnNext(System.out::println) //
-                .concatMap(score -> {
-                    log.info("score={}", score);
-                    return db //
-                            .select("select name from person where score = ?") //
-                            .parameter(score) //
-                            .getAs(String.class) //
-                            .doOnComplete(() -> log.info("completed select where score=" + score));
-                }) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoErrors() //
-                .assertValues("FRED", "JOSEPH") //
-                .assertComplete(); //
+        try (Database db = db(1)) {
+            // we can do this with 1 connection only!
+            db.select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .getAs(Integer.class) //
+                    .doOnNext(System.out::println) //
+                    .concatMap(score -> {
+                        log.info("score={}", score);
+                        return db //
+                                .select("select name from person where score = ?") //
+                                .parameter(score) //
+                                .getAs(String.class) //
+                                .doOnComplete(
+                                        () -> log.info("completed select where score=" + score));
+                    }) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues("FRED", "JOSEPH") //
+                    .assertComplete(); //
+        }
     }
 
     @Test
     @SuppressFBWarnings
     public void testReadMeFragment1() {
-        Database db = Database.test();
-        db.select("select name from person") //
-                .getAs(String.class) //
-                .forEach(System.out::println);
+        try (Database db = db()) {
+            db.select("select name from person") //
+                    .getAs(String.class) //
+                    .forEach(System.out::println);
+        }
     }
 
     @Test
     public void testReadMeFragmentColumnDoesNotExistEmitsSqlSyntaxErrorException() {
-        Database db = Database.test();
-        db.select("select nam from person") //
-                .getAs(String.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoValues() //
-                .assertError(SQLSyntaxErrorException.class);
+        try (Database db = Database.test()) {
+            db.select("select nam from person") //
+                    .getAs(String.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoValues() //
+                    .assertError(SQLSyntaxErrorException.class);
+        }
     }
 
     @Test
     public void testReadMeFragmentDerbyHealthCheck() {
-        Database db = Database.test();
-        db.select("select 'a' from sysibm.sysdummy1") //
-                .getAs(String.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue("a") //
-                .assertComplete();
+        try (Database db = Database.test()) {
+            db.select("select 'a' from sysibm.sysdummy1") //
+                    .getAs(String.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue("a") //
+                    .assertComplete();
+        }
     }
 
     @Test
     @SuppressFBWarnings
     public void testTupleSupport() {
-        db().select("select name, score from person") //
-                .getAs(String.class, Integer.class) //
-                .forEach(System.out::println);
+        try (Database db = db()) {
+            db.select("select name, score from person") //
+                    .getAs(String.class, Integer.class) //
+                    .forEach(System.out::println);
+        }
     }
 
     @Test
     public void testDelayedCallsAreNonBlocking() throws InterruptedException {
         List<String> list = new CopyOnWriteArrayList<String>();
-        Database db = db(1); //
-        db.select("select score from person where name=?") //
-                .parameter("FRED") //
-                .getAs(Integer.class) //
-                .doOnNext(x -> Thread.sleep(1000)) //
-                .subscribeOn(Schedulers.io()) //
-                .subscribe();
-        Thread.sleep(100);
-        CountDownLatch latch = new CountDownLatch(1);
-        db.select("select score from person where name=?") //
-                .parameter("FRED") //
-                .getAs(Integer.class) //
-                .doOnNext(x -> list.add("emitted")) //
-                .doOnNext(x -> log.debug("emitted on " + Thread.currentThread().getName())) //
-                .doOnNext(x -> latch.countDown()) //
-                .subscribe();
-        list.add("subscribed");
-        assertTrue(latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
-        assertEquals(Arrays.asList("subscribed", "emitted"), list);
+        try (Database db = db(1)) { //
+            db.select("select score from person where name=?") //
+                    .parameter("FRED") //
+                    .getAs(Integer.class) //
+                    .doOnNext(x -> Thread.sleep(1000)) //
+                    .subscribeOn(Schedulers.io()) //
+                    .subscribe();
+            Thread.sleep(100);
+            CountDownLatch latch = new CountDownLatch(1);
+            db.select("select score from person where name=?") //
+                    .parameter("FRED") //
+                    .getAs(Integer.class) //
+                    .doOnNext(x -> list.add("emitted")) //
+                    .doOnNext(x -> log.debug("emitted on " + Thread.currentThread().getName())) //
+                    .doOnNext(x -> latch.countDown()) //
+                    .subscribe();
+            list.add("subscribed");
+            assertTrue(latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            assertEquals(Arrays.asList("subscribed", "emitted"), list);
+        }
     }
 
     @Test
