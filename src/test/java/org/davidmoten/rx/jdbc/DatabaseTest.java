@@ -598,72 +598,80 @@ public class DatabaseTest {
 
     @Test
     public void testSelectTransactedTuple2() {
-        Tx<Tuple2<String, Integer>> t = db() //
-                .select("select name, score from person where name=?") //
-                .parameters("FRED") //
-                .transacted() //
-                .getAs(String.class, Integer.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(2) //
-                .assertComplete() //
-                .values().get(0);
-        assertEquals("FRED", t.value()._1());
-        assertEquals(21, (int) t.value()._2());
+        try (Database db = db()) {
+            Tx<Tuple2<String, Integer>> t = db //
+                    .select("select name, score from person where name=?") //
+                    .parameters("FRED") //
+                    .transacted() //
+                    .getAs(String.class, Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(2) //
+                    .assertComplete() //
+                    .values().get(0);
+            assertEquals("FRED", t.value()._1());
+            assertEquals(21, (int) t.value()._2());
+        }
     }
 
     @Test
     public void testSelectTransactedTuple3() {
-        Tx<Tuple3<String, Integer, String>> t = db() //
-                .select("select name, score, name from person where name=?") //
-                .parameters("FRED") //
-                .transacted() //
-                .getAs(String.class, Integer.class, String.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(2) //
-                .assertComplete() //
-                .values().get(0);
-        assertEquals("FRED", t.value()._1());
-        assertEquals(21, (int) t.value()._2());
-        assertEquals("FRED", t.value()._3());
+        try (Database db = db()) {
+            Tx<Tuple3<String, Integer, String>> t = db //
+                    .select("select name, score, name from person where name=?") //
+                    .parameters("FRED") //
+                    .transacted() //
+                    .getAs(String.class, Integer.class, String.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(2) //
+                    .assertComplete() //
+                    .values().get(0);
+            assertEquals("FRED", t.value()._1());
+            assertEquals(21, (int) t.value()._2());
+            assertEquals("FRED", t.value()._3());
+        }
     }
 
     @Test
     public void testSelectTransactedTuple4() {
-        Tx<Tuple4<String, Integer, String, Integer>> t = db() //
-                .select("select name, score, name, score from person where name=?") //
-                .parameters("FRED") //
-                .transacted() //
-                .getAs(String.class, Integer.class, String.class, Integer.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(2) //
-                .assertComplete() //
-                .values().get(0);
-        assertEquals("FRED", t.value()._1());
-        assertEquals(21, (int) t.value()._2());
-        assertEquals("FRED", t.value()._3());
-        assertEquals(21, (int) t.value()._4());
+        try (Database db = db()) {
+            Tx<Tuple4<String, Integer, String, Integer>> t = db //
+                    .select("select name, score, name, score from person where name=?") //
+                    .parameters("FRED") //
+                    .transacted() //
+                    .getAs(String.class, Integer.class, String.class, Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(2) //
+                    .assertComplete() //
+                    .values().get(0);
+            assertEquals("FRED", t.value()._1());
+            assertEquals(21, (int) t.value()._2());
+            assertEquals("FRED", t.value()._3());
+            assertEquals(21, (int) t.value()._4());
+        }
     }
 
     @Test
     public void testSelectTransactedTuple5() {
-        Tx<Tuple5<String, Integer, String, Integer, String>> t = db() //
-                .select("select name, score, name, score, name from person where name=?") //
-                .parameters("FRED") //
-                .transacted() //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(2) //
-                .assertComplete() //
-                .values().get(0);
-        assertEquals("FRED", t.value()._1());
-        assertEquals(21, (int) t.value()._2());
-        assertEquals("FRED", t.value()._3());
-        assertEquals(21, (int) t.value()._4());
-        assertEquals("FRED", t.value()._5());
+        try (Database db = db()) {
+            Tx<Tuple5<String, Integer, String, Integer, String>> t = db //
+                    .select("select name, score, name, score, name from person where name=?") //
+                    .parameters("FRED") //
+                    .transacted() //
+                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(2) //
+                    .assertComplete() //
+                    .values().get(0);
+            assertEquals("FRED", t.value()._1());
+            assertEquals(21, (int) t.value()._2());
+            assertEquals("FRED", t.value()._3());
+            assertEquals(21, (int) t.value()._4());
+            assertEquals("FRED", t.value()._5());
+        }
     }
 
     @Test
