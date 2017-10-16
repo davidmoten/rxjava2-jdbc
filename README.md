@@ -489,7 +489,7 @@ What has happened is that
 
 Large objects support
 ------------------------------
-Blob and Clobs are straightforward to handle.
+Blobs and Clobs are straightforward to handle.
 
 ### Insert a Clob
 Here's how to insert a String value into a Clob (*document* column below is of type ```CLOB```):
