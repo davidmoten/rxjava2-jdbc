@@ -795,25 +795,26 @@ public class DatabaseTest {
 
     @Test
     public void testSelectTransactedChained() throws Exception {
-        Database db = db();
-        db //
-                .select("select score from person where name=?") //
-                .parameters("FRED", "JOSEPH") //
-                .transacted() //
-                .transactedValuesOnly() //
-                .getAs(Integer.class) //
-                .doOnNext(
-                        tx -> log.debug(tx.isComplete() ? "complete" : String.valueOf(tx.value())))//
-                .flatMap(tx -> tx //
-                        .select("select name from person where score = ?") //
-                        .parameter(tx.value()) //
-                        .valuesOnly() //
-                        .getAs(String.class)) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoErrors() //
-                .assertValues("FRED", "JOSEPH") //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .transacted() //
+                    .transactedValuesOnly() //
+                    .getAs(Integer.class) //
+                    .doOnNext(tx -> log
+                            .debug(tx.isComplete() ? "complete" : String.valueOf(tx.value())))//
+                    .flatMap(tx -> tx //
+                            .select("select name from person where score = ?") //
+                            .parameter(tx.value()) //
+                            .valuesOnly() //
+                            .getAs(String.class)) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues("FRED", "JOSEPH") //
+                    .assertComplete();
+        }
     }
 
     @Test
@@ -1577,13 +1578,14 @@ public class DatabaseTest {
 
     @Test
     public void testInsertNullClobAndReadClobAsString() {
-        Database db = db();
-        insertNullClob(db);
-        db.select("select document from person_clob where name='FRED'") //
-                .getAsOptional(String.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(Optional.<String>empty()) //
-                .assertComplete();
+        try (Database db = db()) {
+            insertNullClob(db);
+            db.select("select document from person_clob where name='FRED'") //
+                    .getAsOptional(String.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(Optional.<String>empty()) //
+                    .assertComplete();
+        }
     }
 
     private static void insertNullClob(Database db) {
@@ -1626,59 +1628,63 @@ public class DatabaseTest {
 
     @Test
     public void testInsertNullClobAndReadClobAsTuple2() {
-        Database db = db();
-        insertNullClob(db);
-        db.select("select document, document from person_clob where name='FRED'") //
-                .getAs(String.class, String.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(Tuple2.create(null, null)) //
-                .assertComplete();
+        try (Database db = db()) {
+            insertNullClob(db);
+            db.select("select document, document from person_clob where name='FRED'") //
+                    .getAs(String.class, String.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(Tuple2.create(null, null)) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testInsertClobAndReadClobAsString() {
-        Database db = db();
-        db.update("insert into person_clob(name,document) values(?,?)") //
-                .parameters("FRED", "some text here") //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
-        db.select("select document from person_clob where name='FRED'") //
-                .getAs(String.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) // .assertValue("some
-                                                                     // text
-                                                                     // here")
-                                                                     // //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("insert into person_clob(name,document) values(?,?)") //
+                    .parameters("FRED", "some text here") //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+            db.select("select document from person_clob where name='FRED'") //
+                    .getAs(String.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) // .assertValue("some
+                                                                         // text
+                                                                         // here")
+                                                                         // //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testInsertClobAndReadClobUsingReader() {
-        Database db = db();
-        db.update("insert into person_clob(name,document) values(?,?)") //
-                .parameters("FRED", "some text here") //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
-        db.select("select document from person_clob where name='FRED'") //
-                .getAs(Reader.class) //
-                .map(r -> read(r)).test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue("some text here") //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("insert into person_clob(name,document) values(?,?)") //
+                    .parameters("FRED", "some text here") //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+            db.select("select document from person_clob where name='FRED'") //
+                    .getAs(Reader.class) //
+                    .map(r -> read(r)).test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue("some text here") //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testInsertBlobAndReadBlobAsByteArray() {
-        Database db = db();
-        insertPersonBlob(db);
-        db.select("select document from person_blob where name='FRED'") //
-                .getAs(byte[].class) //
-                .map(b -> new String(b)) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue("some text here") //
-                .assertComplete();
+        try (Database db = db()) {
+            insertPersonBlob(db);
+            db.select("select document from person_blob where name='FRED'") //
+                    .getAs(byte[].class) //
+                    .map(b -> new String(b)) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue("some text here") //
+                    .assertComplete();
+        }
     }
 
     private static void insertPersonBlob(Database db) {
@@ -1693,21 +1699,22 @@ public class DatabaseTest {
 
     @Test
     public void testInsertBlobAndReadBlobAsInputStream() {
-        Database db = db();
-        byte[] bytes = "some text here".getBytes();
-        db.update("insert into person_blob(name,document) values(?,?)") //
-                .parameters("FRED", new ByteArrayInputStream(bytes)) //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
-        db.select("select document from person_blob where name='FRED'") //
-                .getAs(InputStream.class) //
-                .map(is -> read(is)) //
-                .map(b -> new String(b)) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue("some text here") //
-                .assertComplete();
+        try (Database db = db()) {
+            byte[] bytes = "some text here".getBytes();
+            db.update("insert into person_blob(name,document) values(?,?)") //
+                    .parameters("FRED", new ByteArrayInputStream(bytes)) //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+            db.select("select document from person_blob where name='FRED'") //
+                    .getAs(InputStream.class) //
+                    .map(is -> read(is)) //
+                    .map(b -> new String(b)) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue("some text here") //
+                    .assertComplete();
+        }
     }
 
     private static String read(Reader reader) throws IOException {
@@ -1845,136 +1852,143 @@ public class DatabaseTest {
     @Test
     public void testUpdateCalendarParameter() {
         Calendar c = GregorianCalendar.from(ZonedDateTime.parse("2017-03-25T15:37Z"));
-        Database db = db();
-        db.update("update person set registered=?") //
-                .parameter(c) //
-                .counts() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(3) //
-                .assertComplete();
-        db.select("select registered from person") //
-                .getAs(Long.class) //
-                .firstOrError() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(c.getTimeInMillis()) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set registered=?") //
+                    .parameter(c) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(3) //
+                    .assertComplete();
+            db.select("select registered from person") //
+                    .getAs(Long.class) //
+                    .firstOrError() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(c.getTimeInMillis()) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateTimeParameter() {
-        Database db = db();
-        Time t = new Time(1234);
-        db.update("update person set registered=?") //
-                .parameter(t) //
-                .counts() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(3) //
-                .assertComplete();
-        db.select("select registered from person") //
-                .getAs(Long.class) //
-                .firstOrError() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1234L) //
-                .assertComplete();
+        try (Database db = db()) {
+            Time t = new Time(1234);
+            db.update("update person set registered=?") //
+                    .parameter(t) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(3) //
+                    .assertComplete();
+            db.select("select registered from person") //
+                    .getAs(Long.class) //
+                    .firstOrError() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1234L) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateTimestampParameter() {
-        Database db = db();
-        Timestamp t = new Timestamp(1234);
-        db.update("update person set registered=?") //
-                .parameter(t) //
-                .counts() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(3) //
-                .assertComplete();
-        db.select("select registered from person") //
-                .getAs(Long.class) //
-                .firstOrError() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1234L) //
-                .assertComplete();
+        try (Database db = db()) {
+            Timestamp t = new Timestamp(1234);
+            db.update("update person set registered=?") //
+                    .parameter(t) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(3) //
+                    .assertComplete();
+            db.select("select registered from person") //
+                    .getAs(Long.class) //
+                    .firstOrError() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1234L) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateSqlDateParameter() {
-        Database db = db();
-        java.sql.Date t = new java.sql.Date(1234);
+        try (Database db = db()) {
+            java.sql.Date t = new java.sql.Date(1234);
 
-        db.update("update person set registered=?") //
-                .parameter(t) //
-                .counts() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(3) //
-                .assertComplete();
-        db.select("select registered from person") //
-                .getAs(Long.class) //
-                .firstOrError() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS * 10000, TimeUnit.SECONDS) //
-                // TODO make a more accurate comparison using the current TZ
-                .assertValue(x -> Math.abs(x - 1234) <= TimeUnit.HOURS.toMillis(24)) //
-                .assertComplete();
+            db.update("update person set registered=?") //
+                    .parameter(t) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(3) //
+                    .assertComplete();
+            db.select("select registered from person") //
+                    .getAs(Long.class) //
+                    .firstOrError() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS * 10000, TimeUnit.SECONDS) //
+                    // TODO make a more accurate comparison using the current TZ
+                    .assertValue(x -> Math.abs(x - 1234) <= TimeUnit.HOURS.toMillis(24)) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateUtilDateParameter() {
-        Database db = db();
-        Date d = new Date(1234);
-        db.update("update person set registered=?") //
-                .parameter(d) //
-                .counts() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(3) //
-                .assertComplete();
-        db.select("select registered from person") //
-                .getAs(Long.class) //
-                .firstOrError() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1234L) //
-                .assertComplete();
+        try (Database db = db()) {
+            Date d = new Date(1234);
+            db.update("update person set registered=?") //
+                    .parameter(d) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(3) //
+                    .assertComplete();
+            db.select("select registered from person") //
+                    .getAs(Long.class) //
+                    .firstOrError() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1234L) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateTimestampAsInstant() {
-        Database db = db();
-        db.update("update person set registered=? where name='FRED'") //
-                .parameter(Instant.ofEpochMilli(FRED_REGISTERED_TIME)) //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
-        db.select("select registered from person where name='FRED'") //
-                .getAs(Long.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(FRED_REGISTERED_TIME) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set registered=? where name='FRED'") //
+                    .parameter(Instant.ofEpochMilli(FRED_REGISTERED_TIME)) //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+            db.select("select registered from person where name='FRED'") //
+                    .getAs(Long.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(FRED_REGISTERED_TIME) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateTimestampAsZonedDateTime() {
-        Database db = db();
-        db.update("update person set registered=? where name='FRED'") //
-                .parameter(ZonedDateTime.ofInstant(Instant.ofEpochMilli(FRED_REGISTERED_TIME),
-                        ZoneOffset.UTC.normalized())) //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
-        db.select("select registered from person where name='FRED'") //
-                .getAs(Long.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(FRED_REGISTERED_TIME) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set registered=? where name='FRED'") //
+                    .parameter(ZonedDateTime.ofInstant(Instant.ofEpochMilli(FRED_REGISTERED_TIME),
+                            ZoneOffset.UTC.normalized())) //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+            db.select("select registered from person where name='FRED'") //
+                    .getAs(Long.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(FRED_REGISTERED_TIME) //
+                    .assertComplete();
+        }
     }
 
     @Test
