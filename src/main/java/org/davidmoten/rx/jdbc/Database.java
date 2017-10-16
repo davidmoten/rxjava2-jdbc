@@ -6,8 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,7 +22,6 @@ import org.davidmoten.rx.pool.Pool;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
-import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.functions.Action;
 
@@ -67,8 +64,6 @@ public final class Database implements AutoCloseable {
     public static Database from(@Nonnull String url, int maxPoolSize) {
         Preconditions.checkNotNull(url, "url cannot be null");
         Preconditions.checkArgument(maxPoolSize > 0, "maxPoolSize must be greater than 0");
-        ExecutorService executor = Executors.newFixedThreadPool(maxPoolSize);
-        Scheduler scheduler = new ExecutorScheduler(executor);
         NonBlockingConnectionPool pool = Pools.nonBlocking() //
                 .url(url) //
                 .maxPoolSize(maxPoolSize) //
@@ -77,7 +72,6 @@ public final class Database implements AutoCloseable {
                 pool, //
                 () -> {
                     pool.close();
-                    scheduler.shutdown();
                 });
     }
 

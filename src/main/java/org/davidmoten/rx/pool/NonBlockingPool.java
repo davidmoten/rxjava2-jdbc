@@ -9,8 +9,10 @@ import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Scheduler;
 import io.reactivex.Single;
+import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
+import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 
 public final class NonBlockingPool<T> implements Pool<T> {
@@ -25,6 +27,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
     final long returnToPoolDelayAfterHealthCheckFailureMs;
     final BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator;
     final Scheduler scheduler;
+    final Action closeAction;
 
     private final AtomicReference<MemberSingle<T>> member = new AtomicReference<>();
     private volatile boolean closed;
@@ -34,7 +37,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
             long returnToPoolDelayAfterHealthCheckFailureMs, long idleTimeBeforeHealthCheckMs,
             long maxIdleTimeMs, long checkoutRetryIntervalMs,
             BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator,
-            Scheduler scheduler) {
+            Scheduler scheduler, Action closeAction) {
         Preconditions.checkNotNull(factory);
         Preconditions.checkNotNull(healthy);
         Preconditions.checkNotNull(disposer);
@@ -44,6 +47,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         Preconditions.checkNotNull(scheduler);
         Preconditions.checkArgument(checkoutRetryIntervalMs >= 0,
                 "checkoutRetryIntervalMs must be >=0");
+        Preconditions.checkNotNull(closeAction);
         this.factory = factory;
         this.healthy = healthy;
         this.disposer = disposer;
@@ -54,6 +58,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         this.checkoutRetryIntervalMs = checkoutRetryIntervalMs;
         this.checkinDecorator = checkinDecorator;
         this.scheduler = scheduler;// schedules retries
+        this.closeAction = closeAction;
     }
 
     private MemberSingle<T> createMember() {
@@ -94,6 +99,11 @@ public final class NonBlockingPool<T> implements Pool<T> {
                 break;
             }
         }
+        try {
+            closeAction.run();
+        } catch (Exception e) {
+            RxJavaPlugins.onError(e);
+        }
     }
 
     boolean isClosed() {
@@ -119,6 +129,8 @@ public final class NonBlockingPool<T> implements Pool<T> {
         private long maxIdleTimeMs;
         @SuppressWarnings("unchecked")
         private BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator = (BiFunction<T, Checkin, T>) DEFAULT_CHECKIN_DECORATOR;
+        private Action closeAction = () -> {
+        };
 
         private Builder() {
         }
@@ -197,12 +209,18 @@ public final class NonBlockingPool<T> implements Pool<T> {
             return this;
         }
 
+        public Builder<T> onClose(Action closeAction) {
+            this.closeAction = closeAction;
+            return this;
+        }
+
         public NonBlockingPool<T> build() {
             return new NonBlockingPool<T>(factory, healthy, disposer, maxSize,
                     returnToPoolDelayAfterHealthCheckFailureMs, idleTimeBeforeHealthCheckMs,
-                    maxIdleTimeMs, checkoutRetryIntervalMs, checkinDecorator,
-                    scheduler);
+                    maxIdleTimeMs, checkoutRetryIntervalMs, checkinDecorator, scheduler,
+                    closeAction);
         }
+
     }
 
 }

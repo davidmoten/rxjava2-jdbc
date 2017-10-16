@@ -1808,53 +1808,63 @@ public class DatabaseTest {
 
     @Test
     public void testFewerColumnsMappedThanAvailable() {
-        db().select("select name, score from person where name='FRED'") //
-                .getAs(String.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues("FRED") //
-                .assertComplete();
+        try (Database db = db()) {
+            db.select("select name, score from person where name='FRED'") //
+                    .getAs(String.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues("FRED") //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testMoreColumnsMappedThanAvailable() {
-        db() //
-                .select("select name, score from person where name='FRED'") //
-                .getAs(String.class, Integer.class, String.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoValues() //
-                .assertError(MoreColumnsRequestedThanExistException.class);
+        try (Database db = db()) {
+            db //
+                    .select("select name, score from person where name='FRED'") //
+                    .getAs(String.class, Integer.class, String.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoValues() //
+                    .assertError(MoreColumnsRequestedThanExistException.class);
+        }
     }
 
     @Test
     public void testSelectTimestamp() {
-        db() //
-                .select("select registered from person where name='FRED'") //
-                .getAs(Long.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(FRED_REGISTERED_TIME) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select registered from person where name='FRED'") //
+                    .getAs(Long.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(FRED_REGISTERED_TIME) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectTimestampAsDate() {
-        db() //
-                .select("select registered from person where name='FRED'") //
-                .getAs(Date.class) //
-                .map(d -> d.getTime()) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(FRED_REGISTERED_TIME) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select registered from person where name='FRED'") //
+                    .getAs(Date.class) //
+                    .map(d -> d.getTime()) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(FRED_REGISTERED_TIME) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectTimestampAsInstant() {
-        db() //
-                .select("select registered from person where name='FRED'") //
-                .getAs(Instant.class) //
-                .map(d -> d.toEpochMilli()) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(FRED_REGISTERED_TIME) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select registered from person where name='FRED'") //
+                    .getAs(Instant.class) //
+                    .map(d -> d.toEpochMilli()) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(FRED_REGISTERED_TIME) //
+                    .assertComplete();
+        }
     }
 
     @Test
