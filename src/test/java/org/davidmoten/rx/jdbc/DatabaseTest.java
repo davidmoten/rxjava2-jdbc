@@ -676,45 +676,49 @@ public class DatabaseTest {
 
     @Test
     public void testSelectTransactedTuple6() {
-        Tx<Tuple6<String, Integer, String, Integer, String, Integer>> t = db() //
-                .select("select name, score, name, score, name, score from person where name=?") //
-                .parameters("FRED") //
-                .transacted() //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(2) //
-                .assertComplete() //
-                .values().get(0);
-        assertEquals("FRED", t.value()._1());
-        assertEquals(21, (int) t.value()._2());
-        assertEquals("FRED", t.value()._3());
-        assertEquals(21, (int) t.value()._4());
-        assertEquals("FRED", t.value()._5());
-        assertEquals(21, (int) t.value()._6());
+        try (Database db = db()) {
+            Tx<Tuple6<String, Integer, String, Integer, String, Integer>> t = db //
+                    .select("select name, score, name, score, name, score from person where name=?") //
+                    .parameters("FRED") //
+                    .transacted() //
+                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                            Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(2) //
+                    .assertComplete() //
+                    .values().get(0);
+            assertEquals("FRED", t.value()._1());
+            assertEquals(21, (int) t.value()._2());
+            assertEquals("FRED", t.value()._3());
+            assertEquals(21, (int) t.value()._4());
+            assertEquals("FRED", t.value()._5());
+            assertEquals(21, (int) t.value()._6());
+        }
     }
 
     @Test
     public void testSelectTransactedTuple7() {
-        Tx<Tuple7<String, Integer, String, Integer, String, Integer, String>> t = db() //
-                .select("select name, score, name, score, name, score, name from person where name=?") //
-                .parameters("FRED") //
-                .transacted() //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class, String.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(2) //
-                .assertComplete() //
-                .values().get(0);
-        assertEquals("FRED", t.value()._1());
-        assertEquals(21, (int) t.value()._2());
-        assertEquals("FRED", t.value()._3());
-        assertEquals(21, (int) t.value()._4());
-        assertEquals("FRED", t.value()._5());
-        assertEquals(21, (int) t.value()._6());
-        assertEquals("FRED", t.value()._7());
+        try (Database db = db()) {
+            Tx<Tuple7<String, Integer, String, Integer, String, Integer, String>> t = db //
+                    .select("select name, score, name, score, name, score, name from person where name=?") //
+                    .parameters("FRED") //
+                    .transacted() //
+                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                            Integer.class, String.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(2) //
+                    .assertComplete() //
+                    .values().get(0);
+            assertEquals("FRED", t.value()._1());
+            assertEquals(21, (int) t.value()._2());
+            assertEquals("FRED", t.value()._3());
+            assertEquals(21, (int) t.value()._4());
+            assertEquals("FRED", t.value()._5());
+            assertEquals(21, (int) t.value()._6());
+            assertEquals("FRED", t.value()._7());
+        }
     }
 
     @Test
