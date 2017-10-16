@@ -724,62 +724,70 @@ public class DatabaseTest {
 
     @Test
     public void testSelectTransactedTupleN() {
-        List<Tx<TupleN<Object>>> list = db() //
-                .select("select name, score from person where name=?") //
-                .parameters("FRED") //
-                .transacted() //
-                .getTupleN() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(2) //
-                .assertComplete() //
-                .values();
-        assertEquals("FRED", list.get(0).value().values().get(0));
-        assertEquals(21, (int) list.get(0).value().values().get(1));
-        assertTrue(list.get(1).isComplete());
-        assertEquals(2, list.size());
+        try (Database db = db()) {
+            List<Tx<TupleN<Object>>> list = db //
+                    .select("select name, score from person where name=?") //
+                    .parameters("FRED") //
+                    .transacted() //
+                    .getTupleN() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(2) //
+                    .assertComplete() //
+                    .values();
+            assertEquals("FRED", list.get(0).value().values().get(0));
+            assertEquals(21, (int) list.get(0).value().values().get(1));
+            assertTrue(list.get(1).isComplete());
+            assertEquals(2, list.size());
+        }
     }
 
     @Test
     public void testSelectTransactedCount() {
-        db() //
-                .select("select name, score, name, score, name, score, name from person where name=?") //
-                .parameters("FRED") //
-                .transacted() //
-                .count() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(1) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select name, score, name, score, name, score, name from person where name=?") //
+                    .parameters("FRED") //
+                    .transacted() //
+                    .count() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(1) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectTransactedGetAs() {
-        db() //
-                .select("select name from person") //
-                .transacted() //
-                .getAs(String.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(4) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select name from person") //
+                    .transacted() //
+                    .getAs(String.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(4) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectTransactedGetAsOptional() {
-        List<Tx<Optional<String>>> list = db() //
-                .select("select name from person where name=?") //
-                .parameters("FRED") //
-                .transacted() //
-                .getAsOptional(String.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValueCount(2) //
-                .assertComplete() //
-                .values();
-        assertTrue(list.get(0).isValue());
-        assertEquals("FRED", list.get(0).value().get());
-        assertTrue(list.get(1).isComplete());
+        try (Database db = db()) {
+            List<Tx<Optional<String>>> list = db //
+                    .select("select name from person where name=?") //
+                    .parameters("FRED") //
+                    .transacted() //
+                    .getAsOptional(String.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(2) //
+                    .assertComplete() //
+                    .values();
+            assertTrue(list.get(0).isValue());
+            assertEquals("FRED", list.get(0).value().get());
+            assertTrue(list.get(1).isComplete());
+        }
     }
 
     @Test
@@ -1078,11 +1086,11 @@ public class DatabaseTest {
     @Test
     @Ignore
     public void testAutoMapForReadMe() {
-        Database //
-                .test() //
-                .select(Person10.class) //
-                .get(Person10::name) //
-                .blockingForEach(System.out::println);
+        try (Database db = Database.test()) {
+            db.select(Person10.class) //
+                    .get(Person10::name) //
+                    .blockingForEach(System.out::println);
+        }
     }
 
     @Test(expected = QueryAnnotationMissingException.class)
@@ -1993,55 +2001,61 @@ public class DatabaseTest {
 
     @Test
     public void testCompleteCompletes() {
-        Database db = db(1);
-        db //
-                .update("update person set score=-3 where name='FRED'") //
-                .complete() //
-                .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .blockingAwait();
+        try (Database db = db(1)) {
+            db //
+                    .update("update person set score=-3 where name='FRED'") //
+                    .complete() //
+                    .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .blockingAwait();
 
-        int score = db.select("select score from person where name='FRED'") //
-                .getAs(Integer.class) //
-                .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .blockingFirst();
-        assertEquals(-3, score);
+            int score = db.select("select score from person where name='FRED'") //
+                    .getAs(Integer.class) //
+                    .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .blockingFirst();
+            assertEquals(-3, score);
+        }
     }
 
     @Test
     public void testComplete() throws InterruptedException {
-        Database db = db(1);
-        Completable a = db //
-                .update("update person set score=-3 where name='FRED'") //
-                .complete();
-        db.update("update person set score=-4 where score = -3") //
-                .dependsOn(a) //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
+        try (Database db = db(1)) {
+            Completable a = db //
+                    .update("update person set score=-3 where name='FRED'") //
+                    .complete();
+            db.update("update person set score=-4 where score = -3") //
+                    .dependsOn(a) //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testCountsOnlyInTransaction() {
-        db().update("update person set score = -3") //
-                .transacted() //
-                .countsOnly() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(3) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set score = -3") //
+                    .transacted() //
+                    .countsOnly() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(3) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testCountsInTransaction() {
-        db().update("update person set score = -3") //
-                .transacted() //
-                .counts() //
-                .doOnNext(System.out::println) //
-                .toList() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3
-                        && list.get(1).isComplete() && list.size() == 2) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set score = -3") //
+                    .transacted() //
+                    .counts() //
+                    .doOnNext(System.out::println) //
+                    .toList() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3
+                            && list.get(1).isComplete() && list.size() == 2) //
+                    .assertComplete();
+        }
     }
 
     @Test
