@@ -26,13 +26,8 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
         return this;
     }
 
-    public TransactedSelectBuilder parameterList(@Nonnull List<Object> values) {
-        selectBuilder.parameterList(values);
-        return this;
-    }
-
-    public TransactedSelectBuilder parameterList(@Nonnull Object... values) {
-        selectBuilder.parameterList(values);
+    public TransactedSelectBuilder parameters(@Nonnull List<?> values) {
+        selectBuilder.parameters(values);
         return this;
     }
 

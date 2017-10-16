@@ -36,13 +36,8 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
         return this;
     }
 
-    public TransactedUpdateBuilder parameterList(@Nonnull List<Object> values) {
-        updateBuilder.parameterList(values);
-        return this;
-    }
-
-    public TransactedUpdateBuilder parameterList(@Nonnull Object... values) {
-        updateBuilder.parameterList(values);
+    public TransactedUpdateBuilder parameters(@Nonnull List<?> values) {
+        updateBuilder.parameters(values);
         return this;
     }
 

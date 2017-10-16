@@ -27,13 +27,8 @@ public final class TransactedSelectAutomappedBuilder<T> {
         return this;
     }
 
-    public TransactedSelectAutomappedBuilder<T> parameterList(@Nonnull List<Object> values) {
-        selectBuilder.parameterList(values);
-        return this;
-    }
-
-    public TransactedSelectAutomappedBuilder<T> parameterList(@Nonnull Object... values) {
-        selectBuilder.parameterList(values);
+    public TransactedSelectAutomappedBuilder<T> parameters(@Nonnull List<?> values) {
+        selectBuilder.parameters(values);
         return this;
     }
 

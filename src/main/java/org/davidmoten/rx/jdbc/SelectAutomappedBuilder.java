@@ -66,13 +66,8 @@ public final class SelectAutomappedBuilder<T> {
         return this;
     }
 
-    public SelectAutomappedBuilder<T> parameterList(@Nonnull List<Object> values) {
-        selectBuilder.parameterList(values);
-        return this;
-    }
-
-    public SelectAutomappedBuilder<T> parameterList(@Nonnull Object... values) {
-        selectBuilder.parameterList(values);
+    public SelectAutomappedBuilder<T> parameters(@Nonnull List<?> values) {
+        selectBuilder.parameters(values);
         return this;
     }
 

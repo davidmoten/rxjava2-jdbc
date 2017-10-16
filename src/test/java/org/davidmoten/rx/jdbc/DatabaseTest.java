@@ -122,6 +122,18 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testSelectUsingNamedParameterList() {
+        db().select("select score from person where name=:name") //
+                .parameters(Parameter.named("name", "FRED").value("JOSEPH").list()) //
+                .getAs(Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
+    }
+    
+    @Test
     public void testSelectUsingQuestionMarkFlowableParameters() {
         db().select("select score from person where name=?") //
                 .parameterStream(Flowable.just("FRED", "JOSEPH")) //
@@ -269,7 +281,7 @@ public class DatabaseTest {
                                 if (!x.equals(Lists.newArrayList(21, 34))) {
                                     throw new RuntimeException("run broken");
                                 } else {
-//                                   System.out.println(iCopy + " succeeded");
+                                    // System.out.println(iCopy + " succeeded");
                                 }
                             }) //
                             .doOnSuccess(x -> {

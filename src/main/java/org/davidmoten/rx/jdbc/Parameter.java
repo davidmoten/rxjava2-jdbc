@@ -3,6 +3,7 @@ package org.davidmoten.rx.jdbc;
 import java.util.List;
 
 import com.github.davidmoten.guavamini.Lists;
+import com.github.davidmoten.guavamini.Preconditions;
 
 /**
  * Encapsulates a query parameter.
@@ -47,11 +48,12 @@ public final class Parameter {
     }
 
     public static ParameterListBuilder named(String name, String value) {
-        return new ParameterListBuilder(Lists.newArrayList(new Parameter(name, value)));
+        return new ParameterListBuilder(Lists.newArrayList()).named(name, value);
     }
 
     public static class ParameterListBuilder {
         private final List<Parameter> list;
+        private String lastName;
 
         ParameterListBuilder(List<Parameter> list) {
             this.list = list;
@@ -59,7 +61,12 @@ public final class Parameter {
 
         public ParameterListBuilder named(String name, String value) {
             list.add(new Parameter(name, value));
+            lastName = name;
             return this;
+        }
+
+        public ParameterListBuilder value(String value) {
+            return named(lastName, value);
         }
 
         public List<Parameter> list() {

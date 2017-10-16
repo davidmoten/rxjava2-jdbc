@@ -45,18 +45,8 @@ abstract class ParametersBuilder<T> {
         return (T) this;
     }
 
-    @SuppressWarnings("unchecked")
-    public final T parameterList(@Nonnull List<Object> values) {
-        parameterListStream(Flowable.just(values));
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public final T parameterList(@Nonnull Object... values) {
-        Preconditions.checkNotNull(values, "values cannot be null");
-        parameterStream(Flowable.fromArray(values) //
-                .buffer(sqlInfo.numParameters()));
-        return (T) this;
+    public final T parameters(@Nonnull List<?> values) {
+        return parameterList(values.toArray());
     }
 
     @SuppressWarnings("unchecked")
@@ -70,8 +60,12 @@ abstract class ParametersBuilder<T> {
         return parameters(value);
     }
 
-    @SuppressWarnings("unchecked")
     public final T parameters(@Nonnull Object... values) {
+        return parameterList(values);
+    }
+    
+    @SuppressWarnings("unchecked")
+    private final T parameterList(Object[] values) {
         Preconditions.checkNotNull(values);
         if (values.length == 0) {
             // no effect
