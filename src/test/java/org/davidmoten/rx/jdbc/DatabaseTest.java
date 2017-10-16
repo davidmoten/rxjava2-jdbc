@@ -111,129 +111,152 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingQuestionMark() {
-        db().select("select score from person where name=?") //
-                .parameters("FRED", "JOSEPH") //
-                .getAs(Integer.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoErrors() //
-                .assertValues(21, 34) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .getAs(Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectUsingNamedParameterList() {
-        db().select("select score from person where name=:name") //
-                .parameters(Parameter.named("name", "FRED").value("JOSEPH").list()) //
-                .getAs(Integer.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoErrors() //
-                .assertValues(21, 34) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.select("select score from person where name=:name") //
+                    .parameters(Parameter.named("name", "FRED").value("JOSEPH").list()) //
+                    .getAs(Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
     }
-    
+
     @Test
     public void testSelectUsingQuestionMarkFlowableParameters() {
-        db().select("select score from person where name=?") //
-                .parameterStream(Flowable.just("FRED", "JOSEPH")) //
-                .getAs(Integer.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoErrors() //
-                .assertValues(21, 34) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.select("select score from person where name=?") //
+                    .parameterStream(Flowable.just("FRED", "JOSEPH")) //
+                    .getAs(Integer.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectUsingQuestionMarkFlowableParametersInLists() {
-        db().select("select score from person where name=?") //
-                .parameterListStream(Flowable.just(Arrays.asList("FRED"), Arrays.asList("JOSEPH"))) //
-                .getAs(Integer.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoErrors() //
-                .assertValues(21, 34) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.select("select score from person where name=?") //
+                    .parameterListStream(
+                            Flowable.just(Arrays.asList("FRED"), Arrays.asList("JOSEPH"))) //
+                    .getAs(Integer.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testDrivingSelectWithoutParametersUsingParameterStream() {
-        db().select("select count(*) from person") //
-                .parameters(1, 2, 3) //
-                .getAs(Integer.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(3, 3, 3) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.select("select count(*) from person") //
+                    .parameters(1, 2, 3) //
+                    .getAs(Integer.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(3, 3, 3) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectUsingQuestionMarkFlowableParametersTwoParametersPerQuery() {
-        db().select("select score from person where name=? and score = ?") //
-                .parameterStream(Flowable.just("FRED", 21, "JOSEPH", 34)) //
-                .getAs(Integer.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoErrors() //
-                .assertValues(21, 34) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.select("select score from person where name=? and score = ?") //
+                    .parameterStream(Flowable.just("FRED", 21, "JOSEPH", 34)) //
+                    .getAs(Integer.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
-        db().select("select score from person where name=? and score = ?") //
-                .parameterListStream(
-                        Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
-                .getAs(Integer.class) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoErrors() //
-                .assertValues(21, 34) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.select("select score from person where name=? and score = ?") //
+                    .parameterListStream(
+                            Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                    .getAs(Integer.class) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectUsingQuestionMarkWithPublicTestingDatabase() {
-        Database.test() //
-                .select("select score from person where name=?") //
-                .parameters("FRED", "JOSEPH") //
-                .getAs(Integer.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoErrors() //
-                .assertValues(21, 34) //
-                .assertComplete();
+        try (Database db = Database.test()) {
+            db //
+                    .select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .getAs(Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectWithFetchSize() {
-        db().select("select score from person order by name") //
-                .fetchSize(2) //
-                .getAs(Integer.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoErrors() //
-                .assertValues(21, 34, 25) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.select("select score from person order by name") //
+                    .fetchSize(2) //
+                    .getAs(Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34, 25) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectWithFetchSizeZero() {
-        db().select("select score from person order by name") //
-                .fetchSize(0) //
-                .getAs(Integer.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoErrors() //
-                .assertValues(21, 34, 25) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.select("select score from person order by name") //
+                    .fetchSize(0) //
+                    .getAs(Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34, 25) //
+                    .assertComplete();
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testSelectWithFetchSizeNegative() {
-        db().select("select score from person order by name") //
-                .fetchSize(-1);
+        try (Database db = db()) {
+            db.select("select score from person order by name") //
+                    .fetchSize(-1);
+        }
     }
 
     @Test
@@ -355,28 +378,32 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingName() {
-        db() //
-                .select("select score from person where name=:name") //
-                .parameter("name", "FRED") //
-                .parameter("name", "JOSEPH") //
-                .getAs(Integer.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(21, 34) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select score from person where name=:name") //
+                    .parameter("name", "FRED") //
+                    .parameter("name", "JOSEPH") //
+                    .getAs(Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectUsingNameNotGiven() {
-        db() //
-                .select("select score from person where name=:name and name<>:name2") //
-                .parameter("name", "FRED") //
-                .parameter("name", "JOSEPH") //
-                .getAs(Integer.class) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertError(NamedParameterMissingException.class) //
-                .assertNoValues();
+        try (Database db = db()) {
+            db //
+                    .select("select score from person where name=:name and name<>:name2") //
+                    .parameter("name", "FRED") //
+                    .parameter("name", "JOSEPH") //
+                    .getAs(Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertError(NamedParameterMissingException.class) //
+                    .assertNoValues();
+        }
     }
 
     @Test
@@ -393,63 +420,68 @@ public class DatabaseTest {
 
     @Test
     public void testUpdateWithNull() {
-        db() //
-                .update("update person set date_of_birth = :dob") //
-                .parameter(Parameter.create("dob", null)) //
-                .counts() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(3) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .update("update person set date_of_birth = :dob") //
+                    .parameter(Parameter.create("dob", null)) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(3) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateClobWithNull() {
-        Database db = db();
-        insertNullClob(db);
-        db //
-                .update("update person_clob set document = :doc") //
-                .parameter("doc", Database.NULL_CLOB) //
-                .counts() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
+        try (Database db = db()) {
+            insertNullClob(db);
+            db //
+                    .update("update person_clob set document = :doc") //
+                    .parameter("doc", Database.NULL_CLOB) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateClobWithClob() throws SQLException {
-        Database db = db();
-        Clob clob = new JDBCClobFile(new File("src/test/resources/big.txt"));
-        insertNullClob(db);
-        db //
-                .update("update person_clob set document = :doc") //
-                .parameter("doc", clob) //
-                .counts() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
+        try (Database db = db()) {
+            Clob clob = new JDBCClobFile(new File("src/test/resources/big.txt"));
+            insertNullClob(db);
+            db //
+                    .update("update person_clob set document = :doc") //
+                    .parameter("doc", clob) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateClobWithReader() throws FileNotFoundException {
-        Database db = db();
-        Reader reader = new FileReader(new File("src/test/resources/big.txt"));
-        insertNullClob(db);
-        db //
-                .update("update person_clob set document = :doc") //
-                .parameter("doc", reader) //
-                .counts() //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
+        try (Database db = db()) {
+            Reader reader = new FileReader(new File("src/test/resources/big.txt"));
+            insertNullClob(db);
+            db //
+                    .update("update person_clob set document = :doc") //
+                    .parameter("doc", reader) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateBlobWithBlob() throws SQLException {
-        Database db = db();
+        try (Database db = db()) {
         Blob blob = new JDBCBlobFile(new File("src/test/resources/big.txt"));
         insertPersonBlob(db);
         db //
@@ -460,6 +492,7 @@ public class DatabaseTest {
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
+        }
     }
 
     @Test
