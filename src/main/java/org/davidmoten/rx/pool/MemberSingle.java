@@ -42,10 +42,6 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     private final Scheduler scheduler;
     private final long checkoutRetryIntervalMs;
 
-    // mutable
-
-    private volatile boolean cancelled;
-
     // synchronized by `wip`
     private final CompositeDisposable scheduled = new CompositeDisposable();
 
@@ -57,6 +53,10 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     // or an existing value is available from the pool (queue) (and is then
     // emitted).
     private final AtomicLong requested = new AtomicLong();
+
+    // mutable
+
+    private volatile boolean cancelled;
 
     @SuppressWarnings("unchecked")
     MemberSingle(NonBlockingPool<T> pool) {
