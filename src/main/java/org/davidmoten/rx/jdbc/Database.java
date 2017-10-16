@@ -74,7 +74,8 @@ public final class Database implements AutoCloseable {
                 .maxPoolSize(maxPoolSize) //
                 .build();
         return Database.from( //
-                pool, () -> {
+                pool, //
+                () -> {
                     pool.close();
                     scheduler.shutdown();
                 });
