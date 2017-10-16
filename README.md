@@ -22,7 +22,7 @@ Use this maven dependency:
 <dependency>
   <groupId>com.github.davidmoten</groupId>
   <artifactId>rxjava2-jdbc</artifactId>
-  <version>0.1-RC8</version>
+  <version>0.1-RC9</version>
 </dependency>
 ```
 If you want to use the built-in test database then add the Apache Derby dependency (otherwise you'll need the jdbc dependency for the database you want to connect to):
