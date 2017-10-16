@@ -831,6 +831,10 @@ public class DatabaseTest {
             log.debug(db.toString());
         }
     }
+    
+    private static void println(Object o) {
+        log.debug("{}", o);
+    }
 
     @Test
     public void testSelectChained() {
@@ -839,7 +843,7 @@ public class DatabaseTest {
             db.select("select score from person where name=?") //
                     .parameters("FRED", "JOSEPH") //
                     .getAs(Integer.class) //
-                    .doOnNext(System.out::println) //
+                    .doOnNext(DatabaseTest::println) //
                     .concatMap(score -> {
                         log.info("score={}", score);
                         return db //
@@ -863,7 +867,7 @@ public class DatabaseTest {
         try (Database db = db()) {
             db.select("select name from person") //
                     .getAs(String.class) //
-                    .forEach(System.out::println);
+                    .forEach(DatabaseTest::println);
         }
     }
 
@@ -897,7 +901,7 @@ public class DatabaseTest {
         try (Database db = db()) {
             db.select("select name, score from person") //
                     .getAs(String.class, Integer.class) //
-                    .forEach(System.out::println);
+                    .forEach(DatabaseTest::println);
         }
     }
 
@@ -1089,7 +1093,7 @@ public class DatabaseTest {
         try (Database db = Database.test()) {
             db.select(Person10.class) //
                     .get(Person10::name) //
-                    .blockingForEach(System.out::println);
+                    .blockingForEach(DatabaseTest::println);
         }
     }
 
@@ -1427,7 +1431,7 @@ public class DatabaseTest {
                     .select("select name from person") //
                     .transactedValuesOnly() //
                     .getAs(String.class) //
-                    .doOnNext(System.out::println) //
+                    .doOnNext(DatabaseTest::println) //
                     .flatMap(tx -> tx//
                             .update("update person set score=-1 where name=:name") //
                             .batchSize(1) //
@@ -1512,7 +1516,7 @@ public class DatabaseTest {
                     .select("select name from person") //
                     .transactedValuesOnly() //
                     .getAs(String.class) //
-                    .doOnNext(System.out::println) //
+                    .doOnNext(DatabaseTest::println) //
                     .flatMap(tx -> tx//
                             .update("update person set score=-1 where name=:name") //
                             .batchSize(0) //
@@ -1631,7 +1635,7 @@ public class DatabaseTest {
         Database.test() //
                 .select("select date_of_birth from person where name='FRED'") //
                 .getAsOptional(Instant.class) //
-                .blockingForEach(System.out::println);
+                .blockingForEach(DatabaseTest::println);
     }
 
     @Test
@@ -2059,7 +2063,7 @@ public class DatabaseTest {
             db.update("update person set score = -3") //
                     .transacted() //
                     .counts() //
-                    .doOnNext(System.out::println) //
+                    .doOnNext(DatabaseTest::println) //
                     .toList() //
                     .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                     .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3
@@ -2077,7 +2081,7 @@ public class DatabaseTest {
 
         transaction //
                 .doOnDispose(() -> log.debug("disposing")) //
-                .doOnSuccess(System.out::println) //
+                .doOnSuccess(DatabaseTest::println) //
                 .flatMapPublisher(tx -> {
                     log.debug("flatmapping");
                     return tx //
@@ -2103,7 +2107,7 @@ public class DatabaseTest {
 
         transaction //
                 .doOnDispose(() -> log.debug("disposing")) //
-                .doOnSuccess(System.out::println) //
+                .doOnSuccess(DatabaseTest::println) //
                 .flatMapPublisher(tx -> {
                     log.debug("flatmapping");
                     return tx //
@@ -2186,7 +2190,7 @@ public class DatabaseTest {
                 .select("select name, score from person where name=?") //
                 .parameters("FRED", "FRED") //
                 .autoMap(Person2.class) //
-                .doOnNext(System.out::println) //
+                .doOnNext(DatabaseTest::println) //
                 .test() //
                 .awaitDone(2000, TimeUnit.SECONDS) //
                 .assertNoErrors() //
@@ -2201,7 +2205,7 @@ public class DatabaseTest {
                 .parameters("FRED", "FRED") //
                 .autoMap(Person2.class) //
                 .distinct() //
-                .doOnNext(System.out::println) //
+                .doOnNext(DatabaseTest::println) //
                 .test() //
                 .awaitDone(2000, TimeUnit.SECONDS) //
                 .assertNoErrors() //
