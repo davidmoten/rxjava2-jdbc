@@ -443,8 +443,8 @@ Lets create a database with a non-blocking connection pool of size 1 only and de
 so you can copy and paste this code to your ide and it will run (in a main method or unit test say):
 
 ```java
- create database with non-blocking connection pool 
- of size 1
+// create database with non-blocking connection pool 
+// of size 1
 Database db = Database.test(1); 
 
 // start a slow query
