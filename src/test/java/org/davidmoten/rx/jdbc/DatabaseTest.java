@@ -1128,45 +1128,54 @@ public class DatabaseTest {
 
     @Test
     public void testTuple5() {
-        db() //
-                .select("select name, score, name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class) //
-                .firstOrError() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertComplete().assertValue(Tuple5.create("FRED", 21, "FRED", 21, "FRED")); //
+        try (Database db = db()) {
+            db //
+                    .select("select name, score, name, score, name from person order by name") //
+                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class) //
+                    .firstOrError() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertComplete().assertValue(Tuple5.create("FRED", 21, "FRED", 21, "FRED")); //
+        }
     }
 
     @Test
     public void testTuple6() {
-        db() //
-                .select("select name, score, name, score, name, score from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class) //
-                .firstOrError() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
+        try (Database db = db()) {
+            db //
+                    .select("select name, score, name, score, name, score from person order by name") //
+                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                            Integer.class) //
+                    .firstOrError() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertComplete()
+                    .assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
+        }
     }
 
     @Test
     public void testTuple7() {
-        db() //
-                .select("select name, score, name, score, name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
-                        Integer.class, String.class) //
-                .firstOrError() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertComplete()
-                .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+        try (Database db = db()) {
+            db //
+                    .select("select name, score, name, score, name, score, name from person order by name") //
+                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                            Integer.class, String.class) //
+                    .firstOrError() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertComplete()
+                    .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+        }
     }
 
     @Test
     public void testTupleN() {
-        db() //
-                .select("select name, score, name from person order by name") //
-                .getTupleN() //
-                .firstOrError().test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertComplete() //
-                .assertValue(TupleN.create("FRED", 21, "FRED")); //
+        try (Database db = db()) {
+            db //
+                    .select("select name, score, name from person order by name") //
+                    .getTupleN() //
+                    .firstOrError().test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertComplete() //
+                    .assertValue(TupleN.create("FRED", 21, "FRED")); //
+        }
     }
 
     @Test
@@ -1192,110 +1201,126 @@ public class DatabaseTest {
 
     @Test
     public void testUpdateOneRow() {
-        db().update("update person set score=20 where name='FRED'") //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set score=20 where name='FRED'") //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateThreeRows() {
-        db().update("update person set score=20") //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(3) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set score=20") //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(3) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateWithParameter() {
-        db().update("update person set score=20 where name=?") //
-                .parameter("FRED").counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(1) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set score=20 where name=?") //
+                    .parameter("FRED").counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(1) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateWithParameterTwoRuns() {
-        db().update("update person set score=20 where name=?") //
-                .parameters("FRED", "JOSEPH").counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(1, 1) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set score=20 where name=?") //
+                    .parameters("FRED", "JOSEPH").counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(1, 1) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateAllWithParameterFourRuns() {
-        db().update("update person set score=?") //
-                .parameters(1, 2, 3, 4) //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(3, 3, 3, 3) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set score=?") //
+                    .parameters(1, 2, 3, 4) //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(3, 3, 3, 3) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateWithBatchSize2() {
-        db().update("update person set score=?") //
-                .batchSize(2) //
-                .parameters(1, 2, 3, 4) //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(3, 3, 3, 3) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set score=?") //
+                    .batchSize(2) //
+                    .parameters(1, 2, 3, 4) //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(3, 3, 3, 3) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateWithBatchSize3GreaterThanNumRecords() {
-        db().update("update person set score=?") //
-                .batchSize(3) //
-                .parameters(1, 2, 3, 4) //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(3, 3, 3, 3) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.update("update person set score=?") //
+                    .batchSize(3) //
+                    .parameters(1, 2, 3, 4) //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(3, 3, 3, 3) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testInsert() {
-        Database db = db();
-        db.update("insert into person(name, score) values(?,?)") //
-                .parameters("DAVE", 12, "ANNE", 18) //
-                .counts() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(1, 1) //
-                .assertComplete();
-        List<Tuple2<String, Integer>> list = db.select("select name, score from person") //
-                .getAs(String.class, Integer.class) //
-                .toList() //
-                .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .blockingGet();
-        assertTrue(list.contains(Tuple2.create("DAVE", 12)));
-        assertTrue(list.contains(Tuple2.create("ANNE", 18)));
+        try (Database db = db()) {
+            db.update("insert into person(name, score) values(?,?)") //
+                    .parameters("DAVE", 12, "ANNE", 18) //
+                    .counts() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(1, 1) //
+                    .assertComplete();
+            List<Tuple2<String, Integer>> list = db.select("select name, score from person") //
+                    .getAs(String.class, Integer.class) //
+                    .toList() //
+                    .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .blockingGet();
+            assertTrue(list.contains(Tuple2.create("DAVE", 12)));
+            assertTrue(list.contains(Tuple2.create("ANNE", 18)));
+        }
     }
 
     @Test
     public void testReturnGeneratedKeys() {
-        Database db = db();
-        // note is a table with auto increment
-        db.update("insert into note(text) values(?)") //
-                .parameters("HI", "THERE") //
-                .returnGeneratedKeys() //
-                .getAs(Integer.class)//
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(1, 2) //
-                .assertComplete();
+        try (Database db = db()) {
+            // note is a table with auto increment
+            db.update("insert into note(text) values(?)") //
+                    .parameters("HI", "THERE") //
+                    .returnGeneratedKeys() //
+                    .getAs(Integer.class)//
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(1, 2) //
+                    .assertComplete();
 
-        db.update("insert into note(text) values(?)") //
-                .parameters("ME", "TOO") //
-                .returnGeneratedKeys() //
-                .getAs(Integer.class)//
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(3, 4) //
-                .assertComplete();
+            db.update("insert into note(text) values(?)") //
+                    .parameters("ME", "TOO") //
+                    .returnGeneratedKeys() //
+                    .getAs(Integer.class)//
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(3, 4) //
+                    .assertComplete();
+        }
     }
 
     @Test
@@ -1324,160 +1349,171 @@ public class DatabaseTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testReturnGeneratedKeysWithBatchSizeShouldThrow() {
-        Database db = db();
-        // note is a table with auto increment
-        db.update("insert into note(text) values(?)") //
-                .parameters("HI", "THERE") //
-                .batchSize(2) //
-                .returnGeneratedKeys();
+        try (Database db = db()) {
+            // note is a table with auto increment
+            db.update("insert into note(text) values(?)") //
+                    .parameters("HI", "THERE") //
+                    .batchSize(2) //
+                    .returnGeneratedKeys();
+        }
     }
 
     @Test
     public void testTransactedReturnGeneratedKeys() {
-        Database db = db();
-        // note is a table with auto increment
-        db.update("insert into note(text) values(?)") //
-                .parameters("HI", "THERE") //
-                .transacted() //
-                .returnGeneratedKeys() //
-                .valuesOnly() //
-                .getAs(Integer.class)//
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(1, 2) //
-                .assertComplete();
+        try (Database db = db()) {
+            // note is a table with auto increment
+            db.update("insert into note(text) values(?)") //
+                    .parameters("HI", "THERE") //
+                    .transacted() //
+                    .returnGeneratedKeys() //
+                    .valuesOnly() //
+                    .getAs(Integer.class)//
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(1, 2) //
+                    .assertComplete();
 
-        db.update("insert into note(text) values(?)") //
-                .parameters("ME", "TOO") //
-                .transacted() //
-                .returnGeneratedKeys() //
-                .valuesOnly() //
-                .getAs(Integer.class)//
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(3, 4) //
-                .assertComplete();
+            db.update("insert into note(text) values(?)") //
+                    .parameters("ME", "TOO") //
+                    .transacted() //
+                    .returnGeneratedKeys() //
+                    .valuesOnly() //
+                    .getAs(Integer.class)//
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(3, 4) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testTransactedReturnGeneratedKeys2() {
-        Database db = db();
-        // note is a table with auto increment
-        Flowable<Integer> a = db.update("insert into note(text) values(?)") //
-                .parameters("HI", "THERE") //
-                .transacted() //
-                .returnGeneratedKeys() //
-                .valuesOnly() //
-                .getAs(Integer.class);
+        try (Database db = db()) {
+            // note is a table with auto increment
+            Flowable<Integer> a = db.update("insert into note(text) values(?)") //
+                    .parameters("HI", "THERE") //
+                    .transacted() //
+                    .returnGeneratedKeys() //
+                    .valuesOnly() //
+                    .getAs(Integer.class);
 
-        db.update("insert into note(text) values(?)") //
-                .parameters("ME", "TOO") //
-                .transacted() //
-                .returnGeneratedKeys() //
-                .valuesOnly() //
-                .getAs(Integer.class)//
-                .startWith(a) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(1, 2, 3, 4) //
-                .assertComplete();
+            db.update("insert into note(text) values(?)") //
+                    .parameters("ME", "TOO") //
+                    .transacted() //
+                    .returnGeneratedKeys() //
+                    .valuesOnly() //
+                    .getAs(Integer.class)//
+                    .startWith(a) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(1, 2, 3, 4) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateWithinTransaction() {
-        db() //
-                .select("select name from person") //
-                .transactedValuesOnly() //
-                .getAs(String.class) //
-                .doOnNext(System.out::println) //
-                .flatMap(tx -> tx//
-                        .update("update person set score=-1 where name=:name") //
-                        .batchSize(1) //
-                        .parameter("name", tx.value()) //
-                        .valuesOnly() //
-                        .counts()) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(1, 1, 1) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select name from person") //
+                    .transactedValuesOnly() //
+                    .getAs(String.class) //
+                    .doOnNext(System.out::println) //
+                    .flatMap(tx -> tx//
+                            .update("update person set score=-1 where name=:name") //
+                            .batchSize(1) //
+                            .parameter("name", tx.value()) //
+                            .valuesOnly() //
+                            .counts()) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(1, 1, 1) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectDependsOnFlowable() {
-        Database db = db();
-        Flowable<Integer> a = db.update("update person set score=100 where name=?") //
-                .parameter("FRED") //
-                .counts();
-        db.select("select score from person where name=?") //
-                .parameter("FRED") //
-                .dependsOn(a) //
-                .getAs(Integer.class)//
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(100) //
-                .assertComplete();
+        try (Database db = db()) {
+            Flowable<Integer> a = db.update("update person set score=100 where name=?") //
+                    .parameter("FRED") //
+                    .counts();
+            db.select("select score from person where name=?") //
+                    .parameter("FRED") //
+                    .dependsOn(a) //
+                    .getAs(Integer.class)//
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(100) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectDependsOnObservable() {
-        Database db = db();
-        Observable<Integer> a = db.update("update person set score=100 where name=?") //
-                .parameter("FRED") //
-                .counts().toObservable();
-        db.select("select score from person where name=?") //
-                .parameter("FRED") //
-                .dependsOn(a) //
-                .getAs(Integer.class)//
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(100) //
-                .assertComplete();
+        try (Database db = db()) {
+            Observable<Integer> a = db.update("update person set score=100 where name=?") //
+                    .parameter("FRED") //
+                    .counts().toObservable();
+            db.select("select score from person where name=?") //
+                    .parameter("FRED") //
+                    .dependsOn(a) //
+                    .getAs(Integer.class)//
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(100) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectDependsOnOnSingle() {
-        Database db = db();
-        Single<Long> a = db.update("update person set score=100 where name=?") //
-                .parameter("FRED") //
-                .counts().count();
-        db.select("select score from person where name=?") //
-                .parameter("FRED") //
-                .dependsOn(a) //
-                .getAs(Integer.class)//
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(100) //
-                .assertComplete();
+        try (Database db = db()) {
+            Single<Long> a = db.update("update person set score=100 where name=?") //
+                    .parameter("FRED") //
+                    .counts().count();
+            db.select("select score from person where name=?") //
+                    .parameter("FRED") //
+                    .dependsOn(a) //
+                    .getAs(Integer.class)//
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(100) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testSelectDependsOnCompletable() {
-        Database db = db();
-        Completable a = db.update("update person set score=100 where name=?") //
-                .parameter("FRED") //
-                .counts().ignoreElements();
-        db.select("select score from person where name=?") //
-                .parameter("FRED") //
-                .dependsOn(a) //
-                .getAs(Integer.class)//
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(100) //
-                .assertComplete();
+        try (Database db = db()) {
+            Completable a = db.update("update person set score=100 where name=?") //
+                    .parameter("FRED") //
+                    .counts().ignoreElements();
+            db.select("select score from person where name=?") //
+                    .parameter("FRED") //
+                    .dependsOn(a) //
+                    .getAs(Integer.class)//
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(100) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testUpdateWithinTransactionBatchSize0() {
-        db() //
-                .select("select name from person") //
-                .transactedValuesOnly() //
-                .getAs(String.class) //
-                .doOnNext(System.out::println) //
-                .flatMap(tx -> tx//
-                        .update("update person set score=-1 where name=:name") //
-                        .batchSize(0) //
-                        .parameter("name", tx.value()) //
-                        .valuesOnly() //
-                        .counts()) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValues(1, 1, 1) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select name from person") //
+                    .transactedValuesOnly() //
+                    .getAs(String.class) //
+                    .doOnNext(System.out::println) //
+                    .flatMap(tx -> tx//
+                            .update("update person set score=-1 where name=:name") //
+                            .batchSize(0) //
+                            .parameter("name", tx.value()) //
+                            .valuesOnly() //
+                            .counts()) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(1, 1, 1) //
+                    .assertComplete();
+        }
     }
 
     private static void info() {
