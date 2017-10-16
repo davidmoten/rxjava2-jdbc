@@ -947,28 +947,32 @@ public class DatabaseTest {
 
     @Test
     public void testAutoMapToInterfaceWithTwoMethods() {
-        db() //
-                .select("select name, score from person order by name") //
-                .autoMap(Person2.class) //
-                .firstOrError() //
-                .map(Person2::score) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(21) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select name, score from person order by name") //
+                    .autoMap(Person2.class) //
+                    .firstOrError() //
+                    .map(Person2::score) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(21) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testAutoMapToInterfaceWithExplicitColumnName() {
-        db() //
-                .select("select name, score from person order by name") //
-                .autoMap(Person3.class) //
-                .firstOrError() //
-                .map(Person3::examScore) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(21) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select name, score from person order by name") //
+                    .autoMap(Person3.class) //
+                    .firstOrError() //
+                    .map(Person3::examScore) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(21) //
+                    .assertComplete();
+        }
     }
 
     @Test
