@@ -80,6 +80,16 @@ public final class Database implements AutoCloseable {
         }), () -> pool.close());
     }
 
+    public static Database from(@Nonnull Pool<Connection> pool, Action closeAction) {
+        Preconditions.checkNotNull(pool, "pool canot be null");
+        return new Database(pool.member().map(x -> {
+            if (x.value() == null) {
+                throw new NullPointerException("connection is null!");
+            }
+            return x.value();
+        }), closeAction);
+    }
+
     public static Database fromBlocking(@Nonnull ConnectionProvider cp) {
         return Database.from(new ConnectionProviderBlockingPool(cp));
     }

@@ -7,6 +7,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -30,7 +31,9 @@ public final class DatabaseCreator {
     }
 
     public static Database create(int maxSize) {
-        return create(maxSize, false, Schedulers.from(Executors.newFixedThreadPool(maxSize)));
+        ExecutorService executor = Executors.newFixedThreadPool(maxSize);
+        Scheduler scheduler = new ExecutorScheduler(executor);
+        return create(maxSize, false, scheduler);
     }
 
     public static Database create(int maxSize, Scheduler scheduler) {
@@ -83,7 +86,7 @@ public final class DatabaseCreator {
                 .connectionProvider(connectionProvider(nextUrl(), big)) //
                 .maxPoolSize(maxSize) //
                 .scheduler(scheduler) //
-                .build());
+                .build(), () -> scheduler.shutdown());
     }
 
     public static ConnectionProvider connectionProvider() {
@@ -116,7 +119,7 @@ public final class DatabaseCreator {
                     }
                 } catch (SQLException | InterruptedException | TimeoutException e) {
                     throw new SQLRuntimeException(e);
-                } 
+                }
             }
 
             @Override
