@@ -78,7 +78,8 @@ public final class DatabaseCreator {
         c.setAutoCommit(true);
         exec(c, "create table note2("
                 + "id integer not null generated always as identity (start with 1, increment by 2),"
-                + "text varchar(255) not null," + "constraint primary_key primary key (id)" + ")");
+                + "text varchar(255) not null," //
+                + "constraint primary_key primary key (id)" + ")");
     }
 
     public static Database create(int maxSize, boolean big, Scheduler scheduler) {
