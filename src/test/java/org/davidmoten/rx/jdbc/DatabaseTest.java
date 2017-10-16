@@ -977,87 +977,101 @@ public class DatabaseTest {
 
     @Test
     public void testAutoMapToInterfaceWithExplicitColumnNameThatDoesNotExist() {
-        db() //
-                .select("select name, score from person order by name") //
-                .autoMap(Person4.class) //
-                .firstOrError() //
-                .map(Person4::examScore) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoValues() //
-                .assertError(ColumnNotFoundException.class);
+        try (Database db = db()) {
+            db //
+                    .select("select name, score from person order by name") //
+                    .autoMap(Person4.class) //
+                    .firstOrError() //
+                    .map(Person4::examScore) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoValues() //
+                    .assertError(ColumnNotFoundException.class);
+        }
     }
 
     @Test
     public void testAutoMapToInterfaceWithIndex() {
-        db() //
-                .select("select name, score from person order by name") //
-                .autoMap(Person5.class) //
-                .firstOrError() //
-                .map(Person5::examScore) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(21) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select name, score from person order by name") //
+                    .autoMap(Person5.class) //
+                    .firstOrError() //
+                    .map(Person5::examScore) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(21) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testAutoMapToInterfaceWithIndexTooLarge() {
-        db() //
-                .select("select name, score from person order by name") //
-                .autoMap(Person6.class) //
-                .firstOrError() //
-                .map(Person6::examScore) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoValues() //
-                .assertError(ColumnIndexOutOfRangeException.class);
+        try (Database db = db()) {
+            db //
+                    .select("select name, score from person order by name") //
+                    .autoMap(Person6.class) //
+                    .firstOrError() //
+                    .map(Person6::examScore) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoValues() //
+                    .assertError(ColumnIndexOutOfRangeException.class);
+        }
     }
 
     @Test
     public void testAutoMapToInterfaceWithIndexTooSmall() {
-        db() //
-                .select("select name, score from person order by name") //
-                .autoMap(Person7.class) //
-                .firstOrError() //
-                .map(Person7::examScore) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoValues() //
-                .assertError(ColumnIndexOutOfRangeException.class);
+        try (Database db = db()) {
+            db //
+                    .select("select name, score from person order by name") //
+                    .autoMap(Person7.class) //
+                    .firstOrError() //
+                    .map(Person7::examScore) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoValues() //
+                    .assertError(ColumnIndexOutOfRangeException.class);
+        }
     }
 
     @Test
     public void testAutoMapWithUnmappableColumnType() {
-        db() //
-                .select("select name from person order by name") //
-                .autoMap(Person8.class) //
-                .map(p -> p.name()) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertNoValues() //
-                .assertError(ClassCastException.class);
+        try (Database db = db()) {
+            db //
+                    .select("select name from person order by name") //
+                    .autoMap(Person8.class) //
+                    .map(p -> p.name()) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoValues() //
+                    .assertError(ClassCastException.class);
+        }
     }
 
     @Test
     public void testAutoMapWithMixIndexAndName() {
-        db() //
-                .select("select name, score from person order by name") //
-                .autoMap(Person9.class) //
-                .firstOrError() //
-                .map(Person9::score) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(21) //
-                .assertComplete();
+        try (Database db = db()) {
+            db //
+                    .select("select name, score from person order by name") //
+                    .autoMap(Person9.class) //
+                    .firstOrError() //
+                    .map(Person9::score) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(21) //
+                    .assertComplete();
+        }
     }
 
     @Test
     public void testAutoMapWithQueryInAnnotation() {
-        db().select(Person10.class) //
-                .get() //
-                .firstOrError() //
-                .map(Person10::score) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertValue(21) //
-                .assertComplete();
+        try (Database db = db()) {
+            db.select(Person10.class) //
+                    .get() //
+                    .firstOrError() //
+                    .map(Person10::score) //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(21) //
+                    .assertComplete();
+        }
     }
 
     @Test
@@ -1072,36 +1086,44 @@ public class DatabaseTest {
 
     @Test(expected = QueryAnnotationMissingException.class)
     public void testAutoMapWithoutQueryInAnnotation() {
-        db().select(Person.class);
+        try (Database db = db()) {
+            db.select(Person.class);
+        }
     }
 
     @Test
     public void testSelectWithoutWhereClause() {
-        Assert.assertEquals(3, (long) db().select("select name from person") //
-                .count() //
-                .blockingGet());
+        try (Database db = db()) {
+            Assert.assertEquals(3, (long) db.select("select name from person") //
+                    .count() //
+                    .blockingGet());
+        }
     }
 
     @Test
     public void testTuple3() {
-        db() //
-                .select("select name, score, name from person order by name") //
-                .getAs(String.class, Integer.class, String.class) //
-                .firstOrError() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertComplete() //
-                .assertValue(Tuple3.create("FRED", 21, "FRED")); //
+        try (Database db = db()) {
+            db //
+                    .select("select name, score, name from person order by name") //
+                    .getAs(String.class, Integer.class, String.class) //
+                    .firstOrError() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertComplete() //
+                    .assertValue(Tuple3.create("FRED", 21, "FRED")); //
+        }
     }
 
     @Test
     public void testTuple4() {
-        db() //
-                .select("select name, score, name, score from person order by name") //
-                .getAs(String.class, Integer.class, String.class, Integer.class) //
-                .firstOrError() //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertComplete() //
-                .assertValue(Tuple4.create("FRED", 21, "FRED", 21)); //
+        try (Database db = db()) {
+            db //
+                    .select("select name, score, name, score from person order by name") //
+                    .getAs(String.class, Integer.class, String.class, Integer.class) //
+                    .firstOrError() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertComplete() //
+                    .assertValue(Tuple4.create("FRED", 21, "FRED", 21)); //
+        }
     }
 
     @Test
