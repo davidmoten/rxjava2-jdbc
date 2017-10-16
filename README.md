@@ -42,6 +42,12 @@ To start things off you need a `Database` instance. Given the jdbc url of your d
 ```java
 Database db = Database.from(url, maxPoolSize);
 ```
+Note that the above command creates a `Scheduler` and `ExecutorService` based on the requested `maxPoolSize`. When you are finished with the database object call 
+
+```java
+db.close();
+```
+which will shutdown the created `Scheduler` and `ExecutorService`.
 
 ### Support for playing with rxjava2-jdbc!
 
