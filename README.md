@@ -543,7 +543,7 @@ Flowable<Reader> document =
   db.select("select document from person_clob")
     .getAs(Reader.class);
 ```
-### Read a null Clob
+### Read a Null Clob
 For the special case where you want to return one value from a select statement and that value is a nullable CLOB then use `getAsOptional`:
 ```java
 db.select("select document from person_clob where name='FRED'")
