@@ -36,6 +36,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     private final SimplePlainQueue<DecoratingMember<T>> initializedAvailable;
     private final SimplePlainQueue<DecoratingMember<T>> notInitialized;
     private final SimplePlainQueue<DecoratingMember<T>> toBeReleased;
+    private final SimplePlainQueue<DecoratingMember<T>> toBeChecked;
 
     private final AtomicInteger wip = new AtomicInteger();
     private final DecoratingMember<T>[] members;
@@ -64,6 +65,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         this.initializedAvailable = new MpscLinkedQueue<DecoratingMember<T>>();
         this.notInitialized = new MpscLinkedQueue<DecoratingMember<T>>();
         this.toBeReleased = new MpscLinkedQueue<DecoratingMember<T>>();
+        this.toBeChecked = new MpscLinkedQueue<DecoratingMember<T>>();
         this.members = createMembersArray(pool.maxSize, pool.checkinDecorator);
         for (DecoratingMember<T> m : members) {
             notInitialized.offer(m);
@@ -142,17 +144,6 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
             log.debug("drain loop starting");
             int missed = 1;
             while (true) {
-                // schedule release of any member queued for releasing
-                {
-                    DecoratingMember<T> m;
-                    while ((m = toBeReleased.poll()) != null) {
-                        log.debug("scheduling release of {}", m);
-                        // we mark as releasing so that we can ignore it if already in the
-                        // initializedAvailable queue after concurrent checkin
-                        m.markAsReleasing();
-                        scheduled.add(scheduler.scheduleDirect(new Releaser<T>(m)));
-                    }
-                }
                 long r = requested.get();
                 log.debug("requested={}", r);
                 long e = 0;
@@ -160,6 +151,28 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     if (cancelled) {
                         disposeAll();
                         return;
+                    }
+                    // schedule release immediately of any member queued for releasing
+                    {
+                        DecoratingMember<T> m;
+                        while ((m = toBeReleased.poll()) != null) {
+                            log.debug("scheduling release of {}", m);
+                            // we mark as releasing so that we can ignore it if already in the
+                            // initializedAvailable queue after concurrent checkin
+                            m.markAsReleasing();
+                            scheduled.add(scheduler.scheduleDirect(new Releaser<T>(m)));
+                        }
+                    }
+                    // schedule check of any member queued for checking
+                    {
+                        DecoratingMember<T> m;
+                        while ((m = toBeChecked.poll()) != null) {
+                            log.debug("scheduling check of {}", m);
+                            // we mark as checking so that we can ignore it if already in the
+                            // initializedAvailable queue after concurrent checkin
+                            m.markAsChecking();
+                            scheduled.add(scheduler.scheduleDirect(new Checker(m)));
+                        }
                     }
                     Observers<T> obs = observers.get();
                     // the check below required so a tryEmit that returns false doesn't bring about
@@ -184,7 +197,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                             log.debug("scheduling member creation");
                             scheduled.add(scheduleCreateValue(m2));
                         }
-                    } else if (!m.isReleasing()) {
+                    } else if (!m.isReleasing() && !m.isChecking()) {
                         // this should not block because it just schedules emissions to observers
                         log.debug("trying to emit member");
                         if (tryEmit(obs, m)) {
@@ -226,6 +239,31 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         public void run() {
             try {
                 m.release();
+            } catch (Throwable t) {
+                RxJavaPlugins.onError(t);
+            }
+        }
+    }
+
+    final class Checker implements Runnable {
+
+        private DecoratingMember<T> m;
+
+        Checker(DecoratingMember<T> m) {
+            this.m = m;
+        }
+
+        @Override
+        public void run() {
+            try {
+                log.debug("performing health check on {}", m);
+                if (!pool.healthy.test(m.value())) {
+                    m.disposeValue();
+                    notInitialized.offer(m);
+                } else {
+                    m.setChecking(false);
+                }
+                drain();
             } catch (Throwable t) {
                 RxJavaPlugins.onError(t);
             }

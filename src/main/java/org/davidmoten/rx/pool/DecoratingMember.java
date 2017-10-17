@@ -23,6 +23,9 @@ final class DecoratingMember<T> implements Member<T> {
     // synchronized by MemberSingle.drain() wip
     private boolean releasing;
 
+    // synchronized by MemberSingle.drain() wip
+    private boolean checking;
+
     DecoratingMember(T value, BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator,
             MemberSingle<T> memberSingle) {
         this.checkinDecorator = checkinDecorator;
@@ -46,6 +49,14 @@ final class DecoratingMember<T> implements Member<T> {
 
     public boolean isReleasing() {
         return releasing;
+    }
+
+    public void markAsChecking() {
+        this.checking = true;
+    }
+
+    public boolean isChecking() {
+        return checking;
     }
 
     @Override
@@ -93,6 +104,10 @@ final class DecoratingMember<T> implements Member<T> {
     @Override
     public String toString() {
         return "DecoratingMember [value=" + value + "]";
+    }
+
+    public void setChecking(boolean b) {
+        checking = false;
     }
 
 }
