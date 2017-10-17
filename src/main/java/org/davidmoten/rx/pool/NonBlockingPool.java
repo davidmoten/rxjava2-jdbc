@@ -48,6 +48,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         Preconditions.checkArgument(checkoutRetryIntervalMs >= 0,
                 "checkoutRetryIntervalMs must be >=0");
         Preconditions.checkNotNull(closeAction);
+        Preconditions.checkArgument(maxIdleTimeMs >= 0, "maxIdleTime must be >=0");
         this.factory = factory;
         this.healthy = healthy;
         this.disposer = disposer;
