@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.IOUtils;
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Database;
-import org.davidmoten.rx.jdbc.ExecutorScheduler;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 
 import io.reactivex.Scheduler;
