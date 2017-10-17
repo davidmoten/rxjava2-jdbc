@@ -144,6 +144,9 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
             log.debug("drain loop starting");
             int missed = 1;
             while (true) {
+                // we schedule release of members even if no requests exist
+                scheduleReleases();
+                scheduleChecks();
                 long r = requested.get();
                 log.debug("requested={}", r);
                 long e = 0;
@@ -151,28 +154,6 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     if (cancelled) {
                         disposeAll();
                         return;
-                    }
-                    // schedule release immediately of any member queued for releasing
-                    {
-                        DecoratingMember<T> m;
-                        while ((m = toBeReleased.poll()) != null) {
-                            log.debug("scheduling release of {}", m);
-                            // we mark as releasing so that we can ignore it if already in the
-                            // initializedAvailable queue after concurrent checkin
-                            m.markAsReleasing();
-                            scheduled.add(scheduler.scheduleDirect(new Releaser<T>(m)));
-                        }
-                    }
-                    // schedule check of any member queued for checking
-                    {
-                        DecoratingMember<T> m;
-                        while ((m = toBeChecked.poll()) != null) {
-                            log.debug("scheduling check of {}", m);
-                            // we mark as checking so that we can ignore it if already in the
-                            // initializedAvailable queue after concurrent checkin
-                            m.markAsChecking();
-                            scheduled.add(scheduler.scheduleDirect(new Checker(m)));
-                        }
                     }
                     Observers<T> obs = observers.get();
                     // the check below required so a tryEmit that returns false doesn't bring about
@@ -204,6 +185,11 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                             e++;
                         }
                     }
+                    // schedule release immediately of any member
+                    // queued for releasing
+                    scheduleReleases();
+                    // schedule check of any member queued for checking
+                    scheduleChecks();
                 }
                 // normally we don't reduce requested if it is Long.MAX_VALUE
                 // but given that the only way to increase requested is by subscribing
@@ -216,6 +202,28 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     return;
                 }
             }
+        }
+    }
+
+    private void scheduleChecks() {
+        DecoratingMember<T> m;
+        while ((m = toBeChecked.poll()) != null) {
+            log.debug("scheduling check of {}", m);
+            // we mark as checking so that we can ignore it if already in the
+            // initializedAvailable queue after concurrent checkin
+            m.markAsChecking();
+            scheduled.add(scheduler.scheduleDirect(new Checker(m)));
+        }
+    }
+
+    private void scheduleReleases() {
+        DecoratingMember<T> m;
+        while ((m = toBeReleased.poll()) != null) {
+            log.debug("scheduling release of {}", m);
+            // we mark as releasing so that we can ignore it if already in the
+            // initializedAvailable queue after concurrent checkin
+            m.markAsReleasing();
+            scheduled.add(scheduler.scheduleDirect(new Releaser<T>(m)));
         }
     }
 
