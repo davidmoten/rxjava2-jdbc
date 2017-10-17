@@ -26,6 +26,9 @@ final class DecoratingMember<T> implements Member<T> {
     // synchronized by MemberSingle.drain() wip
     private boolean checking;
 
+    // synchronized by MemberSingle.drain() wip
+    private long lastCheckTime;
+
     DecoratingMember(T value, BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator,
             MemberSingle<T> memberSingle) {
         this.checkinDecorator = checkinDecorator;
@@ -108,6 +111,10 @@ final class DecoratingMember<T> implements Member<T> {
 
     public void setChecking(boolean b) {
         checking = false;
+    }
+
+    public long lastCheckTime() {
+        return lastCheckTime;
     }
 
 }

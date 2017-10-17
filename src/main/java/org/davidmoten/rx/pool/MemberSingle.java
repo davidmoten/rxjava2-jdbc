@@ -181,6 +181,9 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     } else if (!m.isReleasing() && !m.isChecking()) {
                         // this should not block because it just schedules emissions to observers
                         log.debug("trying to emit member");
+                        if (scheduler.now(TimeUnit.MILLISECONDS)- m.lastCheckTime()>= pool.idleTimeBeforeHealthCheckMs) {
+                            
+                        }
                         if (tryEmit(obs, m)) {
                             e++;
                         }
