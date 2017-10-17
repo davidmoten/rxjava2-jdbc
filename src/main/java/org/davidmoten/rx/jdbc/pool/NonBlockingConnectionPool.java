@@ -140,8 +140,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         }
 
         public NonBlockingConnectionPool build() {
-            boolean createScheduler = scheduler == null;
-            if (createScheduler) {
+            if (scheduler==null) {
                 ExecutorService executor = Executors.newFixedThreadPool(maxPoolSize);
                 scheduler = new ExecutorScheduler(executor);
             }
@@ -156,11 +155,6 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
                     .healthy(healthy) //
                     .scheduler(scheduler) //
                     .maxSize(maxPoolSize) //
-                    .onClose(() -> {
-                        if (createScheduler) {
-                            scheduler.shutdown();
-                        }
-                    }) //
                     .returnToPoolDelayAfterHealthCheckFailureMs(
                             returnToPoolDelayAfterHealthCheckFailureMs)); //
         }

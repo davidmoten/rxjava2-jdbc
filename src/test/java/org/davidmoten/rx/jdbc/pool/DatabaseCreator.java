@@ -33,7 +33,7 @@ public final class DatabaseCreator {
 
     public static Database create(int maxSize) {
         ExecutorService executor = Executors.newFixedThreadPool(maxSize);
-        Scheduler scheduler = new ExecutorScheduler(executor);
+        Scheduler scheduler = Schedulers.from(executor);
         return create(maxSize, false, scheduler);
     }
 
@@ -90,9 +90,9 @@ public final class DatabaseCreator {
                 .scheduler(scheduler) //
                 .build();
         return Database.from(pool, () -> {
-                    pool.close();
-                    scheduler.shutdown();
-                });
+            pool.close();
+            scheduler.shutdown();
+        });
     }
 
     public static ConnectionProvider connectionProvider() {

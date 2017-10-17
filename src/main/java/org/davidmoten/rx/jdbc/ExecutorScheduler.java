@@ -15,8 +15,7 @@ public final class ExecutorScheduler extends Scheduler {
         this.executor = executor;
         this.scheduler = Schedulers.from(executor);
     }
-
-    @Override
+    
     public Worker createWorker() {
         return scheduler.createWorker();
     }
