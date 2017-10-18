@@ -121,7 +121,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
                 y) -> x;
         private Callable<? extends T> factory;
         private Predicate<? super T> healthy = x -> true;
-        private long idleTimeBeforeHealthCheckMs = 30;
+        private long idleTimeBeforeHealthCheckMs = 1000;
         private Consumer<? super T> disposer = Consumers.doNothing();
         private int maxSize = 10;
         private long returnToPoolDelayAfterHealthCheckFailureMs = 30000;

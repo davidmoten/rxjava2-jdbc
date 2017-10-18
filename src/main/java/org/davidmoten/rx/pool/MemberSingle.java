@@ -263,7 +263,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
 
     final class Checker implements Runnable {
 
-        private DecoratingMember<T> m;
+        private final DecoratingMember<T> m;
 
         Checker(DecoratingMember<T> m) {
             this.m = m;
