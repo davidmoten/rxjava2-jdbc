@@ -109,8 +109,9 @@ final class DecoratingMember<T> implements Member<T> {
         return "DecoratingMember [value=" + value + "]";
     }
 
-    public void setChecking(boolean b) {
+    public void markAsChecked() {
         checking = false;
+        lastCheckTime = memberSingle.pool.scheduler.now(TimeUnit.MILLISECONDS);
     }
 
     public long lastCheckTime() {

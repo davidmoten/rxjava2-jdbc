@@ -181,11 +181,14 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     } else if (!m.isReleasing() && !m.isChecking()) {
                         // this should not block because it just schedules emissions to observers
                         log.debug("trying to emit member");
-                        if (scheduler.now(TimeUnit.MILLISECONDS)- m.lastCheckTime()>= pool.idleTimeBeforeHealthCheckMs) {
-                            
-                        }
-                        if (tryEmit(obs, m)) {
-                            e++;
+                        if (pool.idleTimeBeforeHealthCheckMs > 0
+                                && scheduler.now(TimeUnit.MILLISECONDS)
+                                        - m.lastCheckTime() >= pool.idleTimeBeforeHealthCheckMs) {
+                            toBeChecked.offer(m);
+                        } else {
+                            if (tryEmit(obs, m)) {
+                                e++;
+                            }
                         }
                     }
                     // schedule release immediately of any member
@@ -211,11 +214,13 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     private void scheduleChecks() {
         DecoratingMember<T> m;
         while ((m = toBeChecked.poll()) != null) {
-            log.debug("scheduling check of {}", m);
-            // we mark as checking so that we can ignore it if already in the
-            // initializedAvailable queue after concurrent checkin
-            m.markAsChecking();
-            scheduled.add(scheduler.scheduleDirect(new Checker(m)));
+            if (!m.isReleasing()) {
+                log.debug("scheduling check of {}", m);
+                // we mark as checking so that we can ignore it if already in the
+                // initializedAvailable queue after concurrent checkin
+                m.markAsChecking();
+                scheduled.add(scheduler.scheduleDirect(new Checker(m)));
+            }
         }
     }
 
@@ -272,7 +277,8 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     m.disposeValue();
                     notInitialized.offer(m);
                 } else {
-                    m.setChecking(false);
+                    m.markAsChecked();
+                    initializedAvailable.offer(m);
                 }
                 drain();
             } catch (Throwable t) {
