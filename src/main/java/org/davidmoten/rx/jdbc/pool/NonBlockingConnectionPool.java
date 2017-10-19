@@ -42,7 +42,6 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         private ConnectionProvider cp;
         private Predicate<? super Connection> healthy = c -> true;
         private int maxPoolSize = 5;
-        private long returnToPoolDelayAfterHealthCheckFailureMs = 1000;
         private long idleTimeBeforeHealthCheckMs = 60000;
         private long maxIdleTimeMs = 30 * 60000;
         private long checkoutRetryIntervalMs = 30000;
@@ -105,15 +104,6 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         public Builder maxPoolSize(int maxPoolSize) {
             this.maxPoolSize = maxPoolSize;
             return this;
-        }
-
-        public Builder returnToPoolDelayAfterHealthCheckFailureMs(long value) {
-            this.returnToPoolDelayAfterHealthCheckFailureMs = value;
-            return this;
-        }
-
-        public Builder returnToPoolDelayAfterHealthCheckFailure(long value, TimeUnit unit) {
-            return returnToPoolDelayAfterHealthCheckFailureMs(unit.toMillis(value));
         }
 
         /**

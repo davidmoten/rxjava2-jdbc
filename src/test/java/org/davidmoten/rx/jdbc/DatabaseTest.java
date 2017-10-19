@@ -268,7 +268,6 @@ public class DatabaseTest {
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
                 .checkoutRetryInterval(1, TimeUnit.SECONDS) //
                 .healthy(c -> c.prepareStatement("select 1").execute()) //
-                .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) //
                 .maxPoolSize(3) //
                 .build();
 
@@ -1760,7 +1759,6 @@ public class DatabaseTest {
                 .maxIdleTime(10, TimeUnit.MINUTES) //
                 .idleTimeBeforeHealthCheck(0, TimeUnit.MINUTES) //
                 .healthy(healthy) //
-                .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.MINUTES) //
                 .scheduler(scheduler) //
                 .maxPoolSize(1) //
                 .build();
