@@ -215,6 +215,7 @@ public class PoolTest {
                 .build();
         {
             TestSubscriber<Member<Integer>> ts = new FlowableSingle<>(pool.member()) //
+                    .repeat() //
                     .doOnNext(System.out::println) //
                     .doOnNext(m -> m.checkin()) //
                     .doOnRequest(t -> System.out.println("test request=" + t)) //
@@ -224,11 +225,10 @@ public class PoolTest {
             ts.assertValueCount(1);
             assertEquals(0, disposed.get());
             assertEquals(0, healthChecks.get());
-            s.advanceTimeBy(1, TimeUnit.MINUTES);
-            s.triggerActions();
-            assertEquals(0, disposed.get());
             // next request is immediate so health check does not run
+            System.out.println("health check should not run because immediate");
             ts.request(1);
+            s.triggerActions();
             ts.assertValueCount(2);
             assertEquals(0, disposed.get());
             assertEquals(0, healthChecks.get());
@@ -238,9 +238,9 @@ public class PoolTest {
             s.triggerActions();
             System.out.println("trying to trigger health check");
             ts.request(1);
-
+            s.triggerActions();
             ts.assertValueCount(2);
-            assertEquals(2, disposed.get());
+            assertEquals(1, disposed.get());
             assertEquals(1, healthChecks.get());
 
             // checkout retry should happen after interval
@@ -250,7 +250,7 @@ public class PoolTest {
             // failing health check causes recreate to be scheduled
             ts.cancel();
             // already disposed so cancel has no effect
-            assertEquals(2, disposed.get());
+            assertEquals(1, disposed.get());
         }
     }
 

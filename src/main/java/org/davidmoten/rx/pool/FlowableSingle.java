@@ -45,7 +45,10 @@ public class FlowableSingle<T> extends Flowable<T> {
 
         @Override
         public void cancel() {
-            disposable.dispose();
+            Disposable d = disposable;
+            if (d != null) {
+                d.dispose();
+            }
         }
 
         @Override
