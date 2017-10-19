@@ -27,6 +27,7 @@ final class DecoratingMember<T> implements Member<T> {
     private boolean checking;
 
     // synchronized by MemberSingle.drain() wip
+    // TODO subject to word tearing, cast down to int and handle wraparound
     private long lastCheckTime;
 
     DecoratingMember(T value, BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator,
@@ -71,11 +72,13 @@ final class DecoratingMember<T> implements Member<T> {
             }
             log.debug("disposing value {}", value);
             memberSingle.pool.disposer.accept(value);
-            value = null;
+
         } catch (Throwable e) {
             // make action configurable
             RxJavaPlugins.onError(e);
+        } finally {
             value = null;
+            checking = false;
         }
     }
 
@@ -87,6 +90,7 @@ final class DecoratingMember<T> implements Member<T> {
     public void setValueAndClearReleasingFlag(T value) {
         this.value = value;
         this.releasing = false;
+        this.lastCheckTime = now();
     }
 
     void scheduleRelease() {
@@ -111,7 +115,11 @@ final class DecoratingMember<T> implements Member<T> {
 
     public void markAsChecked() {
         checking = false;
-        lastCheckTime = memberSingle.pool.scheduler.now(TimeUnit.MILLISECONDS);
+        lastCheckTime = now();
+    }
+
+    private long now() {
+        return memberSingle.pool.scheduler.now(TimeUnit.MILLISECONDS);
     }
 
     public long lastCheckTime() {

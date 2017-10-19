@@ -107,7 +107,9 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
 
     public void checkin(Member<T> member) {
         log.debug("checking in {}", member);
-        ((DecoratingMember<T>) member).scheduleRelease();
+        DecoratingMember<T> d = ((DecoratingMember<T>) member);
+        d.scheduleRelease();
+        d.markAsChecked();
         initializedAvailable.offer((DecoratingMember<T>) member);
         drain();
     }
@@ -181,13 +183,17 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     } else if (!m.isReleasing() && !m.isChecking()) {
                         // this should not block because it just schedules emissions to observers
                         log.debug("trying to emit member");
+                        long now = scheduler.now(TimeUnit.MILLISECONDS);
+                        log.debug("schedule.now={}, lastCheck={}", now, m.lastCheckTime());
                         if (pool.idleTimeBeforeHealthCheckMs > 0
-                                && scheduler.now(TimeUnit.MILLISECONDS)
-                                        - m.lastCheckTime() >= pool.idleTimeBeforeHealthCheckMs) {
+                                && now - m.lastCheckTime() >= pool.idleTimeBeforeHealthCheckMs) {
                             toBeChecked.offer(m);
                         } else {
+                            log.debug("no health check required for {}", m);
                             if (tryEmit(obs, m)) {
                                 e++;
+                            } else {
+                                log.debug("no active observers");
                             }
                         }
                     }
@@ -274,13 +280,19 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
             try {
                 log.debug("performing health check on {}", m);
                 if (!pool.healthy.test(m.value())) {
+                    log.debug("failed health check");
                     m.disposeValue();
-                    notInitialized.offer(m);
+                    log.debug("scheduling recreation of member {}", m);
+                    scheduled.add(scheduler.scheduleDirect(() -> {
+                        log.debug("recreating member after failed health check {}", m);
+                        notInitialized.offer(m);
+                        drain();
+                    }, pool.checkoutRetryIntervalMs, TimeUnit.MILLISECONDS));
                 } else {
                     m.markAsChecked();
                     initializedAvailable.offer(m);
+                    drain();
                 }
-                drain();
             } catch (Throwable t) {
                 RxJavaPlugins.onError(t);
             }

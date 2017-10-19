@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.davidmoten.rx.jdbc.Database;
-import org.davidmoten.rx.pool.Consumers;
+import org.davidmoten.rx.pool.FlowableSingle;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
@@ -34,10 +34,8 @@ public class PoolTest {
         Pool<Integer> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
                 .healthy(n -> true) //
-                .disposer(Consumers.doNothing()) //
                 .maxSize(3) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
-                .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) //
                 .disposer(n -> disposed.incrementAndGet()) //
                 .scheduler(s) //
                 .build();
@@ -64,10 +62,8 @@ public class PoolTest {
         Pool<Integer> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
                 .healthy(n -> true) //
-                .disposer(Consumers.doNothing()) //
                 .maxSize(1) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
-                .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) //
                 .disposer(n -> disposed.incrementAndGet()) //
                 .scheduler(s) //
                 .build();
@@ -195,6 +191,66 @@ public class PoolTest {
             assertEquals(list.get(1).hashCode(), values.get(1).hashCode());
             assertEquals(list.get(1).hashCode(), values.get(2).hashCode());
             assertEquals(list.get(0).hashCode(), values.get(3).hashCode());
+        }
+    }
+
+    @Test
+    public void testHealthCheckWhenFails() throws Exception {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger count = new AtomicInteger();
+        AtomicInteger disposed = new AtomicInteger();
+        AtomicInteger healthChecks = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthy(n -> {
+                    healthChecks.incrementAndGet();
+                    return false;
+                }) //
+                .checkoutRetryInterval(10, TimeUnit.MINUTES) //
+                .idleTimeBeforeHealthCheck(1, TimeUnit.MILLISECONDS) //
+                .maxSize(1) //
+                .maxIdleTime(1, TimeUnit.HOURS) //
+                .disposer(n -> disposed.incrementAndGet()) //
+                .scheduler(s) //
+                .build();
+        {
+            TestSubscriber<Member<Integer>> ts = new FlowableSingle<>(pool.member()) //
+                    .doOnNext(System.out::println) //
+                    .doOnNext(m -> m.checkin()) //
+                    .doOnRequest(t -> System.out.println("test request=" + t)) //
+                    .test(1);
+            s.triggerActions();
+            // health check doesn't get run on create
+            ts.assertValueCount(1);
+            assertEquals(0, disposed.get());
+            assertEquals(0, healthChecks.get());
+            s.advanceTimeBy(1, TimeUnit.MINUTES);
+            s.triggerActions();
+            assertEquals(0, disposed.get());
+            // next request is immediate so health check does not run
+            ts.request(1);
+            ts.assertValueCount(2);
+            assertEquals(0, disposed.get());
+            assertEquals(0, healthChecks.get());
+
+            // now try to trigger health check
+            s.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+            s.triggerActions();
+            System.out.println("trying to trigger health check");
+            ts.request(1);
+
+            ts.assertValueCount(2);
+            assertEquals(2, disposed.get());
+            assertEquals(1, healthChecks.get());
+
+            // checkout retry should happen after interval
+            s.advanceTimeBy(10, TimeUnit.MINUTES);
+            ts.assertValueCount(3);
+
+            // failing health check causes recreate to be scheduled
+            ts.cancel();
+            // already disposed so cancel has no effect
+            assertEquals(2, disposed.get());
         }
     }
 

@@ -24,7 +24,6 @@ public final class NonBlockingPool<T> implements Pool<T> {
     final int maxSize;
     final long maxIdleTimeMs;
     final long checkoutRetryIntervalMs;
-    final long returnToPoolDelayAfterHealthCheckFailureMs;
     final BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator;
     final Scheduler scheduler;
     final Action closeAction;
@@ -33,8 +32,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
     private volatile boolean closed;
 
     NonBlockingPool(Callable<? extends T> factory, Predicate<? super T> healthy,
-            Consumer<? super T> disposer, int maxSize,
-            long returnToPoolDelayAfterHealthCheckFailureMs, long idleTimeBeforeHealthCheckMs,
+            Consumer<? super T> disposer, int maxSize, long idleTimeBeforeHealthCheckMs,
             long maxIdleTimeMs, long checkoutRetryIntervalMs,
             BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator,
             Scheduler scheduler, Action closeAction) {
@@ -42,7 +40,6 @@ public final class NonBlockingPool<T> implements Pool<T> {
         Preconditions.checkNotNull(healthy);
         Preconditions.checkNotNull(disposer);
         Preconditions.checkArgument(maxSize > 0);
-        Preconditions.checkArgument(returnToPoolDelayAfterHealthCheckFailureMs >= 0);
         Preconditions.checkNotNull(checkinDecorator);
         Preconditions.checkNotNull(scheduler);
         Preconditions.checkArgument(checkoutRetryIntervalMs >= 0,
@@ -53,7 +50,6 @@ public final class NonBlockingPool<T> implements Pool<T> {
         this.healthy = healthy;
         this.disposer = disposer;
         this.maxSize = maxSize;
-        this.returnToPoolDelayAfterHealthCheckFailureMs = returnToPoolDelayAfterHealthCheckFailureMs;
         this.idleTimeBeforeHealthCheckMs = idleTimeBeforeHealthCheckMs;
         this.maxIdleTimeMs = maxIdleTimeMs;
         this.checkoutRetryIntervalMs = checkoutRetryIntervalMs;
@@ -124,7 +120,6 @@ public final class NonBlockingPool<T> implements Pool<T> {
         private long idleTimeBeforeHealthCheckMs = 1000;
         private Consumer<? super T> disposer = Consumers.doNothing();
         private int maxSize = 10;
-        private long returnToPoolDelayAfterHealthCheckFailureMs = 30000;
         private long checkoutRetryIntervalMs = 30000;
         private Scheduler scheduler = Schedulers.computation();
         private long maxIdleTimeMs;
@@ -188,17 +183,6 @@ public final class NonBlockingPool<T> implements Pool<T> {
             return this;
         }
 
-        public Builder<T> returnToPoolDelayAfterHealthCheckFailureMs(long retryDelayMs) {
-            Preconditions.checkArgument(retryDelayMs >= 0);
-            this.returnToPoolDelayAfterHealthCheckFailureMs = retryDelayMs;
-            return this;
-        }
-
-        public Builder<T> returnToPoolDelayAfterHealthCheckFailure(long value, TimeUnit unit) {
-            Preconditions.checkNotNull(unit);
-            return returnToPoolDelayAfterHealthCheckFailureMs(unit.toMillis(value));
-        }
-
         public Builder<T> scheduler(Scheduler scheduler) {
             Preconditions.checkNotNull(scheduler);
             this.scheduler = scheduler;
@@ -217,9 +201,8 @@ public final class NonBlockingPool<T> implements Pool<T> {
 
         public NonBlockingPool<T> build() {
             return new NonBlockingPool<T>(factory, healthy, disposer, maxSize,
-                    returnToPoolDelayAfterHealthCheckFailureMs, idleTimeBeforeHealthCheckMs,
-                    maxIdleTimeMs, checkoutRetryIntervalMs, checkinDecorator, scheduler,
-                    closeAction);
+                    idleTimeBeforeHealthCheckMs, maxIdleTimeMs, checkoutRetryIntervalMs,
+                    checkinDecorator, scheduler, closeAction);
         }
 
     }
