@@ -39,13 +39,12 @@ public class PoolTest {
                 .disposer(n -> disposed.incrementAndGet()) //
                 .scheduler(s) //
                 .build();
-        TestSubscriber<Member<Integer>> ts = pool //
-                .member() //
-                .repeat() //
-                .doOnNext(m -> m.checkin()) //
-                .doOnNext(System.out::println) //
-                .doOnRequest(t -> System.out.println("test request=" + t)) //
-                .test(1);
+        TestSubscriber<Member<Integer>> ts = new FlowableSingle<>( //
+                pool.member()) //
+                        .doOnNext(m -> m.checkin()) //
+                        .doOnNext(System.out::println) //
+                        .doOnRequest(t -> System.out.println("test request=" + t)) //
+                        .test(1);
         s.triggerActions();
         ts.assertValueCount(1);
         assertEquals(0, disposed.get());
@@ -68,13 +67,12 @@ public class PoolTest {
                 .scheduler(s) //
                 .build();
         {
-            TestSubscriber<Member<Integer>> ts = pool //
-                    .member() //
-                    .repeat() //
-                    .doOnNext(m -> m.checkin()) //
-                    .doOnNext(System.out::println) //
-                    .doOnRequest(t -> System.out.println("test request=" + t)) //
-                    .test(1);
+            TestSubscriber<Member<Integer>> ts = new FlowableSingle<>(pool //
+                    .member()) //
+                            .doOnNext(m -> m.checkin()) //
+                            .doOnNext(System.out::println) //
+                            .doOnRequest(t -> System.out.println("test request=" + t)) //
+                            .test(1);
             s.triggerActions();
             ts.assertValueCount(1);
             assertEquals(0, disposed.get());
@@ -132,8 +130,7 @@ public class PoolTest {
     public void testConnectionPoolRecylesAlternating() {
         TestScheduler s = new TestScheduler();
         Database db = DatabaseCreator.create(2, s);
-        TestSubscriber<Connection> ts = db.connection() //
-                .repeat() //
+        TestSubscriber<Connection> ts = db.connections() //
                 .doOnNext(System.out::println) //
                 .doOnNext(c -> {
                     // release connection for reuse straight away

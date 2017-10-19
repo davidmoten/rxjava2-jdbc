@@ -210,7 +210,7 @@ public final class Database implements AutoCloseable {
      *         {@code close()} on a connection it is returned to the pool
      */
     public Flowable<Connection> connections() {
-        return new FlowableSingle<Connection>(connection);
+        return new FlowableSingle<Connection>(connection).repeat();
     }
 
     @Override
