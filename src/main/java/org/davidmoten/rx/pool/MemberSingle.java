@@ -56,7 +56,6 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     private final AtomicLong requested = new AtomicLong();
 
     // mutable
-
     private volatile boolean cancelled;
 
     @SuppressWarnings("unchecked")
@@ -165,7 +164,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     }
                     // check for an already initialized available member
                     final DecoratingMember<T> m = initializedAvailable.poll();
-                    log.debug("poll of available members returns " + m);
+                    log.debug("poll of available members returns {}", m);
                     if (m == null) {
                         // no members available, check for a released member (that needs to be
                         // reinitialized before use)
@@ -183,10 +182,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     } else if (!m.isReleasing() && !m.isChecking()) {
                         // this should not block because it just schedules emissions to observers
                         log.debug("trying to emit member");
-                        long now = scheduler.now(TimeUnit.MILLISECONDS);
-                        log.debug("schedule.now={}, lastCheck={}", now, m.lastCheckTime());
-                        if (pool.idleTimeBeforeHealthCheckMs > 0
-                                && now - m.lastCheckTime() >= pool.idleTimeBeforeHealthCheckMs) {
+                        if (shouldPerformHealthCheck(m)) {
                             toBeChecked.offer(m);
                         } else {
                             log.debug("no health check required for {}", m);
@@ -215,6 +211,13 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                 }
             }
         }
+    }
+
+    private boolean shouldPerformHealthCheck(final DecoratingMember<T> m) {
+        long now = scheduler.now(TimeUnit.MILLISECONDS);
+        log.debug("schedule.now={}, lastCheck={}", now, m.lastCheckTime());
+        return pool.idleTimeBeforeHealthCheckMs > 0
+                && now - m.lastCheckTime() >= pool.idleTimeBeforeHealthCheckMs;
     }
 
     private void scheduleChecks() {

@@ -14,6 +14,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 
+import org.davidmoten.rx.FlowableSingle;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.davidmoten.rx.jdbc.pool.Pools;
@@ -22,17 +23,18 @@ import org.davidmoten.rx.pool.Pool;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.functions.Action;
 
 public final class Database implements AutoCloseable {
 
-    private final Single<Connection> connections;
+    private final Single<Connection> connection;
 
     private final Action onClose;
 
     private Database(@Nonnull Single<Connection> connection, @Nonnull Action onClose) {
-        this.connections = connection;
+        this.connection = connection;
         this.onClose = onClose;
     }
 
@@ -185,7 +187,30 @@ public final class Database implements AutoCloseable {
     }
 
     public Single<Connection> connection() {
-        return connections;
+        return connection;
+    }
+
+    /**
+     * <p>
+     * Returns a flowable stream of checked out Connections from the pool. It's
+     * preferrable to use the {@code connection()} method and subscribe to a
+     * MemberSingle instead because the sometimes surprising request patterns of
+     * Flowable operators may mean that more Connections are checked out from the
+     * pool than are needed. For instance if you use
+     * 
+     * <pre>
+     * Flowable&lt;Connection&gt; cons = Database.connection().repeat()
+     * </pre>
+     * <p>
+     * then you will checkout more (1 more) Connection with {@code repeat} than you
+     * requested because {@code repeat} subscribes one more time than dictated by
+     * the requests (buffers).
+     * 
+     * @return stream of checked out connections from the pool. When you call
+     *         {@code close()} on a connection it is returned to the pool
+     */
+    public Flowable<Connection> connections() {
+        return new FlowableSingle<Connection>(connection);
     }
 
     @Override
@@ -199,7 +224,7 @@ public final class Database implements AutoCloseable {
 
     public <T> SelectAutomappedBuilder<T> select(@Nonnull Class<T> cls) {
         Preconditions.checkNotNull(cls, "cls cannot be null");
-        return new SelectAutomappedBuilder<T>(cls, connections, this);
+        return new SelectAutomappedBuilder<T>(cls, connection, this);
     }
 
     public SelectBuilder select(@Nonnull String sql) {
