@@ -1,6 +1,8 @@
 package org.davidmoten.rx.pool;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -9,6 +11,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
 
 public class FlowableSingle<T> extends Flowable<T> {
 
@@ -29,7 +32,7 @@ public class FlowableSingle<T> extends Flowable<T> {
         private final Subscriber<? super T> s;
         private final Single<T> single;
         private final AtomicBoolean once = new AtomicBoolean();
-        private Disposable disposable;
+        private final AtomicReference<Disposable> disposable = new AtomicReference<Disposable>();
 
         public SingleSubscription(Single<T> single, Subscriber<? super T> s) {
             this.single = single;
@@ -39,21 +42,28 @@ public class FlowableSingle<T> extends Flowable<T> {
         @Override
         public void request(long n) {
             if (n > 0 && once.compareAndSet(false, true)) {
-                single.subscribe(this);
+                Disposable d = disposable.get();
+                if (d == null) {
+                    single.subscribe(this);
+                }
             }
         }
 
         @Override
         public void cancel() {
-            Disposable d = disposable;
-            if (d != null) {
-                d.dispose();
+            if (disposable.compareAndSet(null, Disposables.disposed())) {
+                return;
+            } else {
+                disposable.get().dispose();
             }
         }
 
         @Override
         public void onSubscribe(Disposable d) {
-            disposable = d;
+            if (!disposable.compareAndSet(null, d)) {
+                //already cancelled
+                d.dispose();
+            }
         }
 
         @Override
