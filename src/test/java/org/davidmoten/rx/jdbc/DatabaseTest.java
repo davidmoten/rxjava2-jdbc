@@ -51,6 +51,7 @@ import org.davidmoten.rx.jdbc.exceptions.NamedParameterFoundButSqlDoesNotHaveNam
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.exceptions.QueryAnnotationMissingException;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
+import org.davidmoten.rx.jdbc.pool.DatabaseType;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.davidmoten.rx.jdbc.pool.Pools;
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
@@ -268,6 +269,30 @@ public class DatabaseTest {
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
                 .checkoutRetryInterval(1, TimeUnit.SECONDS) //
                 .healthCheck(c -> c.prepareStatement("select 1").execute()) //
+                .maxPoolSize(3) //
+                .build();
+
+        try (Database db = Database.from(pool)) {
+            db.select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .getAs(Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
+    }
+
+    @Test
+    public void testSelectSpecifyingHealthCheck() {
+        NonBlockingConnectionPool pool = Pools //
+                .nonBlocking() //
+                .connectionProvider(DatabaseCreator.connectionProvider()) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
+                .checkoutRetryInterval(1, TimeUnit.SECONDS) //
+                .healthCheck(DatabaseType.H2) //
                 .maxPoolSize(3) //
                 .build();
 
@@ -830,7 +855,7 @@ public class DatabaseTest {
             log.debug(db.toString());
         }
     }
-    
+
     private static void println(Object o) {
         log.debug("{}", o);
     }
