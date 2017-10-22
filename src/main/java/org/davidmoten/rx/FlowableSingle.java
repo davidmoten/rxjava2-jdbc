@@ -12,7 +12,7 @@ import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 
-public class FlowableSingle<T> extends Flowable<T> {
+public final class FlowableSingle<T> extends Flowable<T> {
 
     private final Single<T> single;
 
@@ -33,7 +33,7 @@ public class FlowableSingle<T> extends Flowable<T> {
         private final AtomicBoolean once = new AtomicBoolean();
         private final AtomicReference<Disposable> disposable = new AtomicReference<Disposable>();
 
-        public SingleSubscription(Single<T> single, Subscriber<? super T> s) {
+        SingleSubscription(Single<T> single, Subscriber<? super T> s) {
             this.single = single;
             this.s = s;
         }
@@ -54,13 +54,15 @@ public class FlowableSingle<T> extends Flowable<T> {
                 return;
             } else {
                 disposable.get().dispose();
+                // clear for GC
+                disposable.set(Disposables.disposed());
             }
         }
 
         @Override
         public void onSubscribe(Disposable d) {
             if (!disposable.compareAndSet(null, d)) {
-                //already cancelled
+                // already cancelled
                 d.dispose();
             }
         }
@@ -68,14 +70,15 @@ public class FlowableSingle<T> extends Flowable<T> {
         @Override
         public void onSuccess(T t) {
             s.onNext(t);
-            s.onComplete();
+            if (!disposable.get().isDisposed()) {
+                s.onComplete();
+            }
         }
 
         @Override
         public void onError(Throwable e) {
             s.onError(e);
         }
-
     }
 
 }
