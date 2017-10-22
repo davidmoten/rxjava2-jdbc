@@ -33,7 +33,7 @@ public class PoolTest {
         AtomicInteger disposed = new AtomicInteger();
         Pool<Integer> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
-                .healthy(n -> true) //
+                .healthCheck(n -> true) //
                 .maxSize(3) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .disposer(n -> disposed.incrementAndGet()) //
@@ -60,7 +60,7 @@ public class PoolTest {
         AtomicInteger disposed = new AtomicInteger();
         Pool<Integer> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
-                .healthy(n -> true) //
+                .healthCheck(n -> true) //
                 .maxSize(1) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .disposer(n -> disposed.incrementAndGet()) //
@@ -199,7 +199,7 @@ public class PoolTest {
         AtomicInteger healthChecks = new AtomicInteger();
         Pool<Integer> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
-                .healthy(n -> {
+                .healthCheck(n -> {
                     healthChecks.incrementAndGet();
                     return false;
                 }) //

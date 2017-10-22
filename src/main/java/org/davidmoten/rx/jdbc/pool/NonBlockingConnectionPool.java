@@ -150,7 +150,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
                     .checkoutRetryIntervalMs(checkoutRetryIntervalMs) //
                     .scheduler(scheduler) //
                     .disposer(disposer)//
-                    .healthy(healthCheck) //
+                    .healthCheck(healthCheck) //
                     .scheduler(scheduler) //
                     .maxSize(maxPoolSize) //
             );

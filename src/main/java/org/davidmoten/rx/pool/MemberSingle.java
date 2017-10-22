@@ -282,7 +282,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         public void run() {
             try {
                 log.debug("performing health check on {}", m);
-                if (!pool.healthy.test(m.value())) {
+                if (!pool.healthCheck.test(m.value())) {
                     log.debug("failed health check");
                     m.disposeValue();
                     log.debug("scheduling recreation of member {}", m);

@@ -20,7 +20,7 @@ import io.reactivex.schedulers.Schedulers;
 public final class NonBlockingPool<T> implements Pool<T> {
 
     final Callable<? extends T> factory;
-    final Predicate<? super T> healthy;
+    final Predicate<? super T> healthCheck;
     final long idleTimeBeforeHealthCheckMs;
     final Consumer<? super T> disposer;
     final int maxSize;
@@ -33,13 +33,13 @@ public final class NonBlockingPool<T> implements Pool<T> {
     private final AtomicReference<MemberSingle<T>> member = new AtomicReference<>();
     private volatile boolean closed;
 
-    NonBlockingPool(Callable<? extends T> factory, Predicate<? super T> healthy,
+    NonBlockingPool(Callable<? extends T> factory, Predicate<? super T> healthCheck,
             Consumer<? super T> disposer, int maxSize, long idleTimeBeforeHealthCheckMs,
             long maxIdleTimeMs, long checkoutRetryIntervalMs,
             BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator,
             Scheduler scheduler, Action closeAction) {
         Preconditions.checkNotNull(factory);
-        Preconditions.checkNotNull(healthy);
+        Preconditions.checkNotNull(healthCheck);
         Preconditions.checkNotNull(disposer);
         Preconditions.checkArgument(maxSize > 0);
         Preconditions.checkNotNull(checkinDecorator);
@@ -49,7 +49,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         Preconditions.checkNotNull(closeAction);
         Preconditions.checkArgument(maxIdleTimeMs >= 0, "maxIdleTime must be >=0");
         this.factory = factory;
-        this.healthy = healthy;
+        this.healthCheck = healthCheck;
         this.disposer = disposer;
         this.maxSize = maxSize;
         this.idleTimeBeforeHealthCheckMs = idleTimeBeforeHealthCheckMs;
@@ -118,7 +118,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         private static final BiFunction<Object, Checkin, Object> DEFAULT_CHECKIN_DECORATOR = (x,
                 y) -> x;
         private Callable<? extends T> factory;
-        private Predicate<? super T> healthy = x -> true;
+        private Predicate<? super T> healthCheck = x -> true;
         private long idleTimeBeforeHealthCheckMs = 1000;
         private Consumer<? super T> disposer = Consumers.doNothing();
         private int maxSize = 10;
@@ -139,9 +139,9 @@ public final class NonBlockingPool<T> implements Pool<T> {
             return this;
         }
 
-        public Builder<T> healthy(Predicate<? super T> healthy) {
-            Preconditions.checkNotNull(healthy);
-            this.healthy = healthy;
+        public Builder<T> healthCheck(Predicate<? super T> healthCheck) {
+            Preconditions.checkNotNull(healthCheck);
+            this.healthCheck = healthCheck;
             return this;
         }
 
@@ -202,7 +202,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         }
 
         public NonBlockingPool<T> build() {
-            return new NonBlockingPool<T>(factory, healthy, disposer, maxSize,
+            return new NonBlockingPool<T>(factory, healthCheck, disposer, maxSize,
                     idleTimeBeforeHealthCheckMs, maxIdleTimeMs, checkoutRetryIntervalMs,
                     checkinDecorator, scheduler, closeAction);
         }
