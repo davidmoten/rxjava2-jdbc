@@ -27,7 +27,8 @@ final class DecoratingMember<T> implements Member<T> {
     private boolean checking;
 
     // synchronized by MemberSingle.drain() wip
-    // TODO subject to word tearing, cast down to int and handle wraparound
+    // not subject to word tearing, because of ordering in drain loop (will only
+    // read this value if check has finished)
     private long lastCheckTime;
 
     DecoratingMember(T value, BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator,
