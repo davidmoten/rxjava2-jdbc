@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.davidmoten.rx.FlowableSingle;
+import org.davidmoten.rx.FlowableSingleDeferUntilRequest;
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
@@ -39,7 +39,7 @@ public class PoolTest {
                 .disposer(n -> disposed.incrementAndGet()) //
                 .scheduler(s) //
                 .build();
-        TestSubscriber<Member<Integer>> ts = new FlowableSingle<>( //
+        TestSubscriber<Member<Integer>> ts = new FlowableSingleDeferUntilRequest<>( //
                 pool.member()) //
                         .doOnNext(m -> m.checkin()) //
                         .doOnNext(System.out::println) //
@@ -67,7 +67,7 @@ public class PoolTest {
                 .scheduler(s) //
                 .build();
         {
-            TestSubscriber<Member<Integer>> ts = new FlowableSingle<>(pool //
+            TestSubscriber<Member<Integer>> ts = new FlowableSingleDeferUntilRequest<>(pool //
                     .member()) //
                             .doOnNext(m -> m.checkin()) //
                             .doOnNext(System.out::println) //
@@ -211,7 +211,7 @@ public class PoolTest {
                 .scheduler(s) //
                 .build();
         {
-            TestSubscriber<Member<Integer>> ts = new FlowableSingle<>(pool.member()) //
+            TestSubscriber<Member<Integer>> ts = new FlowableSingleDeferUntilRequest<>(pool.member()) //
                     .repeat() //
                     .doOnNext(System.out::println) //
                     .doOnNext(m -> m.checkin()) //

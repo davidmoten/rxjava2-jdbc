@@ -12,11 +12,11 @@ import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 
-public final class FlowableSingle<T> extends Flowable<T> {
+public final class FlowableSingleDeferUntilRequest<T> extends Flowable<T> {
 
     private final Single<T> single;
 
-    public FlowableSingle(Single<T> single) {
+    public FlowableSingleDeferUntilRequest(Single<T> single) {
         this.single = single;
     }
 

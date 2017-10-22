@@ -14,7 +14,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 
-import org.davidmoten.rx.FlowableSingle;
+import org.davidmoten.rx.FlowableSingleDeferUntilRequest;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.davidmoten.rx.jdbc.pool.Pools;
@@ -210,7 +210,7 @@ public final class Database implements AutoCloseable {
      *         {@code close()} on a connection it is returned to the pool
      */
     public Flowable<Connection> connections() {
-        return new FlowableSingle<Connection>(connection).repeat();
+        return new FlowableSingleDeferUntilRequest<Connection>(connection).repeat();
     }
 
     @Override
