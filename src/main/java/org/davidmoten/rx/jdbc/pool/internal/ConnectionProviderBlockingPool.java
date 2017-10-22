@@ -43,7 +43,6 @@ public final class ConnectionProviderBlockingPool implements Pool<Connection> {
 
         volatile Connection connection;
         final AtomicBoolean hasConnection = new AtomicBoolean();
-        volatile boolean shutdown = false;
 
         @Override
         public Connection con() {
