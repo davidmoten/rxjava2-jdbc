@@ -331,6 +331,12 @@ public class DatabaseTest {
                     .assertComplete();
         }
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNonBlockingPoolWithTrampolineSchedulerThrows() {
+        Pools.nonBlocking().scheduler(Schedulers.trampoline());
+    }
+
     @Test(timeout = 40000)
     public void testSelectUsingNonBlockingBuilderConcurrencyTest()
             throws InterruptedException, TimeoutException {
