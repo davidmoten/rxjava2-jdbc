@@ -157,7 +157,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                         return;
                     }
                     Observers<T> obs = observers.get();
-                    // the check below required so a tryEmit that returns false doesn't bring about
+                    // the check below may be required so a tryEmit that returns false doesn't bring about
                     // a spin on this loop
                     if (obs.activeCount == 0) {
                         break;
