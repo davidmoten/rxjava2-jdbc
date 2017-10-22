@@ -29,8 +29,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
 
     private final AtomicReference<NonBlockingPool<Connection>> pool = new AtomicReference<>();
 
-    public NonBlockingConnectionPool(
-            org.davidmoten.rx.pool.NonBlockingPool.Builder<Connection> builder) {
+    NonBlockingConnectionPool(org.davidmoten.rx.pool.NonBlockingPool.Builder<Connection> builder) {
         pool.set(builder.build());
     }
 

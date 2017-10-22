@@ -1,4 +1,4 @@
-package org.davidmoten.rx.jdbc.pool;
+package org.davidmoten.rx.pool;
 
 import org.davidmoten.rx.pool.Consumers;
 import org.junit.Test;
