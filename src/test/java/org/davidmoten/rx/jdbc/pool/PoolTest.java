@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.davidmoten.rx.FlowableSingleDeferUntilRequest;
+import org.davidmoten.rx.internal.FlowableSingleDeferUntilRequest;
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;

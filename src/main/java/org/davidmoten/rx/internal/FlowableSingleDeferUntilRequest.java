@@ -1,4 +1,4 @@
-package org.davidmoten.rx;
+package org.davidmoten.rx.internal;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
