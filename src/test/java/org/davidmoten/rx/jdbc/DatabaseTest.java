@@ -308,6 +308,29 @@ public class DatabaseTest {
         }
     }
 
+    @Test
+    public void testSelectSpecifyingHealthCheckAsSql() {
+        NonBlockingConnectionPool pool = Pools //
+                .nonBlocking() //
+                .connectionProvider(DatabaseCreator.connectionProvider()) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
+                .checkoutRetryInterval(1, TimeUnit.SECONDS) //
+                .healthCheck("select 1") //
+                .maxPoolSize(3) //
+                .build();
+
+        try (Database db = Database.from(pool)) {
+            db.select("select score from person where name=?") //
+                    .parameters("FRED", "JOSEPH") //
+                    .getAs(Integer.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertNoErrors() //
+                    .assertValues(21, 34) //
+                    .assertComplete();
+        }
+    }
     @Test(timeout = 40000)
     public void testSelectUsingNonBlockingBuilderConcurrencyTest()
             throws InterruptedException, TimeoutException {
