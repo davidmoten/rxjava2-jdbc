@@ -5,6 +5,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
+import org.davidmoten.rx.jdbc.pool.internal.Consumers;
+
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Scheduler;

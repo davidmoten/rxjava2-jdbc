@@ -1,4 +1,4 @@
-package org.davidmoten.rx.pool;
+package org.davidmoten.rx.jdbc.pool.internal;
 
 import io.reactivex.functions.Consumer;
 
