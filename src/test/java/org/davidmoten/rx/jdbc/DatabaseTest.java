@@ -267,7 +267,7 @@ public class DatabaseTest {
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
                 .checkoutRetryInterval(1, TimeUnit.SECONDS) //
-                .healthy(c -> c.prepareStatement("select 1").execute()) //
+                .healthCheck(c -> c.prepareStatement("select 1").execute()) //
                 .maxPoolSize(3) //
                 .build();
 
@@ -1758,7 +1758,7 @@ public class DatabaseTest {
                 .connectionProvider(DatabaseCreator.connectionProvider()) //
                 .maxIdleTime(10, TimeUnit.MINUTES) //
                 .idleTimeBeforeHealthCheck(0, TimeUnit.MINUTES) //
-                .healthy(healthy) //
+                .healthCheck(healthy) //
                 .scheduler(scheduler) //
                 .maxPoolSize(1) //
                 .build();

@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Util;
+import org.davidmoten.rx.jdbc.pool.internal.HealthCheckPredicate;
 import org.davidmoten.rx.jdbc.pool.internal.PooledConnection;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
@@ -40,7 +41,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
     public static final class Builder {
 
         private ConnectionProvider cp;
-        private Predicate<? super Connection> healthy = c -> true;
+        private Predicate<? super Connection> healthCheck = c -> true;
         private int maxPoolSize = 5;
         private long idleTimeBeforeHealthCheckMs = 60000;
         private long maxIdleTimeMs = 30 * 60000;
@@ -89,9 +90,17 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             return idleTimeBeforeHealthCheckMs(unit.toMillis(value));
         }
 
-        public Builder healthy(Predicate<? super Connection> healthy) {
-            this.healthy = healthy;
+        public Builder healthCheck(Predicate<? super Connection> healthCheck) {
+            this.healthCheck = healthCheck;
             return this;
+        }
+
+        public Builder healthCheck(DatabaseType databaseType) {
+            return healthCheck(databaseType.healthCheck());
+        }
+
+        public Builder healthCheck(String sql) {
+            return healthCheck(new HealthCheckPredicate(sql));
         }
 
         /**
@@ -142,7 +151,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
                     .checkoutRetryIntervalMs(checkoutRetryIntervalMs) //
                     .scheduler(scheduler) //
                     .disposer(disposer)//
-                    .healthy(healthy) //
+                    .healthy(healthCheck) //
                     .scheduler(scheduler) //
                     .maxSize(maxPoolSize) //
             );
