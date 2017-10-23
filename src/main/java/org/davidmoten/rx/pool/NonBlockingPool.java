@@ -145,32 +145,20 @@ public final class NonBlockingPool<T> implements Pool<T> {
             return this;
         }
 
-        public Builder<T> idleTimeBeforeHealthCheckMs(long value) {
-            Preconditions.checkArgument(value >= 0);
-            this.idleTimeBeforeHealthCheckMs = value;
-            return this;
-        }
-
-        public Builder<T> idleTimeBeforeHealthCheck(long value, TimeUnit unit) {
-            return idleTimeBeforeHealthCheckMs(unit.toMillis(value));
-        }
-
-        public Builder<T> maxIdleTimeMs(long value) {
-            this.maxIdleTimeMs = value;
+        public Builder<T> idleTimeBeforeHealthCheck(long duration, TimeUnit unit) {
+            Preconditions.checkArgument(duration >= 0);
+            this.idleTimeBeforeHealthCheckMs = unit.toMillis(duration);
             return this;
         }
 
         public Builder<T> maxIdleTime(long value, TimeUnit unit) {
-            return maxIdleTimeMs(unit.toMillis(value));
-        }
-
-        public Builder<T> createRetryIntervalMs(long value) {
-            createRetryIntervalMs = value;
+            this.maxIdleTimeMs = unit.toMillis(value);
             return this;
         }
 
-        public Builder<T> createRetryInterval(long value, TimeUnit unit) {
-            return createRetryIntervalMs(unit.toMillis(value));
+        public Builder<T> createRetryInterval(long duration, TimeUnit unit) {
+            this.createRetryIntervalMs = unit.toMillis(duration);
+            return this;
         }
 
         public Builder<T> disposer(Consumer<? super T> disposer) {

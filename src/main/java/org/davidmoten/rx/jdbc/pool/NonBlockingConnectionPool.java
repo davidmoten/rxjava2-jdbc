@@ -89,20 +89,6 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         }
 
         /**
-         * Sets the max duration a {@link Connection} can be idle (not checked out of
-         * the pool) before it is released from the pool (the Connection is closed).
-         * 
-         * @param durationMs
-         *            the period before which an idle Connection is released from the
-         *            pool (closed).
-         * @return this
-         */
-        public Builder<T> maxIdleTimeMs(long durationMs) {
-            this.maxIdleTimeMs = durationMs;
-            return this;
-        }
-
-        /**
          * Sets the max time a {@link Connection} can be idle (not checked out of the
          * pool) before it is released from the pool (the Connection is closed).
          * 
@@ -114,24 +100,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @return this
          */
         public Builder<T> maxIdleTime(long duration, TimeUnit unit) {
-            return maxIdleTimeMs(unit.toMillis(duration));
-        }
-
-        /**
-         * Sets the minimum time that a connection must be idle (not checked out) before
-         * on the next checkout its validity is checked using the health check function.
-         * If the health check fails then the Connection is closed (ignoring error) and
-         * released from the pool. Another Connection is then scheduled for creation
-         * (using the createRetryInterval delay).
-         * 
-         * @param durationMs
-         *            duration minimum time a connection must be idle before its
-         *            validity is checked on checkout from the pool
-         * @return this
-         */
-        public Builder<T> idleTimeBeforeHealthCheckMs(long durationMs) {
-            Preconditions.checkArgument(durationMs >= 0);
-            this.idleTimeBeforeHealthCheckMs = durationMs;
+            this.maxIdleTimeMs = unit.toMillis(duration);
             return this;
         }
 
@@ -150,20 +119,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @return this
          */
         public Builder<T> idleTimeBeforeHealthCheck(long duration, TimeUnit unit) {
-            return idleTimeBeforeHealthCheckMs(unit.toMillis(duration));
-        }
-
-        /**
-         * Sets the retry interval in the case that creating/reestablishing a
-         * {@link Connection} for use in the pool fails.
-         * 
-         * @param durationMs
-         *            Connection creation retry interval
-         * @return this
-         */
-
-        public Builder<T> createRetryIntervalMs(long durationMs) {
-            this.createRetryIntervalMs = durationMs;
+            this.idleTimeBeforeHealthCheckMs = unit.toMillis(duration);
             return this;
         }
 
@@ -178,7 +134,8 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @return this
          */
         public Builder<T> createRetryInterval(long duration, TimeUnit unit) {
-            return createRetryIntervalMs(unit.toMillis(duration));
+            this.createRetryIntervalMs=unit.toMillis(duration);
+            return this;
         }
 
         /**
@@ -271,9 +228,9 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             NonBlockingConnectionPool p = new NonBlockingConnectionPool(NonBlockingPool //
                     .factory(() -> cp.get()) //
                     .checkinDecorator((con, checkin) -> new PooledConnection(con, checkin)) //
-                    .idleTimeBeforeHealthCheckMs(idleTimeBeforeHealthCheckMs) //
-                    .maxIdleTimeMs(maxIdleTimeMs) //
-                    .createRetryIntervalMs(createRetryIntervalMs) //
+                    .idleTimeBeforeHealthCheck(idleTimeBeforeHealthCheckMs, TimeUnit.MILLISECONDS) //
+                    .maxIdleTime(maxIdleTimeMs, TimeUnit.MILLISECONDS) //
+                    .createRetryInterval(createRetryIntervalMs, TimeUnit.MILLISECONDS) //
                     .scheduler(scheduler) //
                     .disposer(disposer)//
                     .healthCheck(healthCheck) //
