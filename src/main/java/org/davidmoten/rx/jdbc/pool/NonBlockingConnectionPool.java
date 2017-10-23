@@ -74,7 +74,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @return this
          */
         public Builder<T> connectionProvider(DataSource ds) {
-            return connectionProvider(Util.connectionProvider(d));
+            return connectionProvider(Util.connectionProvider(ds));
         }
 
         /**
@@ -98,7 +98,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @return this
          */
         public Builder<T> maxIdleTimeMs(long durationMs) {
-            this.maxIdleTimeMs = value;
+            this.maxIdleTimeMs = durationMs;
             return this;
         }
 
@@ -109,6 +109,8 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @param duration
          *            the period before which an idle Connection is released from the
          *            pool (closed).
+         * @param unit
+         *            time unit
          * @return this
          */
         public Builder<T> maxIdleTime(long duration, TimeUnit unit) {
@@ -143,10 +145,12 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @param duration
          *            minimum time a connection must be idle before its validity is
          *            checked on checkout from the pool
+         * @param unit
+         *            time unit
          * @return this
          */
-        public Builder<T> idleTimeBeforeHealthCheck(long value, TimeUnit unit) {
-            return idleTimeBeforeHealthCheckMs(unit.toMillis(value));
+        public Builder<T> idleTimeBeforeHealthCheck(long duration, TimeUnit unit) {
+            return idleTimeBeforeHealthCheckMs(unit.toMillis(duration));
         }
 
         public Builder<T> createRetryIntervalMs(long value) {
