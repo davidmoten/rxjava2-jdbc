@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import javax.sql.DataSource;
 
@@ -33,11 +34,11 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         pool.set(builder.build());
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public static Builder<NonBlockingConnectionPool> builder() {
+        return new Builder<NonBlockingConnectionPool>(x -> x);
     }
 
-    public static final class Builder {
+    public static final class Builder<T> {
 
         private ConnectionProvider cp;
         private Predicate<? super Connection> healthCheck = c -> true;
@@ -47,58 +48,63 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         private long checkoutRetryIntervalMs = 30000;
         private Consumer<? super Connection> disposer = Util::closeSilently;
         private Scheduler scheduler = null;
+        private final Function<NonBlockingConnectionPool, T> transform;
 
-        public Builder connectionProvider(ConnectionProvider cp) {
+        public Builder(Function<NonBlockingConnectionPool, T> transform) {
+            this.transform = transform;
+        }
+
+        public Builder<T> connectionProvider(ConnectionProvider cp) {
             this.cp = cp;
             return this;
         }
 
-        public Builder connectionProvider(DataSource d) {
+        public Builder<T> connectionProvider(DataSource d) {
             return connectionProvider(Util.connectionProvider(d));
         }
 
-        public Builder url(String url) {
+        public Builder<T> url(String url) {
             return connectionProvider(Util.connectionProvider(url));
         }
 
-        public Builder maxIdleTimeMs(long value) {
+        public Builder<T> maxIdleTimeMs(long value) {
             this.maxIdleTimeMs = value;
             return this;
         }
 
-        public Builder maxIdleTime(long value, TimeUnit unit) {
+        public Builder<T> maxIdleTime(long value, TimeUnit unit) {
             return maxIdleTimeMs(unit.toMillis(value));
         }
 
-        public Builder idleTimeBeforeHealthCheckMs(long value) {
+        public Builder<T> idleTimeBeforeHealthCheckMs(long value) {
             Preconditions.checkArgument(value >= 0);
             this.idleTimeBeforeHealthCheckMs = value;
             return this;
         }
 
-        public Builder checkoutRetryIntervalMs(long value) {
+        public Builder<T> checkoutRetryIntervalMs(long value) {
             this.checkoutRetryIntervalMs = value;
             return this;
         }
 
-        public Builder checkoutRetryInterval(long value, TimeUnit unit) {
+        public Builder<T> checkoutRetryInterval(long value, TimeUnit unit) {
             return checkoutRetryIntervalMs(unit.toMillis(value));
         }
 
-        public Builder idleTimeBeforeHealthCheck(long value, TimeUnit unit) {
+        public Builder<T> idleTimeBeforeHealthCheck(long value, TimeUnit unit) {
             return idleTimeBeforeHealthCheckMs(unit.toMillis(value));
         }
 
-        public Builder healthCheck(Predicate<? super Connection> healthCheck) {
+        public Builder<T> healthCheck(Predicate<? super Connection> healthCheck) {
             this.healthCheck = healthCheck;
             return this;
         }
 
-        public Builder healthCheck(DatabaseType databaseType) {
+        public Builder<T> healthCheck(DatabaseType databaseType) {
             return healthCheck(databaseType.healthCheck());
         }
 
-        public Builder healthCheck(String sql) {
+        public Builder<T> healthCheck(String sql) {
             return healthCheck(new HealthCheckPredicate(sql));
         }
 
@@ -109,7 +115,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          *            maximum number of connections in the pool
          * @return this
          */
-        public Builder maxPoolSize(int maxPoolSize) {
+        public Builder<T> maxPoolSize(int maxPoolSize) {
             this.maxPoolSize = maxPoolSize;
             return this;
         }
@@ -130,19 +136,19 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          *            Do not use {@code Schedulers.trampoline()}.
          * @return this
          */
-        public Builder scheduler(Scheduler scheduler) {
+        public Builder<T> scheduler(Scheduler scheduler) {
             Preconditions.checkArgument(scheduler != Schedulers.trampoline(),
                     "do not use trampoline scheduler because of risk of stack overflow");
             this.scheduler = scheduler;
             return this;
         }
 
-        public NonBlockingConnectionPool build() {
+        public T build() {
             if (scheduler == null) {
                 ExecutorService executor = Executors.newFixedThreadPool(maxPoolSize);
                 scheduler = new ExecutorScheduler(executor);
             }
-            return new NonBlockingConnectionPool(NonBlockingPool //
+            NonBlockingConnectionPool p = new NonBlockingConnectionPool(NonBlockingPool //
                     .factory(() -> cp.get()) //
                     .checkinDecorator((con, checkin) -> new PooledConnection(con, checkin)) //
                     .idleTimeBeforeHealthCheckMs(idleTimeBeforeHealthCheckMs) //
@@ -154,6 +160,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
                     .scheduler(scheduler) //
                     .maxSize(maxPoolSize) //
             );
+            return transform.apply(p);
         }
 
     }

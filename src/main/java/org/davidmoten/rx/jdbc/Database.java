@@ -38,6 +38,11 @@ public final class Database implements AutoCloseable {
         this.onClose = onClose;
     }
 
+    public static NonBlockingConnectionPool.Builder<Database> nonBlocking() {
+        return new NonBlockingConnectionPool.Builder<Database>(
+                pool -> Database.from(pool, () -> pool.close()));
+    }
+
     /**
      * Creates a Database instance. This is a low-level creation method that needs a
      * lot of care so it is recommended to use the other static factory methods on
