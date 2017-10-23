@@ -432,12 +432,17 @@ Database db = Database
   .build();
 ```
 
-Note that the health check sql varies from database to database. Here are some examples:
-
-* Oracle - `select 1 from dual`
-* Sql Server - `select 1`
-* H2 - `select 1`
-* Derby - `select 1 from sysibm.sysdummy1`
+Note that the health check varies from database to database. The following databases are directly supported with `DatabaseType` instances:
+* DB2
+* Derby 
+* HSQLDB
+* H2 
+* Informix
+* MySQL
+* Oracle 
+* Postgres
+* Microsoft SQL Server
+* SQLite
 
 ### Demonstration
 
