@@ -306,6 +306,11 @@ public class DatabaseTest {
         }
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateTestDatabaseWithZeroSizePoolThrows() {
+        Database.test(0);
+    }
+
     @Test
     public void testSelectSpecifyingHealthCheckAsSql() {
         NonBlockingConnectionPool pool = Pools //
