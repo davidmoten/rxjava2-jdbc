@@ -54,24 +54,63 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             this.transform = transform;
         }
 
+        /**
+         * Sets the provider of {@link Connection} objects to be used by the pool.
+         * 
+         * @param cp
+         *            connection provider
+         * @return this
+         */
         public Builder<T> connectionProvider(ConnectionProvider cp) {
             this.cp = cp;
             return this;
         }
 
-        public Builder<T> connectionProvider(DataSource d) {
+        /**
+         * Sets the provider of {@link Connection} objects to be used by the pool.
+         * 
+         * @param ds
+         *            dataSource that providers Connections
+         * @return this
+         */
+        public Builder<T> connectionProvider(DataSource ds) {
             return connectionProvider(Util.connectionProvider(d));
         }
 
+        /**
+         * Sets the jdbc url of the {@link Connection} objects to be used by the pool.
+         * 
+         * @param url
+         *            jdbc url
+         * @return this
+         */
         public Builder<T> url(String url) {
             return connectionProvider(Util.connectionProvider(url));
         }
 
-        public Builder<T> maxIdleTimeMs(long value) {
+        /**
+         * Sets the max duration a {@link Connection} can be idle (not checked out of
+         * the pool) before it is released from the pool (the Connection is closed).
+         * 
+         * @param durationMs
+         *            the period before which an idle Connection is released from the
+         *            pool (closed).
+         * @return this
+         */
+        public Builder<T> maxIdleTimeMs(long durationMs) {
             this.maxIdleTimeMs = value;
             return this;
         }
 
+        /**
+         * Sets the max time a {@link Connection} can be idle (not checked out of the
+         * pool) before it is released from the pool (the Connection is closed).
+         * 
+         * @param duration
+         *            the period before which an idle Connection is released from the
+         *            pool (closed).
+         * @return this
+         */
         public Builder<T> maxIdleTime(long value, TimeUnit unit) {
             return maxIdleTimeMs(unit.toMillis(value));
         }
