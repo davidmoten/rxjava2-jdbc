@@ -32,7 +32,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0);
-
+    
     private final SimplePlainQueue<DecoratingMember<T>> initializedAvailable;
     private final SimplePlainQueue<DecoratingMember<T>> notInitialized;
     private final SimplePlainQueue<DecoratingMember<T>> toBeReleased;
@@ -240,7 +240,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
             // we mark as releasing so that we can ignore it if already in the
             // initializedAvailable queue after concurrent checkin
             m.markAsReleasing();
-            scheduled.add(scheduler.scheduleDirect(new Releaser<T>(m)));
+            scheduled.add(scheduler.scheduleDirect(new Releaser(m)));
         }
     }
 
@@ -252,7 +252,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         removeAllObservers();
     }
 
-    static final class Releaser<T> implements Runnable {
+    final class Releaser implements Runnable {
 
         private DecoratingMember<T> m;
 
@@ -263,7 +263,8 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         @Override
         public void run() {
             try {
-                m.release();
+                m.disposeValue();
+                release(m);
             } catch (Throwable t) {
                 RxJavaPlugins.onError(t);
             }

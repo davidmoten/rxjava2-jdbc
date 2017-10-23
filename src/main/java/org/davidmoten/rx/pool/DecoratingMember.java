@@ -73,7 +73,6 @@ final class DecoratingMember<T> implements Member<T> {
             }
             log.debug("disposing value {}", value);
             memberSingle.pool.disposer.accept(value);
-
         } catch (Throwable e) {
             // make action configurable
             RxJavaPlugins.onError(e);
@@ -81,11 +80,6 @@ final class DecoratingMember<T> implements Member<T> {
             value = null;
             checking = false;
         }
-    }
-
-    public void release() {
-        disposeValue();
-        memberSingle.release(this);
     }
 
     public void setValueAndClearReleasingFlag(T value) {

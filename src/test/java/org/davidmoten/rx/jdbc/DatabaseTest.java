@@ -317,6 +317,7 @@ public class DatabaseTest {
                 .nonBlocking() //
                 .connectionProvider(DatabaseCreator.connectionProvider()) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
+                .healthCheck(DatabaseType.H2) //
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
                 .createRetryInterval(1, TimeUnit.SECONDS) //
                 .healthCheck("select 1") //
