@@ -43,30 +43,32 @@ public final class Database implements AutoCloseable {
                 pool -> Database.from(pool, () -> pool.close()));
     }
 
-    /**
-     * Creates a Database instance. This is a low-level creation method that needs a
-     * lot of care so it is recommended to use the other static factory methods on
-     * Database that will handle pooling for you.
-     * 
-     * @param connection
-     *            each subscription to this Single should yield a valid open
-     *            Connection to the database. Bear in mind that once a query is
-     *            completed with this connection the connection will be closed. If
-     *            you don't want the connection to be closed (pooling behaviour)
-     *            then you need to override the `close()` behaviour of the
-     *            Connection and handle the semaphore pool pattern yourself (!) or
-     *            preferrably use the other static factory methods like
-     *            {@code Database.from(url, maxPoolSize)} for instance.
-     * @param onClose
-     *            the action that will be run when {@code Database.close()} is
-     *            called.
-     * @return Database instance using the given connection provider
-     */
-    public static Database from(@Nonnull Single<Connection> connection, @Nonnull Action onClose) {
-        Preconditions.checkNotNull(connection, "connections cannot be null");
-        Preconditions.checkNotNull(onClose, "onClose cannot be null");
-        return new Database(connection, onClose);
-    }
+    // /**
+    // * Creates a Database instance. This is a low-level creation method that needs
+    // a
+    // * lot of care so it is recommended to use the other static factory methods on
+    // * Database that will handle pooling for you.
+    // *
+    // * @param connection
+    // * each subscription to this Single should yield a valid open
+    // * Connection to the database. Bear in mind that once a query is
+    // * completed with this connection the connection will be closed. If
+    // * you don't want the connection to be closed (pooling behaviour)
+    // * then you need to override the `close()` behaviour of the
+    // * Connection and handle the semaphore pool pattern yourself (!) or
+    // * preferrably use the other static factory methods like
+    // * {@code Database.from(url, maxPoolSize)} for instance.
+    // * @param onClose
+    // * the action that will be run when {@code Database.close()} is
+    // * called.
+    // * @return Database instance using the given connection provider
+    // */
+    // private static Database from(@Nonnull Single<Connection> connection, @Nonnull
+    // Action onClose) {
+    // Preconditions.checkNotNull(connection, "connections cannot be null");
+    // Preconditions.checkNotNull(onClose, "onClose cannot be null");
+    // return new Database(connection, onClose);
+    // }
 
     public static Database from(@Nonnull String url, int maxPoolSize) {
         Preconditions.checkNotNull(url, "url cannot be null");
