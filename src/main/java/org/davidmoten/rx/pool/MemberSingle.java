@@ -183,6 +183,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                         // this should not block because it just schedules emissions to observers
                         log.debug("trying to emit member");
                         if (shouldPerformHealthCheck(m)) {
+                            log.debug("queueing member for health check {}", m);
                             toBeChecked.offer(m);
                         } else {
                             log.debug("no health check required for {}", m);
@@ -502,6 +503,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
 
     static final class MemberSingleObserver<T> extends AtomicReference<MemberSingle<T>>
             implements Disposable {
+        
         private static final long serialVersionUID = -7650903191002190468L;
 
         final SingleObserver<? super Member<T>> child;
