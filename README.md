@@ -415,7 +415,7 @@ Database db = Database.test(maxPoolSize);
 If you want more control over the behaviour of the non-blocking connection pool:
 
 ```java
-NonBlockingConnectionPool pool = Pools
+Database db = Database
     .nonBlocking()
     .url(url)
     // an unused connection will be closed after thirty minutes
@@ -427,7 +427,6 @@ NonBlockingConnectionPool pool = Pools
     .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) 
     .maxPoolSize(3)
     .build();
-Database db = Database.from(pool);
 ```
 
 Note that the health check sql varies from database to database. Here are some examples:
