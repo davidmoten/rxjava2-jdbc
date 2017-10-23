@@ -203,7 +203,7 @@ public class PoolTest {
                     healthChecks.incrementAndGet();
                     return false;
                 }) //
-                .checkoutRetryInterval(10, TimeUnit.MINUTES) //
+                .createRetryInterval(10, TimeUnit.MINUTES) //
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MILLISECONDS) //
                 .maxSize(1) //
                 .maxIdleTime(1, TimeUnit.HOURS) //

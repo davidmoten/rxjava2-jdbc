@@ -41,7 +41,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     private final AtomicInteger wip = new AtomicInteger();
     private final DecoratingMember<T>[] members;
     private final Scheduler scheduler;
-    private final long checkoutRetryIntervalMs;
+    private final long createRetryIntervalMs;
 
     // synchronized by `wip`
     private final CompositeDisposable scheduled = new CompositeDisposable();
@@ -70,7 +70,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
             notInitialized.offer(m);
         }
         this.scheduler = pool.scheduler;
-        this.checkoutRetryIntervalMs = pool.checkoutRetryIntervalMs;
+        this.createRetryIntervalMs = pool.createRetryIntervalMs;
         this.observers = new AtomicReference<>(EMPTY);
         this.pool = pool;
     }
@@ -290,7 +290,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                         log.debug("recreating member after failed health check {}", m);
                         notInitialized.offer(m);
                         drain();
-                    }, pool.checkoutRetryIntervalMs, TimeUnit.MILLISECONDS));
+                    }, pool.createRetryIntervalMs, TimeUnit.MILLISECONDS));
                 } else {
                     m.markAsChecked();
                     initializedAvailable.offer(m);
@@ -318,7 +318,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     // taken a significant time to complete
                     if (!cancelled) {
                         // schedule a retry
-                        scheduled.add(scheduler.scheduleDirect(this, checkoutRetryIntervalMs,
+                        scheduled.add(scheduler.scheduleDirect(this, createRetryIntervalMs,
                                 TimeUnit.MILLISECONDS));
                     }
                 }

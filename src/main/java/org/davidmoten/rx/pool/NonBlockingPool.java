@@ -25,7 +25,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
     final Consumer<? super T> disposer;
     final int maxSize;
     final long maxIdleTimeMs;
-    final long checkoutRetryIntervalMs;
+    final long createRetryIntervalMs;
     final BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator;
     final Scheduler scheduler;
     final Action closeAction;
@@ -35,7 +35,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
 
     NonBlockingPool(Callable<? extends T> factory, Predicate<? super T> healthCheck,
             Consumer<? super T> disposer, int maxSize, long idleTimeBeforeHealthCheckMs,
-            long maxIdleTimeMs, long checkoutRetryIntervalMs,
+            long maxIdleTimeMs, long createRetryIntervalMs,
             BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator,
             Scheduler scheduler, Action closeAction) {
         Preconditions.checkNotNull(factory);
@@ -44,8 +44,8 @@ public final class NonBlockingPool<T> implements Pool<T> {
         Preconditions.checkArgument(maxSize > 0);
         Preconditions.checkNotNull(checkinDecorator);
         Preconditions.checkNotNull(scheduler);
-        Preconditions.checkArgument(checkoutRetryIntervalMs >= 0,
-                "checkoutRetryIntervalMs must be >=0");
+        Preconditions.checkArgument(createRetryIntervalMs >= 0,
+                "createRetryIntervalMs must be >=0");
         Preconditions.checkNotNull(closeAction);
         Preconditions.checkArgument(maxIdleTimeMs >= 0, "maxIdleTime must be >=0");
         this.factory = factory;
@@ -54,7 +54,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         this.maxSize = maxSize;
         this.idleTimeBeforeHealthCheckMs = idleTimeBeforeHealthCheckMs;
         this.maxIdleTimeMs = maxIdleTimeMs;
-        this.checkoutRetryIntervalMs = checkoutRetryIntervalMs;
+        this.createRetryIntervalMs = createRetryIntervalMs;
         this.checkinDecorator = checkinDecorator;
         this.scheduler = scheduler;// schedules retries
         this.closeAction = closeAction;
@@ -122,7 +122,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         private long idleTimeBeforeHealthCheckMs = 1000;
         private Consumer<? super T> disposer = Consumers.doNothing();
         private int maxSize = 10;
-        private long checkoutRetryIntervalMs = 30000;
+        private long createRetryIntervalMs = 30000;
         private Scheduler scheduler = Schedulers.computation();
         private long maxIdleTimeMs;
         @SuppressWarnings("unchecked")
@@ -164,13 +164,13 @@ public final class NonBlockingPool<T> implements Pool<T> {
             return maxIdleTimeMs(unit.toMillis(value));
         }
 
-        public Builder<T> checkoutRetryIntervalMs(long value) {
-            checkoutRetryIntervalMs = value;
+        public Builder<T> createRetryIntervalMs(long value) {
+            createRetryIntervalMs = value;
             return this;
         }
 
-        public Builder<T> checkoutRetryInterval(long value, TimeUnit unit) {
-            return checkoutRetryIntervalMs(unit.toMillis(value));
+        public Builder<T> createRetryInterval(long value, TimeUnit unit) {
+            return createRetryIntervalMs(unit.toMillis(value));
         }
 
         public Builder<T> disposer(Consumer<? super T> disposer) {
@@ -203,7 +203,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
 
         public NonBlockingPool<T> build() {
             return new NonBlockingPool<T>(factory, healthCheck, disposer, maxSize,
-                    idleTimeBeforeHealthCheckMs, maxIdleTimeMs, checkoutRetryIntervalMs,
+                    idleTimeBeforeHealthCheckMs, maxIdleTimeMs, createRetryIntervalMs,
                     checkinDecorator, scheduler, closeAction);
         }
 
