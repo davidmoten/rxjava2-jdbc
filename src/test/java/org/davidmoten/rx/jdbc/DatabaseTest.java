@@ -2298,7 +2298,7 @@ public class DatabaseTest {
             assertEquals("fred", p.nameLower());
         }
     }
-
+    
     // @Test
     // public void testDefaultMethod() throws NoSuchMethodException,
     // IllegalAccessException {
