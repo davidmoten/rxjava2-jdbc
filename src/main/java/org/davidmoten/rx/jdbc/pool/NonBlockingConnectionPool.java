@@ -153,8 +153,17 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             return idleTimeBeforeHealthCheckMs(unit.toMillis(duration));
         }
 
-        public Builder<T> createRetryIntervalMs(long value) {
-            this.createRetryIntervalMs = value;
+        /**
+         * Sets the retry interval in the case that creating/reestablishing a
+         * {@link Connection} for use in the pool fails.
+         * 
+         * @param durationMs
+         *            Connection creation retry interval
+         * @return this
+         */
+
+        public Builder<T> createRetryIntervalMs(long durationMs) {
+            this.createRetryIntervalMs = durationMs;
             return this;
         }
 
@@ -175,7 +184,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         /**
          * Sets the health check for a Connection in the pool that is run only if the
          * time since the last checkout of this Connection finished is more than
-         * minIntervalHealthCheck and a checkout of this Connection has just been
+         * idleTimeBeforeHealthCheck and a checkout of this Connection has just been
          * requested.
          * 
          * @param healthCheck
@@ -191,7 +200,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         /**
          * Sets the health check for a Connection in the pool that is run only if the
          * time since the last checkout of this Connection finished is more than
-         * minIntervalHealthCheck and a checkout of this Connection has just been
+         * idleTimeBeforeHealthCheck and a checkout of this Connection has just been
          * requested.
          * 
          * @param databaseType
@@ -205,11 +214,12 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         /**
          * Sets the health check for a Connection in the pool that is run only if the
          * time since the last checkout of this Connection finished is more than
-         * minIntervalHealthCheck and a checkout of this Connection has just been
+         * idleTimeBeforeHealthCheck and a checkout of this Connection has just been
          * requested.
          * 
          * @param sql
-         *            sql to run to check the validity of the connection. If the sql is run without error then the connection is assumed healthy.
+         *            sql to run to check the validity of the connection. If the sql is
+         *            run without error then the connection is assumed healthy.
          * @return this
          */
         public Builder<T> healthCheck(String sql) {
@@ -242,6 +252,8 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          *            timeouts and retries. Defaults to
          *            {@code Schedulers.from(Executors.newFixedThreadPool(maxPoolSize))}.
          *            Do not use {@code Schedulers.trampoline()}.
+         * @throws IllegalArgumentException
+         *             if trampoline specified
          * @return this
          */
         public Builder<T> scheduler(Scheduler scheduler) {
