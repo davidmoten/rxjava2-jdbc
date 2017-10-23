@@ -111,14 +111,42 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          *            pool (closed).
          * @return this
          */
-        public Builder<T> maxIdleTime(long value, TimeUnit unit) {
-            return maxIdleTimeMs(unit.toMillis(value));
+        public Builder<T> maxIdleTime(long duration, TimeUnit unit) {
+            return maxIdleTimeMs(unit.toMillis(duration));
         }
 
-        public Builder<T> idleTimeBeforeHealthCheckMs(long value) {
-            Preconditions.checkArgument(value >= 0);
-            this.idleTimeBeforeHealthCheckMs = value;
+        /**
+         * Sets the minimum time that a connection must be idle (not checked out) before
+         * on the next checkout its validity is checked using the health check function.
+         * If the health check fails then the Connection is closed (ignoring error) and
+         * released from the pool. Another Connection is then scheduled for creation
+         * (using the createRetryInterval delay).
+         * 
+         * @param durationMs
+         *            duration minimum time a connection must be idle before its
+         *            validity is checked on checkout from the pool
+         * @return this
+         */
+        public Builder<T> idleTimeBeforeHealthCheckMs(long durationMs) {
+            Preconditions.checkArgument(durationMs >= 0);
+            this.idleTimeBeforeHealthCheckMs = durationMs;
             return this;
+        }
+
+        /**
+         * Sets the minimum time that a connection must be idle (not checked out) before
+         * on the next checkout its validity is checked using the health check function.
+         * If the health check fails then the Connection is closed (ignoring error) and
+         * released from the pool. Another Connection is then scheduled for creation
+         * (using the createRetryInterval delay).
+         * 
+         * @param duration
+         *            minimum time a connection must be idle before its validity is
+         *            checked on checkout from the pool
+         * @return this
+         */
+        public Builder<T> idleTimeBeforeHealthCheck(long value, TimeUnit unit) {
+            return idleTimeBeforeHealthCheckMs(unit.toMillis(value));
         }
 
         public Builder<T> createRetryIntervalMs(long value) {
@@ -128,10 +156,6 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
 
         public Builder<T> createRetryInterval(long value, TimeUnit unit) {
             return createRetryIntervalMs(unit.toMillis(value));
-        }
-
-        public Builder<T> idleTimeBeforeHealthCheck(long value, TimeUnit unit) {
-            return idleTimeBeforeHealthCheckMs(unit.toMillis(value));
         }
 
         public Builder<T> healthCheck(Predicate<? super Connection> healthCheck) {
