@@ -424,7 +424,7 @@ Database db = Database
   // has been idle for at least 5 seconds
   .healthCheck(DatabaseType.ORACLE)
   .idleTimeBeforeHealthCheck(5, TimeUnit.SECONDS)
-  .checkoutRetryInterval(30, TimeUnit.SECONDS)
+  .createRetryInterval(30, TimeUnit.SECONDS)
   .maxPoolSize(3)
   .build();
 ```
