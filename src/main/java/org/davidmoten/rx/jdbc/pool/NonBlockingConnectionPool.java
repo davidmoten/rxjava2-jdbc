@@ -158,19 +158,60 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             return this;
         }
 
-        public Builder<T> createRetryInterval(long value, TimeUnit unit) {
-            return createRetryIntervalMs(unit.toMillis(value));
+        /**
+         * Sets the retry interval in the case that creating/reestablishing a
+         * {@link Connection} for use in the pool fails.
+         * 
+         * @param duration
+         *            Connection creation retry interval
+         * @param unit
+         *            time unit
+         * @return this
+         */
+        public Builder<T> createRetryInterval(long duration, TimeUnit unit) {
+            return createRetryIntervalMs(unit.toMillis(duration));
         }
 
+        /**
+         * Sets the health check for a Connection in the pool that is run only if the
+         * time since the last checkout of this Connection finished is more than
+         * minIntervalHealthCheck and a checkout of this Connection has just been
+         * requested.
+         * 
+         * @param healthCheck
+         *            check to run on Connection. Returns true if and only if the
+         *            Connection is valid/healthy.
+         * @return this
+         */
         public Builder<T> healthCheck(Predicate<? super Connection> healthCheck) {
             this.healthCheck = healthCheck;
             return this;
         }
 
+        /**
+         * Sets the health check for a Connection in the pool that is run only if the
+         * time since the last checkout of this Connection finished is more than
+         * minIntervalHealthCheck and a checkout of this Connection has just been
+         * requested.
+         * 
+         * @param databaseType
+         *            the check to run is chosen based on the database type
+         * @return this
+         */
         public Builder<T> healthCheck(DatabaseType databaseType) {
             return healthCheck(databaseType.healthCheck());
         }
 
+        /**
+         * Sets the health check for a Connection in the pool that is run only if the
+         * time since the last checkout of this Connection finished is more than
+         * minIntervalHealthCheck and a checkout of this Connection has just been
+         * requested.
+         * 
+         * @param sql
+         *            sql to run to check the validity of the connection. If the sql is run without error then the connection is assumed healthy.
+         * @return this
+         */
         public Builder<T> healthCheck(String sql) {
             return healthCheck(new HealthCheckPredicate(sql));
         }
