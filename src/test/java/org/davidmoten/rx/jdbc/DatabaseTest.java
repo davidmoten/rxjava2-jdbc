@@ -286,7 +286,7 @@ public class DatabaseTest {
 
     @Test
     public void testSelectSpecifyingHealthCheck() {
-        NonBlockingConnectionPool pool = Pools //
+        try (Database db = Database//
                 .nonBlocking() //
                 .connectionProvider(DatabaseCreator.connectionProvider()) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
@@ -294,9 +294,7 @@ public class DatabaseTest {
                 .checkoutRetryInterval(1, TimeUnit.SECONDS) //
                 .healthCheck(DatabaseType.H2) //
                 .maxPoolSize(3) //
-                .build();
-
-        try (Database db = Database.from(pool)) {
+                .build()) {
             db.select("select score from person where name=?") //
                     .parameters("FRED", "JOSEPH") //
                     .getAs(Integer.class) //
