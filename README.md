@@ -417,6 +417,7 @@ If you want more control over the behaviour of the non-blocking connection pool:
 ```java
 Database db = Database
   .nonBlocking()
+  // the jdbc url of the connections to be placed in the pool
   .url(url)
   // an unused connection will be closed after thirty minutes
   .maxIdleTime(30, TimeUnit.MINUTES)
@@ -424,7 +425,9 @@ Database db = Database
   // has been idle for at least 5 seconds
   .healthCheck(DatabaseType.ORACLE)
   .idleTimeBeforeHealthCheck(5, TimeUnit.SECONDS)
+  // if a connection fails creation then retry after 30 seconds
   .createRetryInterval(30, TimeUnit.SECONDS)
+  // the maximum number of connections in the pool
   .maxPoolSize(3)
   .build();
 ```
