@@ -416,17 +416,17 @@ If you want more control over the behaviour of the non-blocking connection pool:
 
 ```java
 Database db = Database
-    .nonBlocking()
-    .url(url)
-    // an unused connection will be closed after thirty minutes
-    .maxIdleTime(30, TimeUnit.MINUTES)
-    // connections are checked for healthiness on checkout if the connection 
-    // has been idle for at least `idleTimeBeforeHealthCheckMs`
-    .healthy(c -> c.prepareStatement("select 1").execute())
-    .idleTimeBeforeHealthCheckMs(1, TimeUnit.MINUTES)
-    .returnToPoolDelayAfterHealthCheckFailure(1, TimeUnit.SECONDS) 
-    .maxPoolSize(3)
-    .build();
+  .nonBlocking()
+  .url(url)
+  // an unused connection will be closed after thirty minutes
+  .maxIdleTime(30, TimeUnit.MINUTES)
+  // connections are checked for healthiness on checkout if the connection 
+  // has been idle for at least 5 seconds
+  .healthCheck(DatabaseType.ORACLE)
+  .idleTimeBeforeHealthCheck(5, TimeUnit.SECONDS)
+  .checkoutRetryInterval(30, TimeUnit.SECONDS)
+  .maxPoolSize(3)
+  .build();
 ```
 
 Note that the health check sql varies from database to database. Here are some examples:
