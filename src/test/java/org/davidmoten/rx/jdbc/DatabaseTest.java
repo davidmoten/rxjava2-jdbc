@@ -2288,12 +2288,15 @@ public class DatabaseTest {
 
     @Test
     public void testAutomappedObjectsWhenDefaultMethodInvoked() {
-        PersonWithDefaultMethod p = Database.test() //
-                .select("select name, score from person where name=?") //
-                .parameters("FRED") //
-                .autoMap(PersonWithDefaultMethod.class) //
-                .blockingFirst();
-        assertEquals("fred", p.nameLower());
+        // only run test if java 8
+        if (System.getProperty("java.version").startsWith("1.8.")) {
+            PersonWithDefaultMethod p = Database.test() //
+                    .select("select name, score from person where name=?") //
+                    .parameters("FRED") //
+                    .autoMap(PersonWithDefaultMethod.class) //
+                    .blockingFirst();
+            assertEquals("fred", p.nameLower());
+        }
     }
 
     // @Test
