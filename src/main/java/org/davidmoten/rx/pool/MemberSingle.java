@@ -32,7 +32,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0);
-    
+
     private final SimplePlainQueue<DecoratingMember<T>> initializedAvailable;
     private final SimplePlainQueue<DecoratingMember<T>> notInitialized;
     private final SimplePlainQueue<DecoratingMember<T>> toBeReleased;
@@ -157,9 +157,14 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                         return;
                     }
                     Observers<T> obs = observers.get();
-                    // the check below may be required so a tryEmit that returns false doesn't bring about
-                    // a spin on this loop
-                    if (obs.activeCount == 0) {
+                    // the check below is required so a tryEmit that returns false doesn't bring
+                    // abouts a spin on this loop
+                    int c = obs.activeCount;
+                    // if there have been some cancellations then adjust the requested amount by
+                    // increasing emitted e
+                    e += Math.max(0, r - e - c);
+                    if (c == 0) {
+                        // if no observers then we consider the requests met (or cancelled)
                         break;
                     }
                     // check for an already initialized available member
@@ -503,7 +508,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
 
     static final class MemberSingleObserver<T> extends AtomicReference<MemberSingle<T>>
             implements Disposable {
-        
+
         private static final long serialVersionUID = -7650903191002190468L;
 
         final SingleObserver<? super Member<T>> child;
