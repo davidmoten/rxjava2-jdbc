@@ -164,7 +164,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     // increasing emitted e
                     e += Math.max(0, r - e - c);
                     if (c == 0) {
-                        // if no observers then we consider the requests met (or cancelled)
+                        // if no observers then we break the loop
                         break;
                     }
                     // check for an already initialized available member
@@ -182,7 +182,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                             // requested will be incremented and drain called.
                             e++;
                             log.debug("scheduling member creation");
-                            scheduled.add(scheduleCreateValue(m2));
+                            scheduled.add(scheduler.scheduleDirect(new Creator(m2)));
                         }
                     } else if (!m.isReleasing() && !m.isChecking()) {
                         // this should not block because it just schedules emissions to observers
@@ -250,12 +250,75 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         }
     }
 
-    private void disposeAll() {
-        initializedAvailable.clear();
-        toBeReleased.clear();
-        notInitialized.clear();
-        disposeValues();
-        removeAllObservers();
+    private boolean tryEmit(Observers<T> obs, DecoratingMember<T> m) {
+        // get a fresh worker each time so we jump threads to
+        // break the stack-trace (a long-enough chain of
+        // checkout-checkins could otherwise provoke stack
+        // overflow)
+
+        // advance counter so the next and choose an Observer to emit to (round robin)
+
+        int index = obs.index;
+        MemberSingleObserver<T> o = obs.observers[index];
+        MemberSingleObserver<T> oNext = o;
+        // atomically bump up the index (if that entry has not been deleted in
+        // the meantime by disposal)
+        while (true) {
+            Observers<T> x = observers.get();
+            if (x.index == index && x.observers[index] == o) {
+                boolean[] active = new boolean[x.active.length];
+                System.arraycopy(x.active, 0, active, 0, active.length);
+                int nextIndex = (index + 1) % active.length;
+                while (nextIndex != index && !active[nextIndex]) {
+                    nextIndex = (nextIndex + 1) % active.length;
+                }
+                active[nextIndex] = false;
+                if (observers.compareAndSet(x,
+                        new Observers<T>(x.observers, active, x.activeCount - 1, nextIndex))) {
+                    oNext = x.observers[nextIndex];
+                    break;
+                }
+            } else {
+                // checkin because no active observers
+                m.checkin();
+                return false;
+            }
+        }
+        Worker worker = scheduler.createWorker();
+        worker.schedule(new Emitter<T>(worker, oNext, m));
+        return true;
+    }
+
+    final class Creator implements Runnable {
+
+        private final DecoratingMember<T> m;
+
+        Creator(DecoratingMember<T> m) {
+            this.m = m;
+        }
+
+        @Override
+        public void run() {
+            if (!cancelled) {
+                try {
+                    log.debug("creating value");
+                    // this action might block so is scheduled
+                    T value = pool.factory.call();
+                    m.setValueAndClearReleasingFlag(value);
+                    requested.incrementAndGet();
+                    checkin(m);
+                } catch (Throwable t) {
+                    RxJavaPlugins.onError(t);
+                    // check cancelled again because factory.call() is user specified and could have
+                    // taken a significant time to complete
+                    if (!cancelled) {
+                        // schedule a retry
+                        scheduled.add(scheduler.scheduleDirect(this, createRetryIntervalMs,
+                                TimeUnit.MILLISECONDS));
+                    }
+                }
+            }
+        }
     }
 
     final class Releaser implements Runnable {
@@ -309,74 +372,20 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         }
     }
 
-    private Disposable scheduleCreateValue(DecoratingMember<T> m) {
-        return scheduler.scheduleDirect(() -> {
-            if (!cancelled) {
-                try {
-                    log.debug("creating value");
-                    // this action might block so is scheduled
-                    T value = pool.factory.call();
-                    m.setValueAndClearReleasingFlag(value);
-                    requested.incrementAndGet();
-                    checkin(m);
-                } catch (Throwable t) {
-                    RxJavaPlugins.onError(t);
-                    // check cancelled again because factory.call() is user specified and could have
-                    // taken a significant time to complete
-                    if (!cancelled) {
-                        // schedule a retry
-                        scheduled.add(scheduler.scheduleDirect(this, createRetryIntervalMs,
-                                TimeUnit.MILLISECONDS));
-                    }
-                }
-            }
-        });
-    }
-
-    private boolean tryEmit(Observers<T> obs, DecoratingMember<T> m) {
-        // get a fresh worker each time so we jump threads to
-        // break the stack-trace (a long-enough chain of
-        // checkout-checkins could otherwise provoke stack
-        // overflow)
-
-        // advance counter so the next and choose an Observer to emit to (round robin)
-
-        int index = obs.index;
-        MemberSingleObserver<T> o = obs.observers[index];
-        MemberSingleObserver<T> oNext = o;
-        // atomically bump up the index (if that entry has not been deleted in
-        // the meantime by disposal)
-        while (true) {
-            Observers<T> x = observers.get();
-            if (x.index == index && x.observers[index] == o) {
-                boolean[] active = new boolean[x.active.length];
-                System.arraycopy(x.active, 0, active, 0, active.length);
-                int nextIndex = (index + 1) % active.length;
-                while (nextIndex != index && !active[nextIndex]) {
-                    nextIndex = (nextIndex + 1) % active.length;
-                }
-                active[nextIndex] = false;
-                if (observers.compareAndSet(x,
-                        new Observers<T>(x.observers, active, x.activeCount - 1, nextIndex))) {
-                    oNext = x.observers[nextIndex];
-                    break;
-                }
-            } else {
-                // checkin because no active observers
-                m.checkin();
-                return false;
-            }
-        }
-        Worker worker = scheduler.createWorker();
-        worker.schedule(new Emitter<T>(worker, oNext, m));
-        return true;
-    }
-
     @Override
     public void close() {
         cancel();
     }
 
+    private void disposeAll() {
+        initializedAvailable.clear();
+        toBeReleased.clear();
+        notInitialized.clear();
+        disposeValues();
+        removeAllObservers();
+    }
+
+    
     private void disposeValues() {
         scheduled.dispose();
         for (DecoratingMember<T> member : members) {
