@@ -75,7 +75,6 @@
         <connection>${scm.url}</connection>
         <developerConnection>${scm.url}</developerConnection>
         <url>${scm.url}</url>
-        <tag>0.1-RC1</tag>
     </scm>
 
     <dependencies>
