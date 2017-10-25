@@ -1,6 +1,8 @@
 package org.davidmoten.rx.pool;
 
 import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -55,6 +57,8 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     // emitted).
     private final AtomicLong requested = new AtomicLong();
 
+    private final AtomicLong initializeScheduled = new AtomicLong();
+
     // mutable
     private volatile boolean cancelled;
 
@@ -105,11 +109,18 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     }
 
     public void checkin(Member<T> member) {
+        checkin(member, false);
+    }
+
+    public void checkin(Member<T> member, boolean decrementInitializeScheduled) {
         log.debug("checking in {}", member);
         DecoratingMember<T> d = ((DecoratingMember<T>) member);
         d.scheduleRelease();
         d.markAsChecked();
         initializedAvailable.offer((DecoratingMember<T>) member);
+        if (decrementInitializeScheduled) {
+            initializeScheduled.decrementAndGet();
+        }
         drain();
     }
 
@@ -148,9 +159,11 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                 // we schedule release of members even if no requests exist
                 scheduleReleases();
                 scheduleChecks();
-                long r = requested.get();
+
+                long r = requested.get(); // requested
                 log.debug("requested={}", r);
-                long e = 0;
+
+                long e = 0; // emitted
                 while (e != r) {
                     if (cancelled) {
                         disposeAll();
@@ -177,21 +190,20 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                         if (m2 == null) {
                             break;
                         } else {
-                            // incrementing e here will result in requested being decremented
-                            // (outside of this loop). After scheduled creation has occurred
-                            // requested will be incremented and drain called.
-                            e++;
-                            log.debug("scheduling member creation");
-                            scheduled.add(scheduler.scheduleDirect(new Creator(m2)));
+                            // only schedule member initialization if there is enough demand,
+                            boolean used = trySchedulingInitialization(r, e, m2);
+                            if (!used) {
+                                break;
+                            }
                         }
                     } else if (!m.isReleasing() && !m.isChecking()) {
-                        // this should not block because it just schedules emissions to observers
                         log.debug("trying to emit member");
                         if (shouldPerformHealthCheck(m)) {
                             log.debug("queueing member for health check {}", m);
                             toBeChecked.offer(m);
                         } else {
                             log.debug("no health check required for {}", m);
+                            // this should not block because it just schedules emissions to observers
                             if (tryEmit(obs, m)) {
                                 e++;
                             } else {
@@ -204,6 +216,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     scheduleReleases();
                     // schedule check of any member queued for checking
                     scheduleChecks();
+
                 }
                 // normally we don't reduce requested if it is Long.MAX_VALUE
                 // but given that the only way to increase requested is by subscribing
@@ -219,11 +232,32 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         }
     }
 
+    private boolean trySchedulingInitialization(long r, long e, final DecoratingMember<T> m) {
+        // check initializeScheduled using a CAS loop
+        boolean used = false;
+        while (true) {
+            long cs = initializeScheduled.get();
+            if (e + cs < r) {
+                if (initializeScheduled.compareAndSet(cs, cs + 1)) {
+                    log.debug("scheduling member creation");
+                    scheduled.add(scheduler.scheduleDirect(new Initializer(m)));
+                    break;
+                }
+            } else {
+                log.info("insufficient demand to initialize {}", m);
+                // don't need to initialize more so put back on queue and exit the loop
+                notInitialized.offer(m);
+                used = false;
+                break;
+            }
+        }
+        return used;
+    }
+
     private boolean shouldPerformHealthCheck(final DecoratingMember<T> m) {
         long now = scheduler.now(TimeUnit.MILLISECONDS);
         log.debug("schedule.now={}, lastCheck={}", now, m.lastCheckTime());
-        return pool.idleTimeBeforeHealthCheckMs > 0
-                && now - m.lastCheckTime() >= pool.idleTimeBeforeHealthCheckMs;
+        return pool.idleTimeBeforeHealthCheckMs > 0 && now - m.lastCheckTime() >= pool.idleTimeBeforeHealthCheckMs;
     }
 
     private void scheduleChecks() {
@@ -273,8 +307,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     nextIndex = (nextIndex + 1) % active.length;
                 }
                 active[nextIndex] = false;
-                if (observers.compareAndSet(x,
-                        new Observers<T>(x.observers, active, x.activeCount - 1, nextIndex))) {
+                if (observers.compareAndSet(x, new Observers<T>(x.observers, active, x.activeCount - 1, nextIndex))) {
                     oNext = x.observers[nextIndex];
                     break;
                 }
@@ -289,11 +322,11 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         return true;
     }
 
-    final class Creator implements Runnable {
+    final class Initializer implements Runnable {
 
         private final DecoratingMember<T> m;
 
-        Creator(DecoratingMember<T> m) {
+        Initializer(DecoratingMember<T> m) {
             this.m = m;
         }
 
@@ -306,15 +339,14 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     T value = pool.factory.call();
                     m.setValueAndClearReleasingFlag(value);
                     requested.incrementAndGet();
-                    checkin(m);
+                    checkin(m, true);
                 } catch (Throwable t) {
                     RxJavaPlugins.onError(t);
                     // check cancelled again because factory.call() is user specified and could have
                     // taken a significant time to complete
                     if (!cancelled) {
                         // schedule a retry
-                        scheduled.add(scheduler.scheduleDirect(this, createRetryIntervalMs,
-                                TimeUnit.MILLISECONDS));
+                        scheduled.add(scheduler.scheduleDirect(this, createRetryIntervalMs, TimeUnit.MILLISECONDS));
                     }
                 }
             }
@@ -385,7 +417,6 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         removeAllObservers();
     }
 
-    
     private void disposeValues() {
         scheduled.dispose();
         for (DecoratingMember<T> member : members) {
@@ -404,8 +435,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
             boolean[] active = new boolean[n + 1];
             System.arraycopy(a.active, 0, active, 0, n);
             active[n] = true;
-            if (observers.compareAndSet(a,
-                    new Observers<T>(b, active, a.activeCount + 1, a.index))) {
+            if (observers.compareAndSet(a, new Observers<T>(b, active, a.activeCount + 1, a.index))) {
                 return;
             }
         }
@@ -472,10 +502,8 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         final int activeCount;
         final int index;
 
-        Observers(MemberSingleObserver<T>[] observers, boolean[] active, int activeCount,
-                int index) {
-            Preconditions.checkArgument(observers.length > 0 || index == 0,
-                    "index must be -1 for zero length array");
+        Observers(MemberSingleObserver<T>[] observers, boolean[] active, int activeCount, int index) {
+            Preconditions.checkArgument(observers.length > 0 || index == 0, "index must be -1 for zero length array");
             Preconditions.checkArgument(observers.length == active.length);
             this.observers = observers;
             this.index = index;
@@ -515,8 +543,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         drain();
     }
 
-    static final class MemberSingleObserver<T> extends AtomicReference<MemberSingle<T>>
-            implements Disposable {
+    static final class MemberSingleObserver<T> extends AtomicReference<MemberSingle<T>> implements Disposable {
 
         private static final long serialVersionUID = -7650903191002190468L;
 

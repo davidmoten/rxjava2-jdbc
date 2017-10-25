@@ -255,8 +255,6 @@ public class NonBlockingPoolTest {
     }
 
     @Test
-    @Ignore
-    // TODO enable
     public void testMemberAvailableAfterCreationScheduledIsUsedImmediately() throws InterruptedException {
         AtomicInteger count = new AtomicInteger();
         CountDownLatch latch3 = new CountDownLatch(1);
