@@ -33,19 +33,17 @@ public final class NonBlockingPool<T> implements Pool<T> {
     private final AtomicReference<MemberSingle<T>> member = new AtomicReference<>();
     private volatile boolean closed;
 
-    NonBlockingPool(Callable<? extends T> factory, Predicate<? super T> healthCheck,
-            Consumer<? super T> disposer, int maxSize, long idleTimeBeforeHealthCheckMs,
-            long maxIdleTimeMs, long createRetryIntervalMs,
-            BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator,
-            Scheduler scheduler, Action closeAction) {
+    NonBlockingPool(Callable<? extends T> factory, Predicate<? super T> healthCheck, Consumer<? super T> disposer,
+            int maxSize, long idleTimeBeforeHealthCheckMs, long maxIdleTimeMs, long createRetryIntervalMs,
+            BiFunction<? super T, ? super Checkin, ? extends T> checkinDecorator, Scheduler scheduler,
+            Action closeAction) {
         Preconditions.checkNotNull(factory);
         Preconditions.checkNotNull(healthCheck);
         Preconditions.checkNotNull(disposer);
         Preconditions.checkArgument(maxSize > 0);
         Preconditions.checkNotNull(checkinDecorator);
         Preconditions.checkNotNull(scheduler);
-        Preconditions.checkArgument(createRetryIntervalMs >= 0,
-                "createRetryIntervalMs must be >=0");
+        Preconditions.checkArgument(createRetryIntervalMs >= 0, "createRetryIntervalMs must be >=0");
         Preconditions.checkNotNull(closeAction);
         Preconditions.checkArgument(maxIdleTimeMs >= 0, "maxIdleTime must be >=0");
         this.factory = factory;
@@ -115,10 +113,16 @@ public final class NonBlockingPool<T> implements Pool<T> {
 
     public static class Builder<T> {
 
-        private static final BiFunction<Object, Checkin, Object> DEFAULT_CHECKIN_DECORATOR = (x,
-                y) -> x;
+        private static final Predicate<Object> ALWAYS_TRUE = new Predicate<Object>() {
+            @Override
+            public boolean test(Object o) throws Exception {
+                return true;
+            }
+        };
+
+        private static final BiFunction<Object, Checkin, Object> DEFAULT_CHECKIN_DECORATOR = (x, y) -> x;
         private Callable<? extends T> factory;
-        private Predicate<? super T> healthCheck = x -> true;
+        private Predicate<? super T> healthCheck = ALWAYS_TRUE;
         private long idleTimeBeforeHealthCheckMs = 1000;
         private Consumer<? super T> disposer = Consumers.doNothing();
         private int maxSize = 10;
@@ -190,9 +194,8 @@ public final class NonBlockingPool<T> implements Pool<T> {
         }
 
         public NonBlockingPool<T> build() {
-            return new NonBlockingPool<T>(factory, healthCheck, disposer, maxSize,
-                    idleTimeBeforeHealthCheckMs, maxIdleTimeMs, createRetryIntervalMs,
-                    checkinDecorator, scheduler, closeAction);
+            return new NonBlockingPool<T>(factory, healthCheck, disposer, maxSize, idleTimeBeforeHealthCheckMs,
+                    maxIdleTimeMs, createRetryIntervalMs, checkinDecorator, scheduler, closeAction);
         }
 
     }

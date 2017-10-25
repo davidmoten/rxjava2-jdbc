@@ -24,7 +24,7 @@ import io.reactivex.Flowable;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
 
-public class PoolTest {
+public class NonBlockingPoolTest {
 
     @Test
     public void testMaxIdleTime() throws InterruptedException {
@@ -249,6 +249,19 @@ public class PoolTest {
             // already disposed so cancel has no effect
             assertEquals(1, disposed.get());
         }
+    }
+
+    @Test
+    public void testMemberAvailableAfterCreationScheduledIsUsedImmediately() {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger count = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .idleTimeBeforeHealthCheck(0, TimeUnit.MILLISECONDS) //
+                .maxSize(2) //
+                .maxIdleTime(1, TimeUnit.HOURS) //
+                .scheduler(s) //
+                .build();
     }
 
 }
