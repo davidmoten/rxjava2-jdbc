@@ -89,8 +89,8 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         }
 
         /**
-         * Sets the max time a {@link Connection} can be idle (not checked out of the
-         * pool) before it is released from the pool (the Connection is closed).
+         * Sets the max time a {@link Connection} can be idle (checked in to pool)
+         * before it is released from the pool (the Connection is closed).
          * 
          * @param duration
          *            the period before which an idle Connection is released from the
@@ -105,9 +105,9 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         }
 
         /**
-         * Sets the minimum time that a connection must be idle (not checked out) before
-         * on the next checkout its validity is checked using the health check function.
-         * If the health check fails then the Connection is closed (ignoring error) and
+         * Sets the minimum time that a connection must be idle (checked in) before on
+         * the next checkout its validity is checked using the health check function. If
+         * the health check fails then the Connection is closed (ignoring error) and
          * released from the pool. Another Connection is then scheduled for creation
          * (using the createRetryInterval delay).
          * 
@@ -134,7 +134,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @return this
          */
         public Builder<T> createRetryInterval(long duration, TimeUnit unit) {
-            this.createRetryIntervalMs=unit.toMillis(duration);
+            this.createRetryIntervalMs = unit.toMillis(duration);
             return this;
         }
 
