@@ -9,15 +9,18 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.davidmoten.rx.internal.FlowableSingleDeferUntilRequest;
 import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
@@ -252,16 +255,42 @@ public class NonBlockingPoolTest {
     }
 
     @Test
-    public void testMemberAvailableAfterCreationScheduledIsUsedImmediately() {
-        TestScheduler s = new TestScheduler();
+    @Ignore
+    // TODO enable
+    public void testMemberAvailableAfterCreationScheduledIsUsedImmediately() throws InterruptedException {
         AtomicInteger count = new AtomicInteger();
+        CountDownLatch latch3 = new CountDownLatch(1);
         Pool<Integer> pool = NonBlockingPool //
-                .factory(() -> count.incrementAndGet()) //
+                .factory(() -> {
+                    if (count.get() == 1) {
+                        latch3.await(1, TimeUnit.MINUTES);
+                    }
+                    return count.incrementAndGet();
+                }) //
                 .idleTimeBeforeHealthCheck(0, TimeUnit.MILLISECONDS) //
                 .maxSize(2) //
                 .maxIdleTime(1, TimeUnit.HOURS) //
-                .scheduler(s) //
                 .build();
+        AtomicReference<Member<Integer>> m1 = new AtomicReference<>();
+        CountDownLatch latch1 = new CountDownLatch(1);
+        pool.member().doOnSuccess(x -> {
+            m1.set(x);
+            latch1.countDown();
+        }).subscribe();
+        assertTrue(latch1.await(1, TimeUnit.MINUTES));
+        AtomicReference<Member<Integer>> m2 = new AtomicReference<>();
+        CountDownLatch latch2 = new CountDownLatch(1);
+        pool.member().doOnSuccess(x -> {
+            m2.set(x);
+            latch2.countDown();
+        }).subscribe();
+        m1.get().checkin();
+        // now m2 takes a while to create (it will have been scheduled)
+        // so the return of m1 to the pool will ideally go straight to m2 despite the
+        // scheduled create
+        assertTrue(latch2.await(10, TimeUnit.SECONDS));
+        assertEquals(m1.get().value().intValue(), m2.get().value().intValue());
+        latch3.countDown();
     }
 
 }
