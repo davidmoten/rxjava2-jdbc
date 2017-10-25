@@ -285,7 +285,7 @@ public class NonBlockingPoolTest {
         // now m2 takes a while to create (it will have been scheduled)
         // so the return of m1 to the pool will ideally go straight to m2 despite the
         // scheduled create
-        assertTrue(latch2.await(10, TimeUnit.SECONDS));
+        assertTrue(latch2.await(30, TimeUnit.SECONDS));
         assertEquals(m1.get().value().intValue(), m2.get().value().intValue());
         latch3.countDown();
     }
