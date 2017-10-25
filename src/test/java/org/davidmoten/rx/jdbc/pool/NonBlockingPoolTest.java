@@ -20,7 +20,6 @@ import org.davidmoten.rx.jdbc.Database;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
