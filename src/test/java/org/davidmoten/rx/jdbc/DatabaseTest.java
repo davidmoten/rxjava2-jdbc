@@ -1252,6 +1252,21 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testTupleNWithClassInTransaction() {
+        try (Database db = db()) {
+            db //
+                    .select("select score a, score b from person order by name") //
+                    .transactedValuesOnly() //
+                    .getTupleN(Integer.class) //
+                    .map(x -> x.value()) //
+                    .firstOrError() //
+                    .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertComplete() //
+                    .assertValue(TupleN.create(21, 21)); //
+        }
+    }
+
+    @Test
     public void testHealthCheck() throws InterruptedException {
         AtomicBoolean once = new AtomicBoolean(true);
         testHealthCheck(c -> {
