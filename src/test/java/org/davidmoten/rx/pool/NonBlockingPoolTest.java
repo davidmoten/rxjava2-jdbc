@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.davidmoten.rx.internal.FlowableSingleDeferUntilRequest;
 import org.davidmoten.rx.jdbc.Database;
@@ -21,7 +22,10 @@ import org.junit.Test;
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.exceptions.UndeliverableException;
+import io.reactivex.functions.Consumer;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
 
@@ -284,30 +288,38 @@ public class NonBlockingPoolTest {
 
     @Test
     public void testPoolFactoryWhenFailsThenRecovers() {
-        TestScheduler s = new TestScheduler();
-        AtomicInteger c = new AtomicInteger();
-        NonBlockingPool<Integer> pool = NonBlockingPool.factory(() -> {
-            if (c.getAndIncrement() == 0) {
-                throw new TestException();
-            } else {
-                return c.get();
-            }
-        }) //
-                .maxSize(1) //
-                .scheduler(s) //
-                .createRetryInterval(10, TimeUnit.SECONDS) //
-                .build();
-        TestObserver<Integer> ts = pool.member() //
-                .map(m -> m.value()) //
-                .test() //
-                .assertNotTerminated() //
-                .assertNoValues();
-        s.triggerActions();
-
-        s.advanceTimeBy(10, TimeUnit.SECONDS);
-        s.triggerActions();
-        ts.assertComplete();
-        ts.assertValue(2);
+        AtomicReference<Throwable> ex = new AtomicReference<>();
+        Consumer<? super Throwable> handler = RxJavaPlugins.getErrorHandler();
+        RxJavaPlugins.setErrorHandler(t -> ex.set(t));
+        try {
+            TestScheduler s = new TestScheduler();
+            AtomicInteger c = new AtomicInteger();
+            NonBlockingPool<Integer> pool = NonBlockingPool.factory(() -> {
+                if (c.getAndIncrement() == 0) {
+                    throw new TestException();
+                } else {
+                    return c.get();
+                }
+            }) //
+                    .maxSize(1) //
+                    .scheduler(s) //
+                    .createRetryInterval(10, TimeUnit.SECONDS) //
+                    .build();
+            TestObserver<Integer> ts = pool.member() //
+                    .map(m -> m.value()) //
+                    .test() //
+                    .assertNotTerminated() //
+                    .assertNoValues();
+            s.triggerActions();
+            assertTrue(ex.get() instanceof UndeliverableException);
+            assertTrue(((UndeliverableException) ex.get()).getCause() instanceof TestException);
+            s.advanceTimeBy(10, TimeUnit.SECONDS);
+            s.triggerActions();
+            ts.assertComplete();
+            ts.assertValue(2);
+        } finally {
+            RxJavaPlugins.setErrorHandler(handler);
+        }
     }
 
     private static Scheduler createScheduleToDelayCreation(TestScheduler ts) {
