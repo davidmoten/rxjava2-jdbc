@@ -21,6 +21,7 @@ import org.junit.Test;
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.TestObserver;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
 
@@ -274,7 +275,41 @@ public class NonBlockingPoolTest {
         ts.triggerActions();
         assertEquals(2, list.size());
     }
-    
+
+    public static class TestException extends Exception {
+
+        private static final long serialVersionUID = 4243235711346034313L;
+
+    }
+
+    @Test
+    public void testPoolFactoryWhenFailsThenRecovers() {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger c = new AtomicInteger();
+        NonBlockingPool<Integer> pool = NonBlockingPool.factory(() -> {
+            if (c.getAndIncrement() == 0) {
+                throw new TestException();
+            } else {
+                return c.get();
+            }
+        }) //
+                .maxSize(1) //
+                .scheduler(s) //
+                .createRetryInterval(10, TimeUnit.SECONDS) //
+                .build();
+        TestObserver<Integer> ts = pool.member() //
+                .map(m -> m.value()) //
+                .test() //
+                .assertNotTerminated() //
+                .assertNoValues();
+        s.triggerActions();
+
+        s.advanceTimeBy(10, TimeUnit.SECONDS);
+        s.triggerActions();
+        ts.assertComplete();
+        ts.assertValue(2);
+    }
+
     private static Scheduler createScheduleToDelayCreation(TestScheduler ts) {
         return new Scheduler() {
 
