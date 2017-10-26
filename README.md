@@ -31,7 +31,7 @@ If you want to use the built-in test database then add the Apache Derby dependen
 <dependency>
   <groupId>org.apache.derby</groupId>
   <artifactId>derby</artifactId>
-  <version>10.13.1.1</version>
+  <version>10.14.1.0</version>
 </dependency>
 ```
 
@@ -42,12 +42,6 @@ To start things off you need a `Database` instance. Given the jdbc url of your d
 ```java
 Database db = Database.from(url, maxPoolSize);
 ```
-Note that the above command creates a `Scheduler` and `ExecutorService` based on the requested `maxPoolSize`. When you are finished with the database object call 
-
-```java
-db.close();
-```
-which will shutdown the created `Scheduler` and `ExecutorService`.
 
 ### Support for playing with rxjava2-jdbc!
 
