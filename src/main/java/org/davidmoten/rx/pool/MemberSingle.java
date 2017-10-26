@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.davidmoten.guavamini.Preconditions;
+import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
 
 import io.reactivex.Scheduler;
 import io.reactivex.Scheduler.Worker;
@@ -320,6 +321,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         return true;
     }
 
+    @VisibleForTesting
     final class Initializer implements Runnable {
 
         private final DecoratingMember<T> m;

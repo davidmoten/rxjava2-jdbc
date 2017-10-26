@@ -1,4 +1,4 @@
-package org.davidmoten.rx.jdbc.pool;
+package org.davidmoten.rx.pool;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -9,20 +9,18 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.davidmoten.rx.internal.FlowableSingleDeferUntilRequest;
 import org.davidmoten.rx.jdbc.Database;
-import org.davidmoten.rx.pool.Member;
-import org.davidmoten.rx.pool.NonBlockingPool;
-import org.davidmoten.rx.pool.Pool;
+import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
+import io.reactivex.Scheduler;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
 
@@ -255,39 +253,58 @@ public class NonBlockingPoolTest {
 
     @Test
     public void testMemberAvailableAfterCreationScheduledIsUsedImmediately() throws InterruptedException {
+        TestScheduler ts = new TestScheduler();
+        Scheduler s = createScheduleToDelayCreation(ts);
         AtomicInteger count = new AtomicInteger();
-        CountDownLatch latch3 = new CountDownLatch(1);
         Pool<Integer> pool = NonBlockingPool //
-                .factory(() -> {
-                    if (count.get() == 1) {
-                        latch3.await(1, TimeUnit.MINUTES);
-                    }
-                    return count.incrementAndGet();
-                }) //
-                .idleTimeBeforeHealthCheck(0, TimeUnit.MILLISECONDS) //
+                .factory(() -> count.incrementAndGet()) //
+                .createRetryInterval(10, TimeUnit.MINUTES) //
                 .maxSize(2) //
                 .maxIdleTime(1, TimeUnit.HOURS) //
+                .scheduler(s) //
                 .build();
-        AtomicReference<Member<Integer>> m1 = new AtomicReference<>();
-        CountDownLatch latch1 = new CountDownLatch(1);
-        pool.member().doOnSuccess(x -> {
-            m1.set(x);
-            latch1.countDown();
-        }).subscribe();
-        assertTrue(latch1.await(1, TimeUnit.MINUTES));
-        AtomicReference<Member<Integer>> m2 = new AtomicReference<>();
-        CountDownLatch latch2 = new CountDownLatch(1);
-        pool.member().doOnSuccess(x -> {
-            m2.set(x);
-            latch2.countDown();
-        }).subscribe();
-        m1.get().checkin();
-        // now m2 takes a while to create (it will have been scheduled)
-        // so the return of m1 to the pool will ideally go straight to m2 despite the
-        // scheduled create
-        assertTrue(latch2.await(30, TimeUnit.SECONDS));
-        assertEquals(m1.get().value().intValue(), m2.get().value().intValue());
-        latch3.countDown();
+        List<Member<Integer>> list = new ArrayList<Member<Integer>>();
+        pool.member().doOnSuccess(m -> list.add(m)).subscribe();
+        assertEquals(0, list.size());
+        ts.advanceTimeBy(1, TimeUnit.MINUTES);
+        ts.triggerActions();
+        assertEquals(1, list.size());
+        pool.member().doOnSuccess(m -> list.add(m)).subscribe();
+        list.get(0).checkin();
+        ts.triggerActions();
+        assertEquals(2, list.size());
+    }
+    
+    private static Scheduler createScheduleToDelayCreation(TestScheduler ts) {
+        return new Scheduler() {
+
+            @Override
+            public Worker createWorker() {
+                Worker w = ts.createWorker();
+                return new Worker() {
+
+                    @Override
+                    public void dispose() {
+                        w.dispose();
+                    }
+
+                    @Override
+                    public boolean isDisposed() {
+                        return w.isDisposed();
+                    }
+
+                    @Override
+                    public Disposable schedule(Runnable run, long delay, TimeUnit unit) {
+                        if (run instanceof MemberSingle.Initializer && delay == 0) {
+                            return w.schedule(run, 1, TimeUnit.MINUTES);
+                        } else {
+                            return w.schedule(run, delay, unit);
+                        }
+                    }
+                };
+            }
+
+        };
     }
 
 }
