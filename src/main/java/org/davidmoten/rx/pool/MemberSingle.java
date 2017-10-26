@@ -242,7 +242,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     return true;
                 }
             } else {
-                log.info("insufficient demand to initialize {}", m);
+                log.debug("insufficient demand to initialize {}", m);
                 // don't need to initialize more so put back on queue and exit the loop
                 notInitialized.offer(m);
                 return false;
