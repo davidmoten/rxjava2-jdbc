@@ -5,7 +5,9 @@
 
 JDBC is so much simpler with *rxjava2-jdbc*.
 
-Status: *in development*
+Status: *in development, release candidates on Maven Central*
+
+Maven site reports are [here](http://davidmoten.github.io/rxjava2-jdbc/index.html) including [javadoc](http://davidmoten.github.io/rxjava2-jdbc/apidocs/index.html).
 
 How to build
 -------------
