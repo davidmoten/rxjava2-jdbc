@@ -95,7 +95,7 @@ public enum Util {
                         setBlob(ps, i, o, cls);
                     } else if (Calendar.class.isAssignableFrom(cls)) {
                         Calendar cal = (Calendar) o;
-                        Timestamp t = new java.sql.Timestamp(cal.getTimeInMillis());
+                        Timestamp t = new Timestamp(cal.getTimeInMillis());
                         ps.setTimestamp(i, t);
                     } else if (Time.class.isAssignableFrom(cls)) {
                         Calendar cal = Calendar.getInstance();
@@ -108,15 +108,15 @@ public enum Util {
                     } else if (java.util.Date.class.isAssignableFrom(cls)) {
                         Calendar cal = Calendar.getInstance();
                         java.util.Date date = (java.util.Date) o;
-                        ps.setTimestamp(i, new java.sql.Timestamp(date.getTime()), cal);
+                        ps.setTimestamp(i, new Timestamp(date.getTime()), cal);
                     } else if (Instant.class.isAssignableFrom(cls)) {
                         Calendar cal = Calendar.getInstance();
                         Instant instant = (Instant) o;
-                        ps.setTimestamp(i, new java.sql.Timestamp(instant.toEpochMilli()), cal);
+                        ps.setTimestamp(i, new Timestamp(instant.toEpochMilli()), cal);
                     } else if (ZonedDateTime.class.isAssignableFrom(cls)) {
                         Calendar cal = Calendar.getInstance();
                         ZonedDateTime d = (ZonedDateTime) o;
-                        ps.setTimestamp(i, new java.sql.Timestamp(d.toInstant().toEpochMilli()),
+                        ps.setTimestamp(i, new Timestamp(d.toInstant().toEpochMilli()),
                                 cal);
                     } else
                         ps.setObject(i, o);
@@ -272,6 +272,7 @@ public enum Util {
         try {
             con = ps.getConnection();
         } catch (SQLException e) {
+            // don't care
         }
         closeSilently(ps);
         closeSilently(con);
@@ -389,7 +390,7 @@ public enum Util {
                     return Instant.ofEpochMilli(d.getTime());
                 else
                     return o;
-            } else if (o instanceof java.sql.Timestamp) {
+            } else if (o instanceof Timestamp) {
                 Timestamp t = (java.sql.Timestamp) o;
                 if (cls.isAssignableFrom(Long.class))
                     return t.getTime();
@@ -765,7 +766,7 @@ public enum Util {
     // return s.toString();
     // }
 
-    static interface Col {
+    interface Col {
         Class<?> returnType();
     }
 
@@ -882,7 +883,7 @@ public enum Util {
 
         @SuppressWarnings("unchecked")
         public T newInstance() {
-            return (T) java.lang.reflect.Proxy.newProxyInstance(cls.getClassLoader(),
+            return (T) Proxy.newProxyInstance(cls.getClassLoader(),
                     new Class[] { cls }, new ProxyInstance<T>(cls, values()));
         }
 

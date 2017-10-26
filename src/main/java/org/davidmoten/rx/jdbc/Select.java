@@ -38,12 +38,12 @@ final class Select {
         log.debug("Select.create called with con={}", con);
         Callable<NamedPreparedStatement> initialState = () -> Util.prepare(con, fetchSize, sql);
         Function<NamedPreparedStatement, Flowable<T>> observableFactory = ps -> parameterGroups
-                .flatMap(parameters -> create(con, ps.ps, parameters, mapper, ps.names), true, 1);
+                .flatMap(parameters -> create(ps.ps, parameters, mapper, ps.names), true, 1);
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(initialState, observableFactory, disposer, eagerDispose);
     }
 
-    private static <T> Flowable<? extends T> create(Connection con, PreparedStatement ps,
+    private static <T> Flowable<? extends T> create(PreparedStatement ps,
             List<Object> parameters, Function<? super ResultSet, T> mapper, List<String> names) {
         log.debug("parameters={}", parameters);
         log.debug("names={}", names);

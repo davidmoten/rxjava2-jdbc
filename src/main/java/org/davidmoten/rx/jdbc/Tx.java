@@ -23,11 +23,11 @@ public interface Tx<T> {
     
     TransactedUpdateBuilder update(String sql);
     
-    public static <T> Predicate<Tx<T>> valuesOnly() {
+    static <T> Predicate<Tx<T>> valuesOnly() {
         return tx -> tx.isValue();
     }
 
-    public static <T> Function<Tx<T>, Flowable<T>> flattenToValuesOnly() {
+    static <T> Function<Tx<T>, Flowable<T>> flattenToValuesOnly() {
         return tx -> {
             if (tx.isValue()) {
                 return Flowable.just(tx.value());
@@ -39,7 +39,7 @@ public interface Tx<T> {
         };
     }
 
-    public static <T> Function<Tx<T>, T> toValue() {
+    static <T> Function<Tx<T>, T> toValue() {
         return tx -> tx.value();
     }
     

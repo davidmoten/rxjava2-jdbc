@@ -29,7 +29,7 @@ public interface ConnectionProvider {
      */
     void close();
 
-    public static ConnectionProvider from(@Nonnull Connection connection) {
+    static ConnectionProvider from(@Nonnull Connection connection) {
         Preconditions.checkNotNull(connection, "connection cannot be null");
         return new ConnectionProvider() {
 
