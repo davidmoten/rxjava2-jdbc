@@ -70,9 +70,7 @@ public final class FlowableSingleDeferUntilRequest<T> extends Flowable<T> {
         @Override
         public void onSuccess(T t) {
             s.onNext(t);
-            if (!disposable.get().isDisposed()) {
-                s.onComplete();
-            }
+            s.onComplete();
         }
 
         @Override

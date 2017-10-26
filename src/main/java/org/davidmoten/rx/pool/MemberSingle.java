@@ -233,24 +233,21 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
 
     private boolean trySchedulingInitialization(long r, long e, final DecoratingMember<T> m) {
         // check initializeScheduled using a CAS loop
-        boolean used = false;
         while (true) {
             long cs = initializeScheduled.get();
             if (e + cs < r) {
                 if (initializeScheduled.compareAndSet(cs, cs + 1)) {
                     log.debug("scheduling member creation");
                     scheduled.add(scheduler.scheduleDirect(new Initializer(m)));
-                    break;
+                    return true;
                 }
             } else {
                 log.info("insufficient demand to initialize {}", m);
                 // don't need to initialize more so put back on queue and exit the loop
                 notInitialized.offer(m);
-                used = false;
-                break;
+                return false;
             }
         }
-        return used;
     }
 
     private boolean shouldPerformHealthCheck(final DecoratingMember<T> m) {
