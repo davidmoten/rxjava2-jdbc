@@ -196,10 +196,10 @@ public class NonBlockingPoolTest {
             List<Object> values = ts.assertValueCount(4) //
                     .assertNotTerminated() //
                     .getEvents().get(0);
-            assertEquals(list.get(0).hashCode(), values.get(0).hashCode());
-            assertEquals(list.get(1).hashCode(), values.get(1).hashCode());
-            assertEquals(list.get(1).hashCode(), values.get(2).hashCode());
-            assertEquals(list.get(0).hashCode(), values.get(3).hashCode());
+            assertEquals(list.get(0), values.get(0));
+            assertEquals(list.get(1), values.get(1));
+            assertEquals(list.get(1), values.get(2));
+            assertEquals(list.get(0), values.get(3));
         }
     }
 
