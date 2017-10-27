@@ -1,12 +1,8 @@
 package org.davidmoten.rx.jdbc;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Reader;
-import java.io.StringReader;
-import java.io.Writer;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
@@ -58,8 +54,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.davidmoten.guavamini.annotations.VisibleForTesting;
-
-import io.reactivex.functions.Consumer;
 
 public enum Util {
     ;
@@ -185,6 +179,19 @@ public enum Util {
 
     private static void setNamedParameters(PreparedStatement ps, List<Parameter> parameters, List<String> names)
             throws SQLException {
+        Map<String, Parameter> map = createMap(parameters);
+        List<Parameter> list = new ArrayList<Parameter>();
+        for (String name : names) {
+            if (!map.containsKey(name))
+                throw new NamedParameterMissingException("named parameter is missing for '" + name + "'");
+            Parameter p = map.get(name);
+            list.add(p);
+        }
+        Util.setParameters(ps, list, true);
+    }
+
+    @VisibleForTesting
+    static Map<String, Parameter> createMap(List<Parameter> parameters) {
         Map<String, Parameter> map = new HashMap<String, Parameter>();
         for (Parameter p : parameters) {
             if (p.hasName()) {
@@ -194,14 +201,7 @@ public enum Util {
                         "named parameters were expected but this parameter did not have a name: " + p);
             }
         }
-        List<Parameter> list = new ArrayList<Parameter>();
-        for (String name : names) {
-            if (!map.containsKey(name))
-                throw new NamedParameterMissingException("named parameter is missing for '" + name + "'");
-            Parameter p = map.get(name);
-            list.add(p);
-        }
-        Util.setParameters(ps, list, true);
+        return map;
     }
 
     static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters, List<String> names)
@@ -314,14 +314,6 @@ public enum Util {
     public static void rollback(PreparedStatement ps) throws SQLException {
         ps.getConnection().rollback();
     }
-
-    public static final Consumer<PreparedStatement> CLOSE_PS_AND_CONNECTION = new Consumer<PreparedStatement>() {
-
-        @Override
-        public void accept(PreparedStatement ps) throws Exception {
-            Util.closePreparedStatementAndConnection(ps);
-        }
-    };
 
     // auto-mapping
 
@@ -471,7 +463,8 @@ public enum Util {
      *            blob
      * @return
      */
-    private static byte[] toBytes(Blob b) {
+    @VisibleForTesting
+    static byte[] toBytes(Blob b) {
         try {
             InputStream is = b.getBinaryStream();
             byte[] result = IOUtils.toByteArray(is);

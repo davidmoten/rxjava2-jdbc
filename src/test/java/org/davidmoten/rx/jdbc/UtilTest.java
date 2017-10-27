@@ -6,8 +6,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -17,11 +20,14 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
 
 import com.github.davidmoten.guavamini.Lists;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class UtilTest {
 
     @Test
@@ -90,10 +96,36 @@ public class UtilTest {
         boolean namesAllowed = true;
         List<Parameter> list = Lists.newArrayList(Parameter.create("name", "FRED"));
         PreparedStatement ps = Mockito.mock(PreparedStatement.class);
-        Mockito.doThrow(new SQLException("boo")) //
-                .when(ps) //
-                .setObject(Mockito.anyInt(), Mockito.anyObject());
-        Util.setParameters(ps, list, namesAllowed);
-        Mockito.verify(ps);
+        try {
+            Mockito.doThrow(new SQLException("boo")) //
+                    .when(ps) //
+                    .setObject(Mockito.anyInt(), Mockito.any());
+            Util.setParameters(ps, list, namesAllowed);
+        } finally {
+            Mockito.verify(ps, Mockito.atMost(1)).setObject(Mockito.anyInt(), Mockito.any());
+        }
     }
+
+    @Test(expected = RuntimeException.class)
+    public void testToBytesThrowsIOException() throws IOException, SQLException {
+        System.out.println("starting test");
+        Blob blob = Mockito.mock(Blob.class);
+        System.out.println("blob mocked");
+        InputStream is = Mockito.mock(InputStream.class);
+        Mockito.when(blob.getBinaryStream()).thenReturn(is);
+        Mockito.when(is.read()).thenThrow(IOException.class);
+        Mockito.when(is.read(Mockito.any())).thenThrow(IOException.class);
+        Mockito.when(is.read(Mockito.any(), Mockito.anyInt(), Mockito.anyInt())).thenThrow(IOException.class);
+        System.out.println("calling toBytes");
+        Util.toBytes(blob);
+    }
+
+    @Test(expected = SQLRuntimeException.class)
+    public void testToBytesThrowsSqlException() throws SQLException {
+        Blob blob = Mockito.mock(Blob.class);
+        Mockito.when(blob.getBinaryStream()) //
+                .thenThrow(new SQLException("boo"));
+        Util.toBytes(blob);
+    }
+
 }
