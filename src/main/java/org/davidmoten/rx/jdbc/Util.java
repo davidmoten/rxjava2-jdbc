@@ -605,121 +605,7 @@ public enum Util {
      */
     static <T> T autoMap(ResultSet rs, Class<T> cls, ProxyService<T> proxyService) {
         return proxyService.newInstance();
-        // try {
-        // if (proxyService != null) {
-        // return proxyService.newInstance();
-        // } else {
-        // int n = rs.getMetaData().getColumnCount();
-        // for (Constructor<?> c : cls.getDeclaredConstructors()) {
-        // if (n == c.getParameterTypes().length) {
-        // return autoMap(rs, (Constructor<T>) c);
-        // }
-        // }
-        // throw new RuntimeException(
-        // "constructor with number of parameters=" + n + " not found in " +
-        // cls);
-        // }
-        // } catch (SQLException e) {
-        // throw new SQLRuntimeException(e);
-        // }
     }
-
-    // /**
-    // * Converts the ResultSet column values into parameters to the given
-    // * constructor (with number of parameters equals the number of columns) of
-    // * type <code>T</code> then returns an instance of type <code>T</code>.
-    // See
-    // * See {@link SelectBuilder#autoMap(Class)}.
-    // *
-    // * @param rs
-    // * the result set row
-    // * @param c
-    // * constructor to use for instantiation
-    // * @return automapped instance
-    // */
-    // private static <T> T autoMap(ResultSet rs, Constructor<T> c) {
-    // Class<?>[] types = c.getParameterTypes();
-    // List<Object> list = new ArrayList<Object>();
-    // for (int i = 0; i < types.length; i++) {
-    // list.add(autoMap(getObject(rs, types[i], i + 1), types[i]));
-    // }
-    // try {
-    // return newInstance(c, list);
-    // } catch (RuntimeException e) {
-    // throw new RuntimeException(
-    // "problem with parameters=" + getTypeInfo(list) + ", rs types=" +
-    // getRowInfo(rs)
-    // + ". Be sure not to use primitives in a constructor when calling
-    // autoMap().",
-    // e);
-    // }
-    // }
-    //
-    // /**
-    // *
-    // * @param c
-    // * constructor to use
-    // * @param parameters
-    // * constructor parameters
-    // * @return
-    // */
-    // @SuppressWarnings("unchecked")
-    // private static <T> T newInstance(Constructor<?> c, List<Object>
-    // parameters) {
-    // try {
-    // return (T) c.newInstance(parameters.toArray());
-    // } catch (InstantiationException e) {
-    // throw new RuntimeException(e);
-    // } catch (IllegalAccessException e) {
-    // throw new RuntimeException(e);
-    // } catch (IllegalArgumentException e) {
-    // throw new RuntimeException(e);
-    // } catch (InvocationTargetException e) {
-    // throw new RuntimeException(e);
-    // }
-    // }
-    //
-    // /**
-    // * Returns debugging info about the types of a list of objects.
-    // *
-    // * @param list
-    // * @return
-    // */
-    // private static String getTypeInfo(List<Object> list) {
-    //
-    // StringBuilder s = new StringBuilder();
-    // for (Object o : list) {
-    // if (s.length() > 0)
-    // s.append(", ");
-    // if (o == null)
-    // s.append("null");
-    // else {
-    // s.append(o.getClass().getName());
-    // s.append("=");
-    // s.append(o);
-    // }
-    // }
-    // return s.toString();
-    // }
-    //
-    // private static String getRowInfo(ResultSet rs) {
-    // StringBuilder s = new StringBuilder();
-    // try {
-    // ResultSetMetaData md = rs.getMetaData();
-    // for (int i = 1; i <= md.getColumnCount(); i++) {
-    // String name = md.getColumnName(i);
-    // String type = md.getColumnClassName(i);
-    // if (s.length() > 0)
-    // s.append(", ");
-    // s.append(name);
-    // s.append("=");
-    // s.append(type);
-    // }
-    // } catch (SQLException e1) {
-    // throw new SQLRuntimeException(e1);
-    // }
-    // return s.toString();
-    // }
 
     interface Col {
         Class<?> returnType();
@@ -738,12 +624,6 @@ public enum Util {
         public Class<?> returnType() {
             return returnType;
         }
-
-        // @Override
-        // public String toString() {
-        // return "NamedCol [name=" + name + ", returnType=" + returnType + "]";
-        // }
-
     }
 
     static class IndexedCol implements Col {
@@ -759,12 +639,6 @@ public enum Util {
         public Class<?> returnType() {
             return returnType;
         }
-
-        // @Override
-        // public String toString() {
-        // return "IndexedCol [index=" + index + ", returnType=" + returnType +
-        // "]";
-        // }
 
     }
 
