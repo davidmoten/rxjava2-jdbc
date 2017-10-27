@@ -58,7 +58,7 @@ To use the built-in test database you will need the Apache Derby dependency:
 <dependency>
   <groupId>org.apache.derby</groupId>
   <artifactId>derby</artifactId>
-  <version>10.13.1.1</version>
+  <version>10.14.1.1</version>
 </dependency>
 ```
 
