@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,8 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.davidmoten.rx.internal.FlowableSingleDeferUntilRequest;
-import org.davidmoten.rx.jdbc.Database;
-import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
@@ -134,23 +131,27 @@ public class NonBlockingPoolTest {
     @Test
     public void testConnectionPoolRecylesAlternating() {
         TestScheduler s = new TestScheduler();
-        Database db = DatabaseCreator.create(2, s);
-        TestSubscriber<Connection> ts = db.connections() //
-                .doOnNext(System.out::println) //
-                .doOnNext(c -> {
-                    // release connection for reuse straight away
-                    c.close();
-                }) //
+        AtomicInteger count = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthCheck(n -> true) //
+                .maxSize(2) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .scheduler(s) //
+                .build();
+        TestSubscriber<Integer> ts = new FlowableSingleDeferUntilRequest<>(pool.member()) //
+                .repeat() //
+                .doOnNext(m -> m.checkin()) //
+                .map(m -> m.value()) //
                 .test(4); //
         s.triggerActions();
         ts.assertValueCount(4) //
                 .assertNotTerminated();
         List<Object> list = ts.getEvents().get(0);
         // all 4 connections released were the same
-        System.out.println(list);
-        assertTrue(list.get(0).hashCode() == list.get(1).hashCode());
-        assertTrue(list.get(1).hashCode() == list.get(2).hashCode());
-        assertTrue(list.get(2).hashCode() == list.get(3).hashCode());
+        assertTrue(list.get(0) == list.get(1));
+        assertTrue(list.get(1) == list.get(2));
+        assertTrue(list.get(2) == list.get(3));
     }
 
     @Test
@@ -161,17 +162,23 @@ public class NonBlockingPoolTest {
     @Test
     public void testConnectionPoolRecylesMany() throws SQLException {
         TestScheduler s = new TestScheduler();
-        Database db = DatabaseCreator.create(2, s);
-        TestSubscriber<Connection> ts = db //
-                .connection() //
+        AtomicInteger count = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthCheck(n -> true) //
+                .maxSize(2) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .scheduler(s) //
+                .build();
+        TestSubscriber<Member<Integer>> ts = new FlowableSingleDeferUntilRequest<>(pool.member()) //
                 .repeat() //
                 .test(4); //
         s.triggerActions();
         ts.assertNoErrors() //
                 .assertValueCount(2) //
                 .assertNotTerminated();
-        List<Connection> list = new ArrayList<>(ts.values());
-        list.get(1).close(); // should release a connection
+        List<Member<Integer>> list = new ArrayList<>(ts.values());
+        list.get(1).checkin(); // should release a connection
         s.triggerActions();
         {
             List<Object> values = ts.assertValueCount(3) //
@@ -182,7 +189,7 @@ public class NonBlockingPoolTest {
             assertEquals(list.get(1).hashCode(), values.get(2).hashCode());
         }
         // .assertValues(list.get(0), list.get(1), list.get(1));
-        list.get(0).close();
+        list.get(0).checkin();
         s.triggerActions();
 
         {
