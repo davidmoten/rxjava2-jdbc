@@ -9,13 +9,18 @@ import static org.mockito.Mockito.when;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.List;
 
 import javax.sql.DataSource;
 
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import com.github.davidmoten.guavamini.Lists;
 
 public class UtilTest {
 
@@ -50,20 +55,17 @@ public class UtilTest {
 
     @Test
     public void testAutomapDateToBigInteger() {
-        assertEquals(100L,
-                ((BigInteger) Util.autoMap(new java.sql.Date(100), BigInteger.class)).longValue());
+        assertEquals(100L, ((BigInteger) Util.autoMap(new java.sql.Date(100), BigInteger.class)).longValue());
     }
 
     @Test
     public void testAutomapDateToInstant() {
-        assertEquals(100L,
-                ((Instant) Util.autoMap(new java.sql.Date(100), Instant.class)).toEpochMilli());
+        assertEquals(100L, ((Instant) Util.autoMap(new java.sql.Date(100), Instant.class)).toEpochMilli());
     }
 
     @Test
     public void testAutomapDateToString() {
-        assertEquals(100L,
-                ((java.sql.Date) Util.autoMap(new java.sql.Date(100), String.class)).getTime());
+        assertEquals(100L, ((java.sql.Date) Util.autoMap(new java.sql.Date(100), String.class)).getTime());
     }
 
     @Test
@@ -72,14 +74,26 @@ public class UtilTest {
         Connection c = mock(Connection.class);
         ConnectionProvider cp = Util.connectionProvider(d);
         when(d.getConnection()).thenReturn(c);
-        assertTrue(c==cp.get());
+        assertTrue(c == cp.get());
         cp.close();
     }
-    
+
     @Test(expected = SQLRuntimeException.class)
     public void testGetConnectionFromDataSourceWhenThrows() throws SQLException {
         DataSource d = mock(DataSource.class);
         when(d.getConnection()).thenThrow(SQLException.class);
         Util.getConnection(d);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testPsThrowsInSetParameters() throws SQLException {
+        boolean namesAllowed = true;
+        List<Parameter> list = Lists.newArrayList(Parameter.create("name", "FRED"));
+        PreparedStatement ps = Mockito.mock(PreparedStatement.class);
+        Mockito.doThrow(new SQLException("boo")) //
+                .when(ps) //
+                .setObject(Mockito.anyInt(), Mockito.anyObject());
+        Util.setParameters(ps, list, namesAllowed);
+        Mockito.verify(ps);
     }
 }

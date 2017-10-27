@@ -73,6 +73,7 @@ public enum Util {
      * @param params
      * @throws SQLException
      */
+    @VisibleForTesting
     static void setParameters(PreparedStatement ps, List<Parameter> params, boolean namesAllowed) throws SQLException {
         for (int i = 1; i <= params.size(); i++) {
             if (params.get(i - 1).hasName() && !namesAllowed)
