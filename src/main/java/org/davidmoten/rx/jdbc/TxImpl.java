@@ -55,7 +55,7 @@ final class TxImpl<T> implements Tx<T> {
     public TransactedSelectBuilder select(String sql) {
         return db.tx(this).select(sql);
     }
-    
+
     @Override
     public TransactedUpdateBuilder update(String sql) {
         return db.tx(this).update(sql);
@@ -70,15 +70,14 @@ final class TxImpl<T> implements Tx<T> {
             builder.append(", value=");
             builder.append(value);
         } else if (isError()) {
-            builder.append(", e=");
+            builder.append(", error=");
             builder.append(e);
-        } else if (isComplete()) {
+        } else {
             builder.append(", completed=");
             builder.append(completed);
         }
         builder.append("]");
         return builder.toString();
     }
-
 
 }
