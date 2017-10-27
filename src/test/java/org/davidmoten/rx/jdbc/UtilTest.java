@@ -8,9 +8,11 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -108,15 +110,12 @@ public class UtilTest {
 
     @Test(expected = RuntimeException.class)
     public void testToBytesThrowsIOException() throws IOException, SQLException {
-        System.out.println("starting test");
         Blob blob = Mockito.mock(Blob.class);
-        System.out.println("blob mocked");
         InputStream is = Mockito.mock(InputStream.class);
         Mockito.when(blob.getBinaryStream()).thenReturn(is);
         Mockito.when(is.read()).thenThrow(IOException.class);
         Mockito.when(is.read(Mockito.any())).thenThrow(IOException.class);
         Mockito.when(is.read(Mockito.any(), Mockito.anyInt(), Mockito.anyInt())).thenThrow(IOException.class);
-        System.out.println("calling toBytes");
         Util.toBytes(blob);
     }
 
@@ -128,4 +127,22 @@ public class UtilTest {
         Util.toBytes(blob);
     }
 
+    @Test(expected = RuntimeException.class)
+    public void testToStringThrowsIOException() throws IOException, SQLException {
+        Clob clob = Mockito.mock(Clob.class);
+        Reader r = Mockito.mock(Reader.class);
+        Mockito.when(clob.getCharacterStream()).thenReturn(r);
+        Mockito.when(r.read()).thenThrow(IOException.class);
+        Mockito.when(r.read((char[]) Mockito.any())).thenThrow(IOException.class);
+        Mockito.when(r.read(Mockito.any(), Mockito.anyInt(), Mockito.anyInt())).thenThrow(IOException.class);
+        Util.toString(clob);
+    }
+
+    @Test(expected = SQLRuntimeException.class)
+    public void testToStringThrowsSqlException() throws SQLException {
+        Clob clob = Mockito.mock(Clob.class);
+        Mockito.when(clob.getCharacterStream()) //
+                .thenThrow(new SQLException("boo"));
+        Util.toString(clob);
+    }
 }

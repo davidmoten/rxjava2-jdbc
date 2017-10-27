@@ -485,7 +485,8 @@ public enum Util {
      * @param c
      * @return
      */
-    private static String toString(Clob c) {
+    @VisibleForTesting
+    static String toString(Clob c) {
         try {
             Reader reader = c.getCharacterStream();
             String result = IOUtils.toString(reader);
