@@ -132,8 +132,17 @@ public interface GetterTx {
      * {@link #autoMap(Class) autoMap()}.
      *
      * @param cls1
+     *            first class
      * @param cls2
+     *            second class
      * @param cls3
+     *            third class
+     * @param <T1>
+     *            type of first class
+     * @param <T2>
+     *            type of second class
+     * @param <T3>
+     *            type of third class
      * @return stream of tuples
      */
     default <T1, T2, T3> Flowable<Tx<Tuple3<T1, T2, T3>>> getAs(@Nonnull Class<T1> cls1,
@@ -149,9 +158,21 @@ public interface GetterTx {
      * {@link #autoMap(Class) autoMap()}.
      *
      * @param cls1
+     *            first class
      * @param cls2
+     *            second class
      * @param cls3
+     *            third class
      * @param cls4
+     *            fourth class
+     * @param <T1>
+     *            type of first class
+     * @param <T2>
+     *            type of second class
+     * @param <T3>
+     *            type of third class
+     * @param <T4>
+     *            type of fourth class
      * @return stream of tuples
      */
     default <T1, T2, T3, T4> Flowable<Tx<Tuple4<T1, T2, T3, T4>>> getAs(@Nonnull Class<T1> cls1,
@@ -168,10 +189,25 @@ public interface GetterTx {
      * {@link #autoMap(Class) autoMap()}.
      *
      * @param cls1
+     *            first class
      * @param cls2
+     *            second class
      * @param cls3
+     *            third class
      * @param cls4
+     *            fourth class
      * @param cls5
+     *            fifth class
+     * @param <T1>
+     *            type of first class
+     * @param <T2>
+     *            type of second class
+     * @param <T3>
+     *            type of third class
+     * @param <T4>
+     *            type of fourth class
+     * @param <T5>
+     *            type of fifth class
      * @return stream of transaction items
      */
     default <T1, T2, T3, T4, T5> Flowable<Tx<Tuple5<T1, T2, T3, T4, T5>>> getAs(
@@ -190,11 +226,29 @@ public interface GetterTx {
      * {@link #autoMap(Class) autoMap()}.
      *
      * @param cls1
+     *            first class
      * @param cls2
+     *            second class
      * @param cls3
+     *            third class
      * @param cls4
+     *            fourth class
      * @param cls5
+     *            fifth class
      * @param cls6
+     *            sixth class
+     * @param <T1>
+     *            type of first class
+     * @param <T2>
+     *            type of second class
+     * @param <T3>
+     *            type of third class
+     * @param <T4>
+     *            type of fourth class
+     * @param <T5>
+     *            type of fifth class
+     * @param <T6>
+     *            type of sixth class
      * @return stream of transaction items
      */
     default <T1, T2, T3, T4, T5, T6> Flowable<Tx<Tuple6<T1, T2, T3, T4, T5, T6>>> getAs(
@@ -214,12 +268,33 @@ public interface GetterTx {
      * {@link #autoMap(Class) autoMap()}.
      *
      * @param cls1
+     *            first class
      * @param cls2
+     *            second class
      * @param cls3
+     *            third class
      * @param cls4
+     *            fourth class
      * @param cls5
+     *            fifth class
      * @param cls6
+     *            sixth class
      * @param cls7
+     *            seventh class
+     * @param <T1>
+     *            type of first class
+     * @param <T2>
+     *            type of second class
+     * @param <T3>
+     *            type of third class
+     * @param <T4>
+     *            type of fourth class
+     * @param <T5>
+     *            type of fifth class
+     * @param <T6>
+     *            type of sixth class
+     * @param <T7>
+     *            type of seventh class
      * @return stream of transaction items
      */
     default <T1, T2, T3, T4, T5, T6, T7> Flowable<Tx<Tuple7<T1, T2, T3, T4, T5, T6, T7>>> getAs(
