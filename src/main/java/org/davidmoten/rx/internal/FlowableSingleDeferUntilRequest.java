@@ -26,21 +26,23 @@ public final class FlowableSingleDeferUntilRequest<T> extends Flowable<T> {
         s.onSubscribe(sub);
     }
 
-    private static final class SingleSubscription<T> implements Subscription, SingleObserver<T> {
+    private static final class SingleSubscription<T> extends AtomicBoolean implements Subscription, SingleObserver<T> {
 
+        private static final long serialVersionUID = -4290226935675014466L;
+        
         private final Subscriber<? super T> s;
         private final Single<T> single;
-        private final AtomicBoolean once = new AtomicBoolean();
         private final AtomicReference<Disposable> disposable = new AtomicReference<Disposable>();
 
         SingleSubscription(Single<T> single, Subscriber<? super T> s) {
+            super();
             this.single = single;
             this.s = s;
         }
 
         @Override
         public void request(long n) {
-            if (n > 0 && once.compareAndSet(false, true)) {
+            if (n > 0 && this.compareAndSet(false, true)) {
                 Disposable d = disposable.get();
                 if (d == null) {
                     single.subscribe(this);
