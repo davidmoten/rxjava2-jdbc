@@ -64,6 +64,7 @@ public final class FlowableSingleDeferUntilRequest<T> extends Flowable<T> {
             if (!disposable.compareAndSet(null, d)) {
                 // already cancelled
                 d.dispose();
+                disposable.set(Disposables.disposed());
             }
         }
 
