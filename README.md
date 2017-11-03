@@ -693,7 +693,7 @@ If you don't want to return something then use `doOnSuccess`:
 
 ```java
 Database db = ...
-Completable db.member() 
+Completable completable = db.member() 
   .doOnSuccess(member -> {
      Connection con = member.value();
      try {
