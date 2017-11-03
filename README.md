@@ -698,7 +698,6 @@ Completable completable = db.member()
      Connection con = member.value();
      try {
        //do whatever you want with the connection
-       return count;
      } finally {
        // don't close the connection, just hand it back to the pool
        // and don't use this member again!
