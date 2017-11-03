@@ -2390,16 +2390,35 @@ public class DatabaseTest {
         db.apply(con -> {
             try (PreparedStatement stmt = con.prepareStatement("select count(*) from person where name='FRED'");
                     ResultSet rs = stmt.executeQuery()) {
-                System.out.println(rs);
                 rs.next();
-                // use a method not overriden by PooledConnection
-                System.out.println(con.getHoldability());
                 return rs.getInt(1);
             }
         }) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
+                .assertComplete();
+
+        // now check that the connection was returned to the pool
+        db.select("select count(*) from person where name='FRED'") //
+                .getAs(Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(1) //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testUsingNormalJDBCApiCompletable() {
+        Database db = db(1);
+        db.apply(con -> {
+            try (PreparedStatement stmt = con.prepareStatement("select count(*) from person where name='FRED'");
+                    ResultSet rs = stmt.executeQuery()) {
+                rs.next();
+            }
+        }) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertComplete();
 
         // now check that the connection was returned to the pool

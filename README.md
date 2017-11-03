@@ -670,9 +670,30 @@ Output:
 
 Using raw JDBC
 ----------------
-Many nifty things in JDBC (like `CallableStatements`) are not directly supported by *rxjava2-jdbc* but you can get acccess to the underlying `Connection`s from the `Database` object by using `Database.member()`.
+Many nifty things in JDBC (like `CallableStatements`) are not directly supported by *rxjava2-jdbc* but you can get acccess to the underlying `Connection`s from the `Database` object by using `Database.apply` or `Database.member()`.
 
 Here's an example where you want to return something from a `Connection` (say you called a stored procedure and returned an integer):
+
+```java
+Database db = ...
+Single<Integer> count =
+  db.apply(
+     con -> {
+       //do whatever you want with the connection
+       // just don't close it!
+       return con.getHoldability();
+     });
+```
+
+If you don't want to return something then use a different overload of `apply`:
+
+```java
+Completable c = 
+  db.apply(con -> {
+       //do whatever you want with the connection
+     }); 
+```
+Here are lower level versions of the above examples where you take on the responsibility of returning the connection to the pool.
 
 ```java
 Database db = ...
@@ -689,10 +710,9 @@ Single<Integer> count = db.member()
      });
 ```
 
-If you don't want to return something then use `doOnSuccess`:
+and
 
 ```java
-Database db = ...
 Completable completable = db.member() 
   .doOnSuccess(member -> {
      Connection con = member.value();
@@ -704,9 +724,6 @@ Completable completable = db.member()
        member.checkin();
      }).toCompletable();
 ```
-
-
-
 
 Logging
 -----------------
