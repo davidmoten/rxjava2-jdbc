@@ -668,6 +668,47 @@ Output:
 
 ```
 
+Using raw JDBC
+----------------
+Many nifty things in JDBC (like `CallableStatements`) are not directly supported by *rxjava2-jdbc* but you can get acccess to the underlying `Connection`s from the `Database` object by using `Database.member()`.
+
+Here's an example where you want to return something from a Connection (say you called a stored procedure and returned an integer):
+
+```java
+Database db = ...
+Single<Integer> count = db.member() 
+  .map(member -> {
+     Connection con = member.value();
+     try {
+       //do whatever you want with the connection
+       return count;
+     } finally {
+       // don't close the connection, just hand it back to the pool
+       // and don't use this member again!
+       member.checkin();
+     });
+```
+
+If you don't want to return something then use `doOnSuccess`:
+
+```java
+Database db = ...
+Completable db.member() 
+  .doOnSuccess(member -> {
+     Connection con = member.value();
+     try {
+       //do whatever you want with the connection
+       return count;
+     } finally {
+       // don't close the connection, just hand it back to the pool
+       // and don't use this member again!
+       member.checkin();
+     }).toCompletable();
+```
+
+
+
+
 Logging
 -----------------
 Logging is handled by slf4j which bridges to the logging framework of your choice. Add

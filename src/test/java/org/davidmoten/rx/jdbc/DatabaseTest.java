@@ -2402,7 +2402,7 @@ public class DatabaseTest {
                         member.checkin();
                     }
                 }) //
-                .test() // \
+                .test() // 
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();
