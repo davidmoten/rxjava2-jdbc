@@ -2387,22 +2387,17 @@ public class DatabaseTest {
     @Test
     public void testUsingNormalJDBCApi() {
         Database db = db(1);
-        db.member() //
-                .map(member -> {
-                    Connection con = member.value();
-                    try (PreparedStatement stmt = con.prepareStatement("select count(*) from person where name='FRED'");
-                            ResultSet rs = stmt.executeQuery()) {
-                        System.out.println(rs);
-                        rs.next();
-                        // use a method not overriden by PooledConnection
-                        System.out.println(con.getHoldability());
-                        return rs.getInt(1);
-                    } finally {
-                        // don't close the connection, just hand it back to the pool
-                        member.checkin();
-                    }
-                }) //
-                .test() // 
+        db.apply(con -> {
+            try (PreparedStatement stmt = con.prepareStatement("select count(*) from person where name='FRED'");
+                    ResultSet rs = stmt.executeQuery()) {
+                System.out.println(rs);
+                rs.next();
+                // use a method not overriden by PooledConnection
+                System.out.println(con.getHoldability());
+                return rs.getInt(1);
+            }
+        }) //
+                .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(1) //
                 .assertComplete();

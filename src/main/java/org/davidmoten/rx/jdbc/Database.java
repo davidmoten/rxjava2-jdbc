@@ -24,11 +24,14 @@ import org.davidmoten.rx.pool.Pool;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.functions.Action;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 
-public final class Database implements AutoCloseable, Pool<Connection> {
+public final class Database implements AutoCloseable {
 
     private final Pool<Connection> pool;
     private final Single<Connection> connection;
@@ -49,33 +52,6 @@ public final class Database implements AutoCloseable, Pool<Connection> {
     public static NonBlockingConnectionPool.Builder<Database> nonBlocking() {
         return new NonBlockingConnectionPool.Builder<Database>(pool -> Database.from(pool, () -> pool.close()));
     }
-
-    // /**
-    // * Creates a Database instance. This is a low-level creation method that needs
-    // a
-    // * lot of care so it is recommended to use the other static factory methods on
-    // * Database that will handle pooling for you.
-    // *
-    // * @param connection
-    // * each subscription to this Single should yield a valid open
-    // * Connection to the database. Bear in mind that once a query is
-    // * completed with this connection the connection will be closed. If
-    // * you don't want the connection to be closed (pooling behaviour)
-    // * then you need to override the `close()` behaviour of the
-    // * Connection and handle the semaphore pool pattern yourself (!) or
-    // * preferrably use the other static factory methods like
-    // * {@code Database.from(url, maxPoolSize)} for instance.
-    // * @param onClose
-    // * the action that will be run when {@code Database.close()} is
-    // * called.
-    // * @return Database instance using the given connection provider
-    // */
-    // private static Database from(@Nonnull Single<Connection> connection, @Nonnull
-    // Action onClose) {
-    // Preconditions.checkNotNull(connection, "connections cannot be null");
-    // Preconditions.checkNotNull(onClose, "onClose cannot be null");
-    // return new Database(connection, onClose);
-    // }
 
     public static Database from(@Nonnull String url, int maxPoolSize) {
         Preconditions.checkNotNull(url, "url cannot be null");
@@ -281,9 +257,35 @@ public final class Database implements AutoCloseable, Pool<Connection> {
         return toSentinelIfNull(bytes);
     }
 
-    @Override
+    /**
+     * Returns a Single of a member of the connection pool. When finished with the
+     * emitted member you must call {@code member.checkin()} to return the
+     * connection to the pool.
+     * 
+     * @return a single member of the connection pool
+     */
     public Single<Member<Connection>> member() {
         return pool.member();
+    }
+
+    public <T> Single<T> apply(Function<? super Connection, ? extends T> function) {
+        return member().map(member -> {
+            try {
+                return function.apply(member.value());
+            } finally {
+                member.checkin();
+            }
+        });
+    }
+
+    public <T> Completable apply(Consumer<? super Connection> consumer) {
+        return member().doOnSuccess(member -> {
+            try {
+                consumer.accept(member.value());
+            } finally {
+                member.checkin();
+            }
+        }).toCompletable();
     }
 
 }
