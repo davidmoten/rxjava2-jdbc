@@ -19,6 +19,7 @@ import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
 import org.davidmoten.rx.jdbc.pool.Pools;
 import org.davidmoten.rx.jdbc.pool.internal.ConnectionProviderBlockingPool;
+import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.Pool;
 
 import com.github.davidmoten.guavamini.Preconditions;
@@ -27,20 +28,26 @@ import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.functions.Action;
 
-public final class Database implements AutoCloseable {
+public final class Database implements AutoCloseable, Pool<Connection> {
 
+    private final Pool<Connection> pool;
     private final Single<Connection> connection;
 
     private final Action onClose;
 
-    private Database(@Nonnull Single<Connection> connection, @Nonnull Action onClose) {
-        this.connection = connection;
+    private Database(@Nonnull Pool<Connection> pool, @Nonnull Action onClose) {
+        this.pool = pool;
+        this.connection = pool.member().map(x -> {
+            if (x.value() == null) {
+                throw new NullPointerException("connection is null!");
+            }
+            return x.value();
+        });
         this.onClose = onClose;
     }
 
     public static NonBlockingConnectionPool.Builder<Database> nonBlocking() {
-        return new NonBlockingConnectionPool.Builder<Database>(
-                pool -> Database.from(pool, () -> pool.close()));
+        return new NonBlockingConnectionPool.Builder<Database>(pool -> Database.from(pool, () -> pool.close()));
     }
 
     // /**
@@ -86,22 +93,12 @@ public final class Database implements AutoCloseable {
 
     public static Database from(@Nonnull Pool<Connection> pool) {
         Preconditions.checkNotNull(pool, "pool canot be null");
-        return new Database(pool.member().map(x -> {
-            if (x.value() == null) {
-                throw new NullPointerException("connection is null!");
-            }
-            return x.value();
-        }), () -> pool.close());
+        return new Database(pool, () -> pool.close());
     }
 
     public static Database from(@Nonnull Pool<Connection> pool, Action closeAction) {
         Preconditions.checkNotNull(pool, "pool canot be null");
-        return new Database(pool.member().map(x -> {
-            if (x.value() == null) {
-                throw new NullPointerException("connection is null!");
-            }
-            return x.value();
-        }), closeAction);
+        return new Database(pool, closeAction);
     }
 
     public static Database fromBlocking(@Nonnull ConnectionProvider cp) {
@@ -168,8 +165,7 @@ public final class Database implements AutoCloseable {
                         latch.countDown();
                     } else {
                         if (!latch.await(1, TimeUnit.MINUTES)) {
-                            throw new SQLRuntimeException(
-                                    "waited 1 minute but test database was not created");
+                            throw new SQLRuntimeException("waited 1 minute but test database was not created");
                         }
                     }
                     return c;
@@ -283,6 +279,11 @@ public final class Database implements AutoCloseable {
 
     public static Object blob(@Nullable byte[] bytes) {
         return toSentinelIfNull(bytes);
+    }
+
+    @Override
+    public Single<Member<Connection>> member() {
+        return pool.member();
     }
 
 }
