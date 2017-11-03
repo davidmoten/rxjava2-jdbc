@@ -16,6 +16,8 @@ import java.io.Reader;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.sql.Time;
@@ -2379,6 +2381,34 @@ public class DatabaseTest {
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues("FRED", "JOSEPH") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testUsingNormalJDBCApi() {
+        Database db = db(1);
+        db.connection() //
+                .map(con -> {
+                    try (PreparedStatement stmt = con.prepareStatement("select count(*) from person where name='FRED'");
+                            ResultSet rs = stmt.executeQuery()) {
+                        System.out.println(rs);
+                        rs.next();
+                        return rs.getInt(1);
+                    } finally {
+                        con.close();
+                    }
+                }) //
+                .test() // \
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(1) //
+                .assertComplete();
+
+        // now check that the connection was returned to the pool
+        db.select("select count(*) from person where name='FRED'") //
+                .getAs(Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(1) //
                 .assertComplete();
     }
 
