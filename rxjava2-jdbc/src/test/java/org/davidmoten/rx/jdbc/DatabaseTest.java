@@ -2456,7 +2456,8 @@ public class DatabaseTest {
                 stmt.execute(
                         "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'APP.examples',0)");
 
-                String sql = "CREATE PROCEDURE APP.GETPERSONCOUNT(IN MIN_SCORE INTEGER,"
+                String sql = "CREATE PROCEDURE APP.GETPERSONCOUNT" //
+                        + " (IN MIN_SCORE INTEGER," //
                         + " OUT COUNT INTEGER)" //
                         + " PARAMETER STYLE JAVA" //
                         + " LANGUAGE JAVA" //
