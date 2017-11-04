@@ -8,4 +8,5 @@ addons:
       - oracle-java8-installer
 
 after_success:
+  - cd rxjava2-jdbc
   - bash <(curl -s https://codecov.io/bash)
