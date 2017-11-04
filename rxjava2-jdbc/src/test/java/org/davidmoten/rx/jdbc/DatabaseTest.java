@@ -2451,9 +2451,12 @@ public class DatabaseTest {
             try (Statement stmt = con.createStatement()) {
                 stmt.execute(
                         "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'examples',0)");
+
                 String sql = "CREATE PROCEDURE APP.GETPERSONCOUNT(IN MIN_SCORE BIGINT,"
-                        + " OUT COUNT INTEGER)" + " PARAMETER STYLE JAVA" + " LANGUAGE JAVA"
-                        + " EXTERNAL NAME"
+                        + " OUT COUNT INTEGER)" //
+                        + " PARAMETER STYLE JAVA" //
+                        + " LANGUAGE JAVA" //
+                        + " EXTERNAL NAME" //
                         + " 'org.davidmoten.rx.jdbc.StoredProcExample.getPersonCount'";
                 stmt.execute(sql);
             }
