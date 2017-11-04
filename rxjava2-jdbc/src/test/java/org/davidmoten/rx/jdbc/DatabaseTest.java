@@ -2446,11 +2446,11 @@ public class DatabaseTest {
 
     @Test
     public void testCallableStatement() {
-        Database db = db(1);
+        Database db = DatabaseCreator.createDerby(1);
         db.apply(con -> {
             try (Statement stmt = con.createStatement()) {
                 stmt.execute(
-                        "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure', 'examples',0)");
+                        "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'examples',0)");
             }
         }).blockingAwait(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
