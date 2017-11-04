@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.sql.Blob;
+import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,6 +24,7 @@ import java.sql.SQLSyntaxErrorException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -2450,15 +2452,24 @@ public class DatabaseTest {
         db.apply(con -> {
             try (Statement stmt = con.createStatement()) {
                 stmt.execute(
-                        "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'examples',0)");
+                        "create table app.person (name varchar(50) primary key, score int not null)");
+                stmt.execute(
+                        "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'APP.examples',0)");
 
-                String sql = "CREATE PROCEDURE APP.GETPERSONCOUNT(IN MIN_SCORE BIGINT,"
+                String sql = "CREATE PROCEDURE APP.GETPERSONCOUNT(IN MIN_SCORE INTEGER,"
                         + " OUT COUNT INTEGER)" //
                         + " PARAMETER STYLE JAVA" //
                         + " LANGUAGE JAVA" //
                         + " EXTERNAL NAME" //
                         + " 'org.davidmoten.rx.jdbc.StoredProcExample.getPersonCount'";
                 stmt.execute(sql);
+                stmt.execute("CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY("
+                        + "'derby.database.classpath', 'APP.examples')");
+                CallableStatement st = con.prepareCall("call getPersonCount(?, ?)");
+                st.setInt(1, 0);
+                st.registerOutParameter(2, Types.INTEGER);
+                st.execute();
+                assertEquals(0, st.getInt(2));
             }
         }).blockingAwait(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }

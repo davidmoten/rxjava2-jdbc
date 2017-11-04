@@ -19,7 +19,7 @@ public class StoredProcExample {
 
     private static PreparedStatement prepareStatement(Connection con, int minScore)
             throws SQLException {
-        PreparedStatement stmt = con.prepareStatement("select count(*) from person where score>?");
+        PreparedStatement stmt = con.prepareStatement("select count(*) from app.person where score>?");
         stmt.setInt(1, minScore);
         return stmt;
     }
