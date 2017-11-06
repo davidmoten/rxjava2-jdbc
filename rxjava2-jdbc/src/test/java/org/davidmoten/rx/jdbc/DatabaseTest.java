@@ -2513,6 +2513,17 @@ public class DatabaseTest {
         }).blockingAwait(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
+    // db.call(sql)
+    // .parameter(0)
+    // .out(Integer.class)
+    // .autoMap(Person.class)
+    // .autoMap(Person.class)
+    // .get();
+
+    private static final class CallResult<Out> {
+
+    }
+
     public interface PersonWithDefaultMethod {
         @Column
         String name();
