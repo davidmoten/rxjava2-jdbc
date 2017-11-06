@@ -19,9 +19,29 @@ public class StoredProcExample {
 
     private static PreparedStatement prepareStatement(Connection con, int minScore)
             throws SQLException {
-        PreparedStatement stmt = con.prepareStatement("select count(*) from app.person where score>?");
+        PreparedStatement stmt = con
+                .prepareStatement("select count(*) from app.person where score>?");
         stmt.setInt(1, minScore);
         return stmt;
+    }
+
+    public static void returnResultSets(int minScore, ResultSet[] rs1, ResultSet[] rs2)
+            throws SQLException {
+        try (Connection con = DriverManager.getConnection("jdbc:default:connection")) {
+            // don't close the statement!
+            {
+                PreparedStatement stmt = con.prepareStatement(
+                        "select name, score from person where score >= ? order by name");
+                stmt.setInt(1, minScore);
+                rs1[0] = stmt.executeQuery();
+            }
+            {
+                PreparedStatement stmt = con.prepareStatement(
+                        "select name, score from person where score >= ? order by name desc");
+                stmt.setInt(1, minScore);
+                rs2[0] = stmt.executeQuery();
+            }
+        }
     }
 
 }

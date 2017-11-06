@@ -2475,6 +2475,44 @@ public class DatabaseTest {
         }).blockingAwait(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
+    @Test
+    public void testCallableStatementReturningResultSets() {
+        Database db = DatabaseCreator.createDerby(1);
+        db.apply(con -> {
+            try (Statement stmt = con.createStatement()) {
+                stmt.execute(
+                        "create table app.person (name varchar(50) primary key, score int not null)");
+                stmt.execute("insert into app.person(name, score) values('FRED', 24)");
+                stmt.execute("insert into app.person(name, score) values('SARAH', 26)");
+                stmt.execute(
+                        "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'APP.examples',0)");
+
+                String sql = "CREATE PROCEDURE APP.RETURNRESULTSETS(in min_score integer)" //
+                        + " PARAMETER STYLE JAVA" //
+                        + " LANGUAGE JAVA" //
+                        + " READS SQL DATA" //
+                        + " DYNAMIC RESULT SETS 2" //
+                        + " EXTERNAL NAME" //
+                        + " 'org.davidmoten.rx.jdbc.StoredProcExample.returnResultSets'";
+                stmt.execute(sql);
+                stmt.execute("CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY("
+                        + "'derby.database.classpath', 'APP.examples')");
+                CallableStatement st = con.prepareCall("call returnResultSets(?)");
+                st.setInt(1, 0);
+                boolean v = st.execute();
+                if (v) {
+                    ResultSet rs1 = st.getResultSet();
+                    st.getMoreResults(Statement.KEEP_CURRENT_RESULT);
+                    ResultSet rs2 = st.getResultSet();
+                    rs1.next();
+                    assertEquals("FRED", rs1.getString(1));
+                    rs2.next();
+                    assertEquals("SARAH", rs2.getString(1));
+                }
+            }
+        }).blockingAwait(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    }
+
     public interface PersonWithDefaultMethod {
         @Column
         String name();
