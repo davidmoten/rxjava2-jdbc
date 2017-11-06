@@ -86,6 +86,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.Single;
+import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.schedulers.TestScheduler;
@@ -2511,17 +2512,6 @@ public class DatabaseTest {
                 }
             }
         }).blockingAwait(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    }
-
-    // db.call(sql)
-    // .parameter(0)
-    // .out(Integer.class)
-    // .autoMap(Person.class)
-    // .autoMap(Person.class)
-    // .get();
-
-    private static final class CallResult<Out> {
-
     }
 
     public interface PersonWithDefaultMethod {
