@@ -44,4 +44,9 @@ public class StoredProcExample {
         }
     }
 
+    public static void twoInTwoOut(int a, int b, String[] name, int[] total) {
+        name[0] = "FREDDY";
+        total[0] = a + b;
+    }
+
 }

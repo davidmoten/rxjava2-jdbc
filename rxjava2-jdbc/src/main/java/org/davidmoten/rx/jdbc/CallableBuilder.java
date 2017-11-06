@@ -2,6 +2,7 @@ package org.davidmoten.rx.jdbc;
 
 import java.sql.ResultSet;
 
+import io.reactivex.Completable;
 import io.reactivex.functions.Function;
 
 public class CallableBuilder {
@@ -23,8 +24,41 @@ public class CallableBuilder {
         this.sql = sql;
     }
 
+    public Completable perform() {
+        // TODO
+        return null;
+    }
+
+    public <T> CallableBuilder1<T> out(Class<T> cls) {
+        return new CallableBuilder1<T>(cls);
+    }
+
     public <T> CallableResultSets1<T> map(Class<T> cls) {
         return new CallableResultSets1<T>(Util.autoMap(cls));
+    }
+
+    public static final class CallableBuilder1<T1> {
+
+        private final Class<T1> cls;
+
+        public CallableBuilder1(Class<T1> cls) {
+            this.cls = cls;
+        }
+
+        public <T2> CallableBuilder2<T1, T2> out(Class<T2> cls2) {
+            return new CallableBuilder2<T1, T2>(cls, cls2);
+        }
+    }
+
+    public static final class CallableBuilder2<T1, T2> {
+
+        private final Class<T1> cls1;
+        private final Class<T2> cls2;
+
+        public CallableBuilder2(Class<T1> cls1, Class<T2> cls2) {
+            this.cls1 = cls1;
+            this.cls2 = cls2;
+        }
     }
 
     public static final class CallableResultSets1<T1> {
