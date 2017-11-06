@@ -2499,8 +2499,8 @@ public class DatabaseTest {
                         + "'derby.database.classpath', 'APP.examples')");
                 CallableStatement st = con.prepareCall("call returnResultSets(?)");
                 st.setInt(1, 0);
-                boolean v = st.execute();
-                if (v) {
+                boolean hasResultSets = st.execute();
+                if (hasResultSets) {
                     ResultSet rs1 = st.getResultSet();
                     st.getMoreResults(Statement.KEEP_CURRENT_RESULT);
                     ResultSet rs2 = st.getResultSet();
