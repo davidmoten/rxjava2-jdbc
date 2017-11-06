@@ -42,6 +42,11 @@ public class CallableBuilder {
         return this;
     }
 
+    public <T> CallableBuilder1<T> inOut(T o, Class<T> cls) {
+        in.add(o);
+        return new CallableBuilder1<T>(in, cls);
+    }
+
     public <T> CallableBuilder1<T> out(Class<T> cls) {
         return new CallableBuilder1<T>(in, cls);
     }
@@ -146,11 +151,10 @@ public class CallableBuilder {
     public static void main(String[] args) {
         {
             // in and out parameters are ordered by position in sql
-            Single<Tuple2<String, Integer>> result = new CallableBuilder("call doit(?,?,?,?)") //
+            Single<Tuple2<Integer, String>> result = new CallableBuilder("call doit(?,?,?,?)") //
                     .in(10) //
+                    .inOut(5, Integer.class) //
                     .out(String.class) //
-                    .in(5) //
-                    .out(Integer.class) //
                     .build();
         }
         {
@@ -164,7 +168,9 @@ public class CallableBuilder {
             result.flatMapPublisher( //
                     r -> r.query1() //
                             .mergeWith(r.query2())) //
-                    .count().doOnSuccess(System.out::println);
+                    .count() //
+                    .doOnSuccess(System.out::println) //
+                    .blockingGet();
         }
     }
 
