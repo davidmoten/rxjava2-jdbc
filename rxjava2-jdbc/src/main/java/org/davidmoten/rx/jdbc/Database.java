@@ -201,6 +201,10 @@ public final class Database implements AutoCloseable {
         }
     }
 
+    public CallableBuilder call(@Nonnull String sql) {
+        return new CallableBuilder(sql);
+    }
+
     public <T> SelectAutomappedBuilder<T> select(@Nonnull Class<T> cls) {
         Preconditions.checkNotNull(cls, "cls cannot be null");
         return new SelectAutomappedBuilder<T>(cls, connection, this);

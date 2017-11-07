@@ -41,18 +41,29 @@ public final class DatabaseCreator {
     }
 
     public static Database createDerby(int maxSize) {
+        return createDerby(maxSize, false);
+    }
+
+    public static Database createDerbyWithStoredProcs(int maxSize) {
+        return createDerby(maxSize, true);
+    }
+
+    private static Database createDerby(int maxSize, boolean withStoredProcs) {
         return Database.from(Pools.nonBlocking() //
-                .connectionProvider(connectionProviderDerby(nextUrlDerby())) //
+                .connectionProvider(connectionProviderDerby(nextUrlDerby(), withStoredProcs)) //
                 .maxPoolSize(maxSize) //
                 .scheduler(Schedulers.from(Executors.newFixedThreadPool(maxSize))) //
                 .build());
     }
 
-    private static ConnectionProvider connectionProviderDerby(String url) {
+    private static ConnectionProvider connectionProviderDerby(String url, boolean withStoredProcs) {
         Connection c;
         try {
             c = DriverManager.getConnection(url);
             createDatabaseDerby(c);
+            if (withStoredProcs) {
+                addStoredProcs(c);
+            }
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
@@ -74,12 +85,41 @@ public final class DatabaseCreator {
         };
     }
 
+    private static void addStoredProcs(Connection c) throws SQLException {
+        exec(c, "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'APP.examples',0)");
+        {
+            String sql = "CREATE PROCEDURE APP.GETPERSONCOUNT" //
+                    + " (IN MIN_SCORE INTEGER," //
+                    + " OUT COUNT INTEGER)" //
+                    + " PARAMETER STYLE JAVA" //
+                    + " LANGUAGE JAVA" //
+                    + " EXTERNAL NAME" //
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.getPersonCount'";
+            exec(c, sql);
+        }
+        {
+            String sql = "CREATE PROCEDURE APP.RETURNRESULTSETS(in min_score integer)" //
+                    + " PARAMETER STYLE JAVA" //
+                    + " LANGUAGE JAVA" //
+                    + " READS SQL DATA" //
+                    + " DYNAMIC RESULT SETS 2" //
+                    + " EXTERNAL NAME" //
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.returnResultSets'";
+            exec(c, sql);
+        }
+
+        exec(c, "CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY(" + "'derby.database.classpath', 'APP.examples')");
+    }
+
     private static void createDatabaseDerby(Connection c) throws SQLException {
         c.setAutoCommit(true);
         exec(c, "create table note2("
                 + "id integer not null generated always as identity (start with 1, increment by 2),"
                 + "text varchar(255) not null," //
                 + "constraint primary_key primary key (id)" + ")");
+        exec(c, "create table app.person (name varchar(50) primary key, score int not null)");
+        exec(c, "insert into app.person(name, score) values('FRED', 24)");
+        exec(c, "insert into app.person(name, score) values('SARAH', 26)");
     }
 
     public static Database create(int maxSize, boolean big, Scheduler scheduler) {
@@ -149,13 +189,12 @@ public final class DatabaseCreator {
                     "create table person (name varchar(50) primary key, score int not null, date_of_birth date, registered timestamp)")
                     .execute();
             if (big) {
-                List<String> lines = IOUtils.readLines(
-                        DatabaseCreator.class.getResourceAsStream("/big.txt"),
+                List<String> lines = IOUtils.readLines(DatabaseCreator.class.getResourceAsStream("/big.txt"),
                         StandardCharsets.UTF_8);
                 lines.stream().map(line -> line.split("\t")).forEach(items -> {
                     try {
-                        c.prepareStatement("insert into person(name,score) values('" + items[0]
-                                + "'," + Integer.parseInt(items[1]) + ")").execute();
+                        c.prepareStatement("insert into person(name,score) values('" + items[0] + "',"
+                                + Integer.parseInt(items[1]) + ")").execute();
                     } catch (SQLException e) {
                         throw new SQLRuntimeException(e);
                     }
