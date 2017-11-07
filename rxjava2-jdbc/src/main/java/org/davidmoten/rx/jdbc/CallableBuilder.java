@@ -50,6 +50,10 @@ public class CallableBuilder {
         return new CallableBuilder1<T>(this, cls);
     }
 
+    public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+        return new CallableResultSets1Builder<T>(this, function);
+    }
+
     public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
         return new CallableResultSets1Builder<T>(this, Util.autoMap(cls));
     }
@@ -104,6 +108,10 @@ public class CallableBuilder {
 
         public <T2> CallableResultSets2Builder<T1, T2> autoMap(Class<T2> cls) {
             return new CallableResultSets2Builder<T1, T2>(b, f1, Util.autoMap(cls));
+        }
+
+        public <T2> CallableResultSets2Builder<T1, T2> map(Function<? super ResultSet, ? extends T2> f2) {
+            return new CallableResultSets2Builder<T1, T2>(b, f1, f2);
         }
     }
 
