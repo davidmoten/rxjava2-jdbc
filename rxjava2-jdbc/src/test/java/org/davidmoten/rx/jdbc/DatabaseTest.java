@@ -2454,20 +2454,18 @@ public class DatabaseTest {
             try (Statement stmt = con.createStatement()) {
                 CallableStatement st = con.prepareCall("call returnResultSets(?)");
                 st.setInt(1, 0);
-                boolean hasResultSets = st.execute();
-                if (hasResultSets) {
-                    ResultSet rs1 = st.getResultSet();
-                    st.getMoreResults(Statement.KEEP_CURRENT_RESULT);
-                    ResultSet rs2 = st.getResultSet();
-                    rs1.next();
-                    assertEquals("FRED", rs1.getString(1));
-                    rs2.next();
-                    assertEquals("SARAH", rs2.getString(1));
-                }
+                st.execute();
+                ResultSet rs1 = st.getResultSet();
+                st.getMoreResults(Statement.KEEP_CURRENT_RESULT);
+                ResultSet rs2 = st.getResultSet();
+                rs1.next();
+                assertEquals("FRED", rs1.getString(1));
+                rs2.next();
+                assertEquals("SARAH", rs2.getString(1));
             }
         }).blockingAwait(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
-
+    
     public interface PersonWithDefaultMethod {
         @Column
         String name();
