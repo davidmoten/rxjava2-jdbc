@@ -1,5 +1,6 @@
 package org.davidmoten.rx.jdbc;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +21,7 @@ public class CallableBuilder {
     final List<Object> in = new ArrayList<>();
     Flowable<?> inStream;
 
-    public CallableBuilder(String sql) {
+    public CallableBuilder(String sql, Single<Connection> connection) {
         this.sql = sql;
     }
 
@@ -148,44 +149,6 @@ public class CallableBuilder {
             return null;
         }
 
-    }
-
-    private interface Person {
-        @Column
-        String name();
-
-        @Column
-        int score();
-    }
-
-    private static CallableBuilder call(String sql) {
-        return new CallableBuilder(sql);
-    }
-
-    public static void main(String[] args) {
-        {
-            // in and out parameters are ordered by position in sql
-            Single<Tuple2<Integer, String>> result = call("call doit(?,?,?,?)") //
-                    .in(10) //
-                    .inOut(5, Integer.class) //
-                    .out(String.class) //
-                    .build();
-        }
-        {
-            // result set returns don't have parameters and are at the end of the java
-            // procedure declaration (can this position vary?)
-            Single<CallableResultSet2<Person, Person>> result = call("call doit(?)") //
-                    .in(10) //
-                    .autoMap(Person.class) //
-                    .autoMap(Person.class) //
-                    .build();
-            result.flatMapPublisher( //
-                    r -> r.query1() //
-                            .mergeWith(r.query2())) //
-                    .count() //
-                    .doOnSuccess(System.out::println) //
-                    .blockingGet();
-        }
     }
 
 }

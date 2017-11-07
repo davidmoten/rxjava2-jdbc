@@ -202,7 +202,7 @@ public final class Database implements AutoCloseable {
     }
 
     public CallableBuilder call(@Nonnull String sql) {
-        return new CallableBuilder(sql);
+        return new CallableBuilder(sql, connection());
     }
 
     public <T> SelectAutomappedBuilder<T> select(@Nonnull Class<T> cls) {
