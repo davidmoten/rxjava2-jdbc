@@ -2472,14 +2472,13 @@ public class DatabaseTest {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
                 .call("call getPersonCount(?,?)") //
-                .in(0) //
-                .out(Integer.class) //
+                .in() //
+                .out(Type.INTEGER, Integer.class) //
                 .build() //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(2) //
                 .assertComplete();
-        ;
     }
 
     public interface PersonWithDefaultMethod {

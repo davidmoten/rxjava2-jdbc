@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 
 import com.github.davidmoten.guavamini.Preconditions;
@@ -17,6 +16,8 @@ import io.reactivex.functions.Function;
 
 public class CallableBuilder {
 
+    private static final Object IN_SENTINEL = new Object();
+
     final String sql;
     final List<Object> params = new ArrayList<>();
 
@@ -27,11 +28,11 @@ public class CallableBuilder {
     }
 
     static final class InOut {
-        final Object object;
+        final Type type;
         final Class<?> cls;
 
-        InOut(Object object, Class<?> cls) {
-            this.object = object;
+        InOut(Type type, Class<?> cls) {
+            this.type = type;
             this.cls = cls;
         }
     }
@@ -41,26 +42,24 @@ public class CallableBuilder {
         return null;
     }
 
-    public CallableBuilder in(Object o) {
-        params.add(o);
+    public CallableBuilder in() {
+        params.add(IN_SENTINEL);
         return this;
     }
 
     public CallableBuilder in(Flowable<?> f) {
-        Preconditions.checkArgument(params.isEmpty(),
-                "you can explicitly specify in parameters or a stream, not both");
         Preconditions.checkArgument(inStream == null, "you can only specify in flowable once");
         this.inStream = f;
         return this;
     }
 
-    public <T> CallableBuilder1<T> inOut(T o, Class<T> cls) {
-        params.add(o);
+    public <T> CallableBuilder1<T> inOut(Type type, Class<T> cls) {
+        params.add(new InOut(type, cls));
         return new CallableBuilder1<T>(this, cls);
     }
 
-    public <T> CallableBuilder1<T> out(Class<T> cls) {
-        params.add(cls);
+    public <T> CallableBuilder1<T> out(Type type, Class<T> cls) {
+        params.add(new Out(type, cls));
         return new CallableBuilder1<T>(this, cls);
     }
 
@@ -70,6 +69,17 @@ public class CallableBuilder {
 
     public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
         return new CallableResultSets1Builder<T>(this, Util.autoMap(cls));
+    }
+
+    // TODO restrict visibility
+    public static final class Out {
+        final Type type;
+        final Class<?> cls;
+
+        public Out(Type type, Class<?> cls) {
+            this.type = type;
+            this.cls = cls;
+        }
     }
 
     public static final class CallableBuilder1<T1> {
@@ -82,12 +92,13 @@ public class CallableBuilder {
             this.cls = cls;
         }
 
-        public CallableBuilder1<T1> in(Object o) {
-            b.params.add(o);
+        public CallableBuilder1<T1> in() {
+            b.in();
             return this;
         }
 
-        public <T2> CallableBuilder2<T1, T2> out(Class<T2> cls2) {
+        public <T2> CallableBuilder2<T1, T2> out(Type type, Class<T2> cls2) {
+            b.out(type,  cls2);
             return new CallableBuilder2<T1, T2>(b, cls, cls2);
         }
 
@@ -120,8 +131,7 @@ public class CallableBuilder {
         private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
 
-        CallableResultSets1Builder(CallableBuilder b,
-                Function<? super ResultSet, ? extends T1> function) {
+        CallableResultSets1Builder(CallableBuilder b, Function<? super ResultSet, ? extends T1> function) {
             this.b = b;
             this.f1 = function;
         }
@@ -130,8 +140,7 @@ public class CallableBuilder {
             return new CallableResultSets2Builder<T1, T2>(b, f1, Util.autoMap(cls));
         }
 
-        public <T2> CallableResultSets2Builder<T1, T2> map(
-                Function<? super ResultSet, ? extends T2> f2) {
+        public <T2> CallableResultSets2Builder<T1, T2> map(Function<? super ResultSet, ? extends T2> f2) {
             return new CallableResultSets2Builder<T1, T2>(b, f1, f2);
         }
     }
