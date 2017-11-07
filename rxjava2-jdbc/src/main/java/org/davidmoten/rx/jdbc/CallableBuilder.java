@@ -17,11 +17,22 @@ import io.reactivex.functions.Function;
 public class CallableBuilder {
 
     final String sql;
-    final List<Object> in = new ArrayList<>();
+    final List<Object> params = new ArrayList<>();
+
     Flowable<?> inStream;
 
     public CallableBuilder(String sql) {
         this.sql = sql;
+    }
+
+    static final class InOut {
+        final Object object;
+        final Class<?> cls;
+
+        InOut(Object object, Class<?> cls) {
+            this.object = object;
+            this.cls = cls;
+        }
     }
 
     public Completable perform() {
@@ -30,23 +41,25 @@ public class CallableBuilder {
     }
 
     public CallableBuilder in(Object o) {
-        in.add(o);
+        params.add(o);
         return this;
     }
 
     public CallableBuilder in(Flowable<?> f) {
-        Preconditions.checkArgument(in.isEmpty(), "you can explicitly specify in parameters or a stream, not both");
+        Preconditions.checkArgument(params.isEmpty(),
+                "you can explicitly specify in parameters or a stream, not both");
         Preconditions.checkArgument(inStream == null, "you can only specify in flowable once");
         this.inStream = f;
         return this;
     }
 
     public <T> CallableBuilder1<T> inOut(T o, Class<T> cls) {
-        in.add(o);
+        params.add(o);
         return new CallableBuilder1<T>(this, cls);
     }
 
     public <T> CallableBuilder1<T> out(Class<T> cls) {
+        params.add(cls);
         return new CallableBuilder1<T>(this, cls);
     }
 
@@ -69,7 +82,7 @@ public class CallableBuilder {
         }
 
         public CallableBuilder1<T1> in(Object o) {
-            b.in.add(o);
+            b.params.add(o);
             return this;
         }
 
@@ -78,7 +91,6 @@ public class CallableBuilder {
         }
 
         public Single<T1> build() {
-            // TODO Auto-generated method stub
             return null;
         }
     }
@@ -96,6 +108,7 @@ public class CallableBuilder {
         }
 
         public Single<Tuple2<T1, T2>> build() {
+
             // TODO Auto-generated method stub
             return null;
         }
@@ -106,7 +119,8 @@ public class CallableBuilder {
         private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
 
-        CallableResultSets1Builder(CallableBuilder b, Function<? super ResultSet, ? extends T1> function) {
+        CallableResultSets1Builder(CallableBuilder b,
+                Function<? super ResultSet, ? extends T1> function) {
             this.b = b;
             this.f1 = function;
         }
@@ -115,7 +129,8 @@ public class CallableBuilder {
             return new CallableResultSets2Builder<T1, T2>(b, f1, Util.autoMap(cls));
         }
 
-        public <T2> CallableResultSets2Builder<T1, T2> map(Function<? super ResultSet, ? extends T2> f2) {
+        public <T2> CallableResultSets2Builder<T1, T2> map(
+                Function<? super ResultSet, ? extends T2> f2) {
             return new CallableResultSets2Builder<T1, T2>(b, f1, f2);
         }
     }
