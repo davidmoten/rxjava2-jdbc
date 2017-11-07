@@ -76,6 +76,11 @@ public class CallableBuilder {
         public <T2> CallableBuilder2<T1, T2> out(Class<T2> cls2) {
             return new CallableBuilder2<T1, T2>(b, cls, cls2);
         }
+
+        public Single<T1> build() {
+            // TODO Auto-generated method stub
+            return null;
+        }
     }
 
     public static final class CallableBuilder2<T1, T2> {

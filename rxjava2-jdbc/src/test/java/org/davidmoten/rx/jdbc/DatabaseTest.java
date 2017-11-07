@@ -2465,7 +2465,23 @@ public class DatabaseTest {
             }
         }).blockingAwait(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
-    
+
+    @Test
+    @Ignore
+    public void testCallableApi() {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call getPersonCount(?,?)") //
+                .in(0) //
+                .out(Integer.class) //
+                .build() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(2) //
+                .assertComplete();
+        ;
+    }
+
     public interface PersonWithDefaultMethod {
         @Column
         String name();

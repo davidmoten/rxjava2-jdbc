@@ -85,6 +85,17 @@ public final class DatabaseCreator {
         };
     }
 
+    private static void createDatabaseDerby(Connection c) throws SQLException {
+        c.setAutoCommit(true);
+        exec(c, "create table note2("
+                + "id integer not null generated always as identity (start with 1, increment by 2),"
+                + "text varchar(255) not null," //
+                + "constraint primary_key primary key (id)" + ")");
+        exec(c, "create table app.person (name varchar(50) primary key, score int not null)");
+        exec(c, "insert into app.person(name, score) values('FRED', 24)");
+        exec(c, "insert into app.person(name, score) values('SARAH', 26)");
+    }
+    
     private static void addStoredProcs(Connection c) throws SQLException {
         exec(c, "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'APP.examples',0)");
         {
@@ -109,17 +120,6 @@ public final class DatabaseCreator {
         }
 
         exec(c, "CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY(" + "'derby.database.classpath', 'APP.examples')");
-    }
-
-    private static void createDatabaseDerby(Connection c) throws SQLException {
-        c.setAutoCommit(true);
-        exec(c, "create table note2("
-                + "id integer not null generated always as identity (start with 1, increment by 2),"
-                + "text varchar(255) not null," //
-                + "constraint primary_key primary key (id)" + ")");
-        exec(c, "create table app.person (name varchar(50) primary key, score int not null)");
-        exec(c, "insert into app.person(name, score) values('FRED', 24)");
-        exec(c, "insert into app.person(name, score) values('SARAH', 26)");
     }
 
     public static Database create(int maxSize, boolean big, Scheduler scheduler) {
