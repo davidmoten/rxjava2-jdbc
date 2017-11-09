@@ -2474,6 +2474,7 @@ public class DatabaseTest {
                 .call("call getPersonCount(?,?)") //
                 .in() //
                 .out(Type.INTEGER, Integer.class) //
+                .in(0, 10, 20) //
                 .build() //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //

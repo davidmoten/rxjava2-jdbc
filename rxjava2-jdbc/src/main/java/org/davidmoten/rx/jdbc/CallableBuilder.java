@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 
@@ -14,7 +15,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
 
-public class CallableBuilder {
+public final class CallableBuilder {
 
     private static final Object IN_SENTINEL = new Object();
 
@@ -23,8 +24,11 @@ public class CallableBuilder {
 
     Flowable<?> inStream;
 
+    private final Single<Connection> connection;
+
     public CallableBuilder(String sql, Single<Connection> connection) {
         this.sql = sql;
+        this.connection = connection;
     }
 
     static final class InOut {
@@ -50,6 +54,11 @@ public class CallableBuilder {
     public CallableBuilder in(Flowable<?> f) {
         Preconditions.checkArgument(inStream == null, "you can only specify in flowable once");
         this.inStream = f;
+        return this;
+    }
+
+    public CallableBuilder in(Object... objects) {
+        in(Flowable.fromArray(objects));
         return this;
     }
 
@@ -98,12 +107,28 @@ public class CallableBuilder {
         }
 
         public <T2> CallableBuilder2<T1, T2> out(Type type, Class<T2> cls2) {
-            b.out(type,  cls2);
+            b.out(type, cls2);
             return new CallableBuilder2<T1, T2>(b, cls, cls2);
         }
 
-        public Single<T1> build() {
-            return null;
+        public CallableBuilder1<T1> in(Flowable<?> f) {
+            b.in(f);
+            return this;
+        }
+
+        public CallableBuilder1<T1> in(Object... objects) {
+            in(Flowable.fromArray(objects));
+            return this;
+        }
+
+        public Flowable<T1> build() {
+            int numInParameters = b.params.stream() //
+                    .filter(x -> x == IN_SENTINEL) //
+                    .collect(Collectors.counting()).intValue();
+            @SuppressWarnings("unchecked")
+            Flowable<List<Object>> parameterGroups = (Flowable<List<Object>>) (Flowable<?>) b.inStream
+                    .buffer(numInParameters);
+            return Call.create(b.connection, b.sql, parameterGroups, cls).dematerialize();
         }
     }
 

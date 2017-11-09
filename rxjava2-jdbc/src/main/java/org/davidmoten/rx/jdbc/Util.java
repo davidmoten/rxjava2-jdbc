@@ -12,6 +12,7 @@ import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
+import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -246,6 +247,10 @@ public enum Util {
     static void closePreparedStatementAndConnection(NamedPreparedStatement ps) {
         closePreparedStatementAndConnection(ps.ps);
     }
+    
+    static void closeCallableStatementAndConnection(NamedCallableStatement stmt) {
+        closePreparedStatementAndConnection(stmt.stmt);
+    }
 
     static NamedPreparedStatement prepare(Connection con, String sql) throws SQLException {
         return prepare(con, 0, sql);
@@ -263,6 +268,31 @@ public enum Util {
                 ps.setFetchSize(fetchSize);
             }
             return new NamedPreparedStatement(ps, s.names());
+        } catch (RuntimeException | SQLException e) {
+            if (ps != null) {
+                ps.close();
+            }
+            throw e;
+        }
+    }
+
+    static NamedCallableStatement prepareCall(Connection con, String sql) throws SQLException {
+        return prepareCall(con, 0, sql);
+    }
+
+    // TODO is fetchSize required for callablestatement
+    static NamedCallableStatement prepareCall(Connection con, int fetchSize, String sql) throws SQLException {
+        // TODO can we parse SqlInfo through because already calculated by
+        // builder?
+        SqlInfo s = SqlInfo.parse(sql);
+        log.debug("preparing statement: {}", sql);
+        CallableStatement ps = null;
+        try {
+            ps = con.prepareCall(s.sql(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            if (fetchSize > 0) {
+                ps.setFetchSize(fetchSize);
+            }
+            return new NamedCallableStatement(ps, s.names());
         } catch (RuntimeException | SQLException e) {
             if (ps != null) {
                 ps.close();
