@@ -8,7 +8,6 @@ import java.util.concurrent.Callable;
 
 import org.davidmoten.rx.jdbc.CallableBuilder.In;
 import org.davidmoten.rx.jdbc.CallableBuilder.InOut;
-import org.davidmoten.rx.jdbc.CallableBuilder.Out;
 import org.davidmoten.rx.jdbc.CallableBuilder.OutParameterPlaceholder;
 import org.davidmoten.rx.jdbc.CallableBuilder.ParameterPlaceholder;
 import org.slf4j.Logger;
