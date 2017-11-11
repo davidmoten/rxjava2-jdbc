@@ -69,7 +69,8 @@ public enum Util {
      * @throws SQLException
      */
     @VisibleForTesting
-    static void setParameters(PreparedStatement ps, List<Parameter> params, boolean namesAllowed) throws SQLException {
+    static void setParameters(PreparedStatement ps, List<Parameter> params, boolean namesAllowed)
+            throws SQLException {
         for (int i = 1; i <= params.size(); i++) {
             if (params.get(i - 1).hasName() && !namesAllowed)
                 throw new NamedParameterFoundButSqlDoesNotHaveNamesException(
@@ -131,7 +132,8 @@ public enum Util {
      * @param cls
      * @throws SQLException
      */
-    private static void setBlob(PreparedStatement ps, int i, Object o, Class<?> cls) throws SQLException {
+    private static void setBlob(PreparedStatement ps, int i, Object o, Class<?> cls)
+            throws SQLException {
         // if (o instanceof Blob) {
         ps.setBlob(i, (Blob) o);
         // } else {
@@ -159,7 +161,8 @@ public enum Util {
      * @param cls
      * @throws SQLException
      */
-    private static void setClob(PreparedStatement ps, int i, Object o, Class<?> cls) throws SQLException {
+    private static void setClob(PreparedStatement ps, int i, Object o, Class<?> cls)
+            throws SQLException {
         // if (o instanceof Clob) {
         ps.setClob(i, (Clob) o);
         // } else {
@@ -178,13 +181,14 @@ public enum Util {
         // }
     }
 
-    private static void setNamedParameters(PreparedStatement ps, List<Parameter> parameters, List<String> names)
-            throws SQLException {
+    private static void setNamedParameters(PreparedStatement ps, List<Parameter> parameters,
+            List<String> names) throws SQLException {
         Map<String, Parameter> map = createMap(parameters);
         List<Parameter> list = new ArrayList<Parameter>();
         for (String name : names) {
             if (!map.containsKey(name))
-                throw new NamedParameterMissingException("named parameter is missing for '" + name + "'");
+                throw new NamedParameterMissingException(
+                        "named parameter is missing for '" + name + "'");
             Parameter p = map.get(name);
             list.add(p);
         }
@@ -199,14 +203,15 @@ public enum Util {
                 map.put(p.name(), p);
             } else {
                 throw new ParameterMissingNameException(
-                        "named parameters were expected but this parameter did not have a name: " + p);
+                        "named parameters were expected but this parameter did not have a name: "
+                                + p);
             }
         }
         return map;
     }
 
-    static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters, List<String> names)
-            throws SQLException {
+    static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters,
+            List<String> names) throws SQLException {
         List<Parameter> params = parameters.stream().map(o -> {
             if (o instanceof Parameter) {
                 return (Parameter) o;
@@ -220,6 +225,13 @@ public enum Util {
             Util.setNamedParameters(ps, params, names);
         }
         return ps;
+    }
+
+    static void incrementCounter(Connection connection) {
+        if (connection instanceof TransactedConnection) {
+            TransactedConnection c = (TransactedConnection) connection;
+            c.incrementCounter();
+        }
     }
 
     public static void closeSilently(AutoCloseable c) {
@@ -247,7 +259,7 @@ public enum Util {
     static void closePreparedStatementAndConnection(NamedPreparedStatement ps) {
         closePreparedStatementAndConnection(ps.ps);
     }
-    
+
     static void closeCallableStatementAndConnection(NamedCallableStatement stmt) {
         closePreparedStatementAndConnection(stmt.stmt);
     }
@@ -256,14 +268,16 @@ public enum Util {
         return prepare(con, 0, sql);
     }
 
-    static NamedPreparedStatement prepare(Connection con, int fetchSize, String sql) throws SQLException {
+    static NamedPreparedStatement prepare(Connection con, int fetchSize, String sql)
+            throws SQLException {
         // TODO can we parse SqlInfo through because already calculated by
         // builder?
         SqlInfo s = SqlInfo.parse(sql);
         log.debug("preparing statement: {}", sql);
         PreparedStatement ps = null;
         try {
-            ps = con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            ps = con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY,
+                    ResultSet.CONCUR_READ_ONLY);
             if (fetchSize > 0) {
                 ps.setFetchSize(fetchSize);
             }
@@ -281,7 +295,8 @@ public enum Util {
     }
 
     // TODO is fetchSize required for callablestatement
-    static NamedCallableStatement prepareCall(Connection con, int fetchSize, String sql) throws SQLException {
+    static NamedCallableStatement prepareCall(Connection con, int fetchSize, String sql)
+            throws SQLException {
         // TODO can we parse SqlInfo through because already calculated by
         // builder?
         SqlInfo s = SqlInfo.parse(sql);
@@ -301,9 +316,11 @@ public enum Util {
         }
     }
 
-    static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql) throws SQLException {
+    static NamedPreparedStatement prepareReturnGeneratedKeys(Connection con, String sql)
+            throws SQLException {
         SqlInfo s = SqlInfo.parse(sql);
-        return new NamedPreparedStatement(con.prepareStatement(s.sql(), Statement.RETURN_GENERATED_KEYS), s.names());
+        return new NamedPreparedStatement(
+                con.prepareStatement(s.sql(), Statement.RETURN_GENERATED_KEYS), s.names());
     }
 
     @VisibleForTesting
@@ -447,13 +464,18 @@ public enum Util {
     public static <T> T mapObject(final ResultSet rs, Class<T> cls, int i) {
         return (T) autoMap(getObject(rs, cls, i), cls);
     }
+    
+    @SuppressWarnings("unchecked")
+    public static <T> T mapObject(final CallableStatement cs, Class<T> cls, int i) {
+        return (T) autoMap(getObject(cs, cls, i), cls);
+    }
 
     private static <T> Object getObject(final ResultSet rs, Class<T> cls, int i) {
         try {
             int colCount = rs.getMetaData().getColumnCount();
             if (i > colCount) {
-                throw new MoreColumnsRequestedThanExistException(
-                        "only " + colCount + " columns exist in ResultSet and column " + i + " was requested");
+                throw new MoreColumnsRequestedThanExistException("only " + colCount
+                        + " columns exist in ResultSet and column " + i + " was requested");
             }
             if (rs.getObject(i) == null) {
                 return null;
@@ -486,6 +508,45 @@ public enum Util {
         }
     }
 
+    private static <T> Object getObject(final CallableStatement cs, Class<T> cls, int i) {
+        try {
+            int colCount = cs.getMetaData().getColumnCount();
+            if (i > colCount) {
+                throw new MoreColumnsRequestedThanExistException("only " + colCount
+                        + " columns exist in ResultSet and column " + i + " was requested");
+            }
+            if (cs.getObject(i) == null) {
+                return null;
+            }
+            final int type = cs.getMetaData().getColumnType(i);
+            // TODO java.util.Calendar support
+            // TODO XMLGregorian Calendar support
+            if (type == Types.DATE)
+                return cs.getDate(i, Calendar.getInstance());
+            else if (type == Types.TIME)
+                return cs.getTime(i, Calendar.getInstance());
+            else if (type == Types.TIMESTAMP)
+                return cs.getTimestamp(i, Calendar.getInstance());
+            else if (type == Types.CLOB && cls.equals(String.class)) {
+                return toString(cs.getClob(i));
+            } else if (type == Types.CLOB && Reader.class.isAssignableFrom(cls)) {
+                Clob c = cs.getClob(i);
+                Reader r = c.getCharacterStream();
+                return createFreeOnCloseReader(c, r);
+            } else if (type == Types.BLOB && cls.equals(byte[].class)) {
+                return toBytes(cs.getBlob(i));
+            } else if (type == Types.BLOB && InputStream.class.isAssignableFrom(cls)) {
+                final Blob b = cs.getBlob(i);
+                final InputStream is = cs.getBlob(i).getBinaryStream();
+                return createFreeOnCloseInputStream(b, is);
+            } else
+                return cs.getObject(i);
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
+
+    
     /**
      * Returns the bytes of a {@link Blob} and frees the blob resource.
      * 
@@ -683,7 +744,8 @@ public enum Util {
             this(rs, collectColIndexes(rs), getMethodCols(cls), cls);
         }
 
-        public ProxyService(ResultSet rs, Map<String, Integer> colIndexes, Map<String, Col> methodCols, Class<T> cls) {
+        public ProxyService(ResultSet rs, Map<String, Integer> colIndexes,
+                Map<String, Col> methodCols, Class<T> cls) {
             this.rs = rs;
             this.colIndexes = colIndexes;
             this.methodCols = methodCols;
@@ -703,33 +765,38 @@ public enum Util {
                         String name = ((NamedCol) column).name;
                         index = colIndexes.get(name.toUpperCase());
                         if (index == null) {
-                            throw new ColumnNotFoundException("query column names do not include '" + name
-                                    + "' which is a named column in the automapped interface " + cls.getName());
+                            throw new ColumnNotFoundException("query column names do not include '"
+                                    + name
+                                    + "' which is a named column in the automapped interface "
+                                    + cls.getName());
                         }
                     } else {
                         IndexedCol col = ((IndexedCol) column);
                         index = col.index;
                         if (index < 1) {
                             throw new ColumnIndexOutOfRangeException(
-                                    "value for Index annotation (on autoMapped interface " + cls.getName()
-                                            + ") must be > 0");
+                                    "value for Index annotation (on autoMapped interface "
+                                            + cls.getName() + ") must be > 0");
                         } else {
                             int count = getColumnCount(rs);
                             if (index > count) {
                                 throw new ColumnIndexOutOfRangeException("value " + index
-                                        + " for Index annotation (on autoMapped interface " + cls.getName()
-                                        + ") must be between 1 and the number of columns in the result set (" + count
-                                        + ")");
+                                        + " for Index annotation (on autoMapped interface "
+                                        + cls.getName()
+                                        + ") must be between 1 and the number of columns in the result set ("
+                                        + count + ")");
                             }
                         }
                     }
-                    Object value = autoMap(getObject(rs, column.returnType(), index), column.returnType());
+                    Object value = autoMap(getObject(rs, column.returnType(), index),
+                            column.returnType());
                     values.put(methodName, value);
                 }
             }
             if (values.isEmpty()) {
                 throw new AnnotationsNotFoundException(
-                        "Did you forget to add @Column or @Index annotations to " + cls.getName() + "?");
+                        "Did you forget to add @Column or @Index annotations to " + cls.getName()
+                                + "?");
             }
             return values;
         }
@@ -772,7 +839,8 @@ public enum Util {
                 if (args[0] == null) {
                     return false;
                 } else if (args[0] instanceof Proxy) {
-                    ProxyInstance<?> handler = (ProxyInstance<?>) Proxy.getInvocationHandler(args[0]);
+                    ProxyInstance<?> handler = (ProxyInstance<?>) Proxy
+                            .getInvocationHandler(args[0]);
                     if (!handler.cls.equals(cls)) {
                         // is a proxied object for a different interface!
                         return false;
@@ -794,7 +862,8 @@ public enum Util {
                 }
                 // TODO java 9 support (fix IllegalAccessException)
                 if (JAVA_9) {
-                    MethodType methodType = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
+                    MethodType methodType = MethodType.methodType(method.getReturnType(),
+                            method.getParameterTypes());
                     return MethodHandles.lookup() //
                             .findSpecial( //
                                     declaringClass, //
@@ -918,7 +987,8 @@ public enum Util {
         };
     }
 
-    static Connection toTransactedConnection(AtomicReference<Connection> connection, Connection c) throws SQLException {
+    static Connection toTransactedConnection(AtomicReference<Connection> connection, Connection c)
+            throws SQLException {
         if (c instanceof TransactedConnection) {
             connection.set(c);
             return c;

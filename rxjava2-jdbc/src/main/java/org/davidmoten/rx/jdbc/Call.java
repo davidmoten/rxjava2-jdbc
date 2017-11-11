@@ -25,17 +25,23 @@ public final class Call {
             Flowable<List<Object>> parameterGroups, Class<T1> cls) {
         log.debug("Update.create {}", sql);
         Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql);
-        final Function<NamedCallableStatement, Flowable<Notification<T1>>> flowableFactory = stmt -> parameterGroups //
-                .flatMap(parameters -> create(stmt, parameters, cls).toFlowable()) //
-                .materialize() //
-                .doOnComplete(() -> Util.commit(stmt.stmt)) //
-                .doOnError(e -> Util.rollback(stmt.stmt));
+        final Function<NamedCallableStatement, Flowable<Notification<T1>>> flowableFactory = //
+                stmt -> parameterGroups //
+                        .flatMap(parameters -> create(stmt, parameters, cls).toFlowable()) //
+                        .materialize() //
+                        .doOnComplete(() -> Util.commit(stmt.stmt)) //
+                        .doOnError(e -> Util.rollback(stmt.stmt));
         Consumer<NamedCallableStatement> disposer = Util::closeCallableStatementAndConnection;
         return Flowable.using(resourceFactory, flowableFactory, disposer, true);
     }
 
-    private static <T> Single<T> create(NamedCallableStatement stmt, List<Object> parameters, Class<T> cls) {
-        return null;
+    private static <T> Single<T> create(NamedCallableStatement stmt, List<Object> parameters,
+            Class<T> cls) {
+        return Single.fromCallable(() -> {
+            Util.incrementCounter(stmt.stmt.getConnection());
+            Util.setParameters(stmt.stmt, parameters, stmt.names);
+            return Util.mapObject(stmt.stmt, cls, 1);
+        });
     }
 
     public static <T1> Flowable<Notification<T1>> create(Single<Connection> connection, String sql,

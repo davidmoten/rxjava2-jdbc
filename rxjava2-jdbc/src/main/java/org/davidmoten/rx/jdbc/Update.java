@@ -51,7 +51,7 @@ final class Update {
                 int[] count = new int[1];
                 return parameterGroups //
                         .flatMap(parameters -> {
-                            incrementCounter(ps.ps.getConnection());
+                            Util.incrementCounter(ps.ps.getConnection());
                             count[0] += 1;
                             Flowable<Integer> result;
                             if (count[0] == batchSize) {
@@ -87,7 +87,7 @@ final class Update {
 
     private static Single<Integer> create(NamedPreparedStatement ps, List<Object> parameters) {
         return Single.fromCallable(() -> {
-            incrementCounter(ps.ps.getConnection());
+            Util.incrementCounter(ps.ps.getConnection());
             Util.setParameters(ps.ps, parameters, ps.names);
             return ps.ps.executeUpdate();
         });
@@ -105,12 +105,6 @@ final class Update {
         });
     }
 
-    private static void incrementCounter(Connection connection) {
-        if (connection instanceof TransactedConnection) {
-            TransactedConnection c = (TransactedConnection) connection;
-            c.incrementCounter();
-        }
-    }
 
     private static Flowable<Integer> toFlowable(int[] a) {
         return Flowable.range(0, a.length).map(i -> a[i]);
