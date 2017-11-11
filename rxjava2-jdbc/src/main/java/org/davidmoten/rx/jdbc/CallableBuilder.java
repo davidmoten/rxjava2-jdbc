@@ -95,7 +95,7 @@ public final class CallableBuilder {
         this.inStream = f;
         return this;
     }
-
+    
     public CallableBuilder in(Object... objects) {
         in(Flowable.fromArray(objects));
         return this;

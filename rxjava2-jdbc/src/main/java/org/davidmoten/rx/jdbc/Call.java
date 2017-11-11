@@ -60,7 +60,6 @@ public final class Call {
                 }
             }
             stmt.stmt.execute();
-            System.out.println("val=" + stmt.stmt.getInt(pos));
             return Util.mapObject(stmt.stmt, cls, pos, p.type());
         });
     }

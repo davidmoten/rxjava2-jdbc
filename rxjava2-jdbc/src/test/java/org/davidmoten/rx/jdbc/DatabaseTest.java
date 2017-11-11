@@ -161,7 +161,8 @@ public class DatabaseTest {
     public void testSelectUsingQuestionMarkFlowableParametersInLists() {
         try (Database db = db()) {
             db.select("select score from person where name=?") //
-                    .parameterListStream(Flowable.just(Arrays.asList("FRED"), Arrays.asList("JOSEPH"))) //
+                    .parameterListStream(
+                            Flowable.just(Arrays.asList("FRED"), Arrays.asList("JOSEPH"))) //
                     .getAs(Integer.class) //
                     .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                     .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -202,7 +203,8 @@ public class DatabaseTest {
     public void testSelectUsingQuestionMarkFlowableParameterListsTwoParametersPerQuery() {
         try (Database db = db()) {
             db.select("select score from person where name=? and score = ?") //
-                    .parameterListStream(Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
+                    .parameterListStream(
+                            Flowable.just(Arrays.asList("FRED", 21), Arrays.asList("JOSEPH", 34))) //
                     .getAs(Integer.class) //
                     .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                     .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -345,7 +347,8 @@ public class DatabaseTest {
     }
 
     @Test(timeout = 40000)
-    public void testSelectUsingNonBlockingBuilderConcurrencyTest() throws InterruptedException, TimeoutException {
+    public void testSelectUsingNonBlockingBuilderConcurrencyTest()
+            throws InterruptedException, TimeoutException {
         info();
         try {
             try (Database db = db(3)) {
@@ -604,7 +607,8 @@ public class DatabaseTest {
                     .parameters("FRED", "JOSEPH") //
                     .transacted() //
                     .getAs(Integer.class) //
-                    .doOnNext(tx -> log.debug(tx.isComplete() ? "complete" : String.valueOf(tx.value()))) //
+                    .doOnNext(tx -> log
+                            .debug(tx.isComplete() ? "complete" : String.valueOf(tx.value()))) //
                     .test() //
                     .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                     .assertValueCount(3) //
@@ -740,7 +744,8 @@ public class DatabaseTest {
                     .select("select name, score, name, score, name, score from person where name=?") //
                     .parameters("FRED") //
                     .transacted() //
-                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
+                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                            Integer.class) //
                     .test() //
                     .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                     .assertValueCount(2) //
@@ -762,8 +767,8 @@ public class DatabaseTest {
                     .select("select name, score, name, score, name, score, name from person where name=?") //
                     .parameters("FRED") //
                     .transacted() //
-                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
-                            String.class) //
+                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                            Integer.class, String.class) //
                     .test() //
                     .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                     .assertValueCount(2) //
@@ -867,7 +872,8 @@ public class DatabaseTest {
                     .transacted() //
                     .transactedValuesOnly() //
                     .getAs(Integer.class) //
-                    .doOnNext(tx -> log.debug(tx.isComplete() ? "complete" : String.valueOf(tx.value())))//
+                    .doOnNext(tx -> log
+                            .debug(tx.isComplete() ? "complete" : String.valueOf(tx.value())))//
                     .flatMap(tx -> tx //
                             .select("select name from person where score = ?") //
                             .parameter(tx.value()) //
@@ -906,7 +912,8 @@ public class DatabaseTest {
                                 .select("select name from person where score = ?") //
                                 .parameter(score) //
                                 .getAs(String.class) //
-                                .doOnComplete(() -> log.info("completed select where score=" + score));
+                                .doOnComplete(
+                                        () -> log.info("completed select where score=" + score));
                     }) //
                     .test() //
                     .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -1211,10 +1218,12 @@ public class DatabaseTest {
         try (Database db = db()) {
             db //
                     .select("select name, score, name, score, name, score from person order by name") //
-                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class) //
+                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                            Integer.class) //
                     .firstOrError() //
                     .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                    .assertComplete().assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
+                    .assertComplete()
+                    .assertValue(Tuple6.create("FRED", 21, "FRED", 21, "FRED", 21)); //
         }
     }
 
@@ -1223,11 +1232,12 @@ public class DatabaseTest {
         try (Database db = db()) {
             db //
                     .select("select name, score, name, score, name, score, name from person order by name") //
-                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class, Integer.class,
-                            String.class) //
+                    .getAs(String.class, Integer.class, String.class, Integer.class, String.class,
+                            Integer.class, String.class) //
                     .firstOrError() //
                     .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                    .assertComplete().assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
+                    .assertComplete()
+                    .assertValue(Tuple7.create("FRED", 21, "FRED", 21, "FRED", 21, "FRED")); //
         }
     }
 
@@ -2145,8 +2155,8 @@ public class DatabaseTest {
                     .doOnNext(DatabaseTest::println) //
                     .toList() //
                     .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                    .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3 && list.get(1).isComplete()
-                            && list.size() == 2) //
+                    .assertValue(list -> list.get(0).isValue() && list.get(0).value() == 3
+                            && list.get(1).isComplete() && list.size() == 2) //
                     .assertComplete();
         }
     }
@@ -2204,7 +2214,8 @@ public class DatabaseTest {
 
     @Test
     public void testSingleFlatMap() {
-        Single.just(1).flatMapPublisher(n -> Flowable.just(1)).test(1).assertValue(1).assertComplete();
+        Single.just(1).flatMapPublisher(n -> Flowable.just(1)).test(1).assertValue(1)
+                .assertComplete();
     }
 
     @Test
@@ -2391,7 +2402,8 @@ public class DatabaseTest {
     public void testUsingNormalJDBCApi() {
         Database db = db(1);
         db.apply(con -> {
-            try (PreparedStatement stmt = con.prepareStatement("select count(*) from person where name='FRED'");
+            try (PreparedStatement stmt = con
+                    .prepareStatement("select count(*) from person where name='FRED'");
                     ResultSet rs = stmt.executeQuery()) {
                 rs.next();
                 return rs.getInt(1);
@@ -2415,7 +2427,8 @@ public class DatabaseTest {
     public void testUsingNormalJDBCApiCompletable() {
         Database db = db(1);
         db.apply(con -> {
-            try (PreparedStatement stmt = con.prepareStatement("select count(*) from person where name='FRED'");
+            try (PreparedStatement stmt = con
+                    .prepareStatement("select count(*) from person where name='FRED'");
                     ResultSet rs = stmt.executeQuery()) {
                 rs.next();
             }
@@ -2471,13 +2484,13 @@ public class DatabaseTest {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
                 .call("call getPersonCount(?,?)") //
-                .in() //
+                .in(Type.INTEGER) //
                 .out(Type.INTEGER, Integer.class) //
                 .in(0, 10, 20) //
                 .build() //
                 .test() //
-                .awaitDone(TIMEOUT_SECONDS*1000, TimeUnit.SECONDS) //
-                .assertValue(2) //
+                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
+                .assertValues(2, 2, 2) //
                 .assertComplete();
     }
 
