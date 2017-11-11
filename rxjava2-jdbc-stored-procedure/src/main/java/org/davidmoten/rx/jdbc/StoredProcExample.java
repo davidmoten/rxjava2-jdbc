@@ -14,6 +14,7 @@ public class StoredProcExample {
                 ResultSet rs = stmt.executeQuery()) {
             rs.next();
             count[0] = rs.getInt(1);
+            System.out.println("returning getPersonCount="+ count[0]);
         }
     }
 

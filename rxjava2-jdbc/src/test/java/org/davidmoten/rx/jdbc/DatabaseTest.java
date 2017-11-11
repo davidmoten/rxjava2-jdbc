@@ -2467,7 +2467,6 @@ public class DatabaseTest {
     }
 
     @Test
-    @Ignore
     public void testCallableApi() {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
@@ -2477,7 +2476,7 @@ public class DatabaseTest {
                 .in(0, 10, 20) //
                 .build() //
                 .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS*1000, TimeUnit.SECONDS) //
                 .assertValue(2) //
                 .assertComplete();
     }

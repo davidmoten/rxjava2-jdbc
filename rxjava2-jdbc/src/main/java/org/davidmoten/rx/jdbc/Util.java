@@ -40,6 +40,8 @@ import javax.annotation.RegEx;
 import javax.sql.DataSource;
 
 import org.apache.commons.io.IOUtils;
+import org.davidmoten.rx.jdbc.CallableBuilder.OutParameterPlaceholder;
+import org.davidmoten.rx.jdbc.CallableBuilder.ParameterPlaceholder;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
@@ -76,50 +78,54 @@ public enum Util {
                 throw new NamedParameterFoundButSqlDoesNotHaveNamesException(
                         "named parameter found but sql does not contain names ps=" + ps);
             Object o = params.get(i - 1).value();
-            try {
-                if (o == null)
-                    ps.setObject(i, null);
-                else if (o == Database.NULL_CLOB)
-                    ps.setNull(i, Types.CLOB);
-                else if (o == Database.NULL_BLOB)
-                    ps.setNull(i, Types.BLOB);
-                else {
-                    Class<?> cls = o.getClass();
-                    if (Clob.class.isAssignableFrom(cls)) {
-                        setClob(ps, i, o, cls);
-                    } else if (Blob.class.isAssignableFrom(cls)) {
-                        setBlob(ps, i, o, cls);
-                    } else if (Calendar.class.isAssignableFrom(cls)) {
-                        Calendar cal = (Calendar) o;
-                        Timestamp t = new Timestamp(cal.getTimeInMillis());
-                        ps.setTimestamp(i, t);
-                    } else if (Time.class.isAssignableFrom(cls)) {
-                        Calendar cal = Calendar.getInstance();
-                        ps.setTime(i, (Time) o, cal);
-                    } else if (Timestamp.class.isAssignableFrom(cls)) {
-                        Calendar cal = Calendar.getInstance();
-                        ps.setTimestamp(i, (Timestamp) o, cal);
-                    } else if (java.sql.Date.class.isAssignableFrom(cls)) {
-                        ps.setDate(i, (java.sql.Date) o, Calendar.getInstance());
-                    } else if (java.util.Date.class.isAssignableFrom(cls)) {
-                        Calendar cal = Calendar.getInstance();
-                        java.util.Date date = (java.util.Date) o;
-                        ps.setTimestamp(i, new Timestamp(date.getTime()), cal);
-                    } else if (Instant.class.isAssignableFrom(cls)) {
-                        Calendar cal = Calendar.getInstance();
-                        Instant instant = (Instant) o;
-                        ps.setTimestamp(i, new Timestamp(instant.toEpochMilli()), cal);
-                    } else if (ZonedDateTime.class.isAssignableFrom(cls)) {
-                        Calendar cal = Calendar.getInstance();
-                        ZonedDateTime d = (ZonedDateTime) o;
-                        ps.setTimestamp(i, new Timestamp(d.toInstant().toEpochMilli()), cal);
-                    } else
-                        ps.setObject(i, o);
-                }
-            } catch (SQLException e) {
-                log.debug("{} when setting ps.setObject({},{})", e.getMessage(), i, o);
-                throw e;
+            setParameter(ps, i, o);
+        }
+    }
+
+    static void setParameter(PreparedStatement ps, int i, Object o) throws SQLException {
+        try {
+            if (o == null)
+                ps.setObject(i, null);
+            else if (o == Database.NULL_CLOB)
+                ps.setNull(i, Types.CLOB);
+            else if (o == Database.NULL_BLOB)
+                ps.setNull(i, Types.BLOB);
+            else {
+                Class<?> cls = o.getClass();
+                if (Clob.class.isAssignableFrom(cls)) {
+                    setClob(ps, i, o, cls);
+                } else if (Blob.class.isAssignableFrom(cls)) {
+                    setBlob(ps, i, o, cls);
+                } else if (Calendar.class.isAssignableFrom(cls)) {
+                    Calendar cal = (Calendar) o;
+                    Timestamp t = new Timestamp(cal.getTimeInMillis());
+                    ps.setTimestamp(i, t);
+                } else if (Time.class.isAssignableFrom(cls)) {
+                    Calendar cal = Calendar.getInstance();
+                    ps.setTime(i, (Time) o, cal);
+                } else if (Timestamp.class.isAssignableFrom(cls)) {
+                    Calendar cal = Calendar.getInstance();
+                    ps.setTimestamp(i, (Timestamp) o, cal);
+                } else if (java.sql.Date.class.isAssignableFrom(cls)) {
+                    ps.setDate(i, (java.sql.Date) o, Calendar.getInstance());
+                } else if (java.util.Date.class.isAssignableFrom(cls)) {
+                    Calendar cal = Calendar.getInstance();
+                    java.util.Date date = (java.util.Date) o;
+                    ps.setTimestamp(i, new Timestamp(date.getTime()), cal);
+                } else if (Instant.class.isAssignableFrom(cls)) {
+                    Calendar cal = Calendar.getInstance();
+                    Instant instant = (Instant) o;
+                    ps.setTimestamp(i, new Timestamp(instant.toEpochMilli()), cal);
+                } else if (ZonedDateTime.class.isAssignableFrom(cls)) {
+                    Calendar cal = Calendar.getInstance();
+                    ZonedDateTime d = (ZonedDateTime) o;
+                    ps.setTimestamp(i, new Timestamp(d.toInstant().toEpochMilli()), cal);
+                } else
+                    ps.setObject(i, o);
             }
+        } catch (SQLException e) {
+            log.debug("{} when setting ps.setObject({},{})", e.getMessage(), i, o);
+            throw e;
         }
     }
 
@@ -181,7 +187,7 @@ public enum Util {
         // }
     }
 
-    private static void setNamedParameters(PreparedStatement ps, List<Parameter> parameters,
+    static void setNamedParameters(PreparedStatement ps, List<Parameter> parameters,
             List<String> names) throws SQLException {
         Map<String, Parameter> map = createMap(parameters);
         List<Parameter> list = new ArrayList<Parameter>();
@@ -290,13 +296,14 @@ public enum Util {
         }
     }
 
-    static NamedCallableStatement prepareCall(Connection con, String sql) throws SQLException {
-        return prepareCall(con, 0, sql);
+    static NamedCallableStatement prepareCall(Connection con, String sql,
+            List<ParameterPlaceholder> parameterPlaceholders) throws SQLException {
+        return prepareCall(con, 0, sql, parameterPlaceholders);
     }
 
     // TODO is fetchSize required for callablestatement
-    static NamedCallableStatement prepareCall(Connection con, int fetchSize, String sql)
-            throws SQLException {
+    static NamedCallableStatement prepareCall(Connection con, int fetchSize, String sql,
+            List<ParameterPlaceholder> parameterPlaceholders) throws SQLException {
         // TODO can we parse SqlInfo through because already calculated by
         // builder?
         SqlInfo s = SqlInfo.parse(sql);
@@ -304,6 +311,12 @@ public enum Util {
         CallableStatement ps = null;
         try {
             ps = con.prepareCall(s.sql(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            for (int i = 0; i < parameterPlaceholders.size(); i++) {
+                ParameterPlaceholder p = parameterPlaceholders.get(i);
+                if (p instanceof OutParameterPlaceholder) {
+                    ps.registerOutParameter(i + 1, ((OutParameterPlaceholder) p).type().value());
+                }
+            }
             if (fetchSize > 0) {
                 ps.setFetchSize(fetchSize);
             }
@@ -464,10 +477,10 @@ public enum Util {
     public static <T> T mapObject(final ResultSet rs, Class<T> cls, int i) {
         return (T) autoMap(getObject(rs, cls, i), cls);
     }
-    
+
     @SuppressWarnings("unchecked")
-    public static <T> T mapObject(final CallableStatement cs, Class<T> cls, int i) {
-        return (T) autoMap(getObject(cs, cls, i), cls);
+    public static <T> T mapObject(final CallableStatement cs, Class<T> cls, int i, Type type) {
+        return (T) autoMap(getObject(cs, cls, i, type), cls);
     }
 
     private static <T> Object getObject(final ResultSet rs, Class<T> cls, int i) {
@@ -508,17 +521,12 @@ public enum Util {
         }
     }
 
-    private static <T> Object getObject(final CallableStatement cs, Class<T> cls, int i) {
+    private static <T> Object getObject(final CallableStatement cs, Class<T> cls, int i, Type typ) {
         try {
-            int colCount = cs.getMetaData().getColumnCount();
-            if (i > colCount) {
-                throw new MoreColumnsRequestedThanExistException("only " + colCount
-                        + " columns exist in ResultSet and column " + i + " was requested");
-            }
             if (cs.getObject(i) == null) {
                 return null;
             }
-            final int type = cs.getMetaData().getColumnType(i);
+            final int type = typ.value();
             // TODO java.util.Calendar support
             // TODO XMLGregorian Calendar support
             if (type == Types.DATE)
@@ -546,7 +554,6 @@ public enum Util {
         }
     }
 
-    
     /**
      * Returns the bytes of a {@link Blob} and frees the blob resource.
      * 

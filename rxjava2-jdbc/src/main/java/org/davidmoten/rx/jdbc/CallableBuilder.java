@@ -17,10 +17,8 @@ import io.reactivex.functions.Function;
 
 public final class CallableBuilder {
 
-    private static final Object IN_SENTINEL = new Object();
-
     final String sql;
-    final List<Object> params = new ArrayList<>();
+    final List<ParameterPlaceholder> params = new ArrayList<>();
 
     Flowable<?> inStream;
 
@@ -31,13 +29,54 @@ public final class CallableBuilder {
         this.connection = connection;
     }
 
-    static final class InOut {
+    interface ParameterPlaceholder {
+        Type type();
+    }
+
+    interface OutParameterPlaceholder extends ParameterPlaceholder {
+
+    }
+
+    static final class In implements ParameterPlaceholder {
+        final Type type;
+
+        In(Type type) {
+            this.type = type;
+        }
+
+        @Override
+        public Type type() {
+            return type;
+        }
+    }
+
+    static final class InOut implements OutParameterPlaceholder {
         final Type type;
         final Class<?> cls;
 
         InOut(Type type, Class<?> cls) {
             this.type = type;
             this.cls = cls;
+        }
+
+        @Override
+        public Type type() {
+            return type;
+        }
+    }
+
+    static final class Out implements OutParameterPlaceholder {
+        final Type type;
+        final Class<?> cls;
+
+        public Out(Type type, Class<?> cls) {
+            this.type = type;
+            this.cls = cls;
+        }
+
+        @Override
+        public Type type() {
+            return type;
         }
     }
 
@@ -46,8 +85,8 @@ public final class CallableBuilder {
         return null;
     }
 
-    public CallableBuilder in() {
-        params.add(IN_SENTINEL);
+    public CallableBuilder in(Type type) {
+        params.add(new In(type));
         return this;
     }
 
@@ -78,17 +117,6 @@ public final class CallableBuilder {
 
     public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
         return new CallableResultSets1Builder<T>(this, Util.autoMap(cls));
-    }
-
-    // TODO restrict visibility
-    public static final class Out {
-        final Type type;
-        final Class<?> cls;
-
-        public Out(Type type, Class<?> cls) {
-            this.type = type;
-            this.cls = cls;
-        }
     }
 
     public static final class CallableBuilder1<T1> {
@@ -123,12 +151,12 @@ public final class CallableBuilder {
 
         public Flowable<T1> build() {
             int numInParameters = b.params.stream() //
-                    .filter(x -> x == IN_SENTINEL) //
+                    .filter(x -> x instanceof In) //
                     .collect(Collectors.counting()).intValue();
             @SuppressWarnings("unchecked")
             Flowable<List<Object>> parameterGroups = (Flowable<List<Object>>) (Flowable<?>) b.inStream
                     .buffer(numInParameters);
-            return Call.create(b.connection, b.sql, parameterGroups, cls).dematerialize();
+            return Call.create(b.connection, b.sql, parameterGroups, b.params, cls).dematerialize();
         }
     }
 
@@ -156,7 +184,8 @@ public final class CallableBuilder {
         private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
 
-        CallableResultSets1Builder(CallableBuilder b, Function<? super ResultSet, ? extends T1> function) {
+        CallableResultSets1Builder(CallableBuilder b,
+                Function<? super ResultSet, ? extends T1> function) {
             this.b = b;
             this.f1 = function;
         }
@@ -165,7 +194,8 @@ public final class CallableBuilder {
             return new CallableResultSets2Builder<T1, T2>(b, f1, Util.autoMap(cls));
         }
 
-        public <T2> CallableResultSets2Builder<T1, T2> map(Function<? super ResultSet, ? extends T2> f2) {
+        public <T2> CallableResultSets2Builder<T1, T2> map(
+                Function<? super ResultSet, ? extends T2> f2) {
             return new CallableResultSets2Builder<T1, T2>(b, f1, f2);
         }
     }
