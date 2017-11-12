@@ -228,8 +228,11 @@ public final class CallableBuilder {
         }
 
         public Flowable<T1> build() {
-            // TODO
             return null;
+            // return Call
+            // .createWithOneResultSet(b.connection, b.sql, b.parameterGroups(), b.params,
+            // f1) //
+            // .dematerialize();
         }
 
     }

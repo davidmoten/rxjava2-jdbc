@@ -3,6 +3,7 @@ package org.davidmoten.rx.jdbc;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,8 +31,15 @@ public final class Call {
         // prevent instantiation
     }
 
-    public static <T1> Flowable<Notification<T1>> createWithOneParameter(Connection con, String sql,
-            Flowable<List<Object>> parameterGroups,
+    public static <T1> Flowable<Notification<T1>> createWithOneOutParameter(
+            Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
+            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls) {
+        return connection.toFlowable().flatMap(con -> createWithOneParameter(con, sql,
+                parameterGroups, parameterPlaceholders, cls));
+    }
+
+    private static <T1> Flowable<Notification<T1>> createWithOneParameter(Connection con,
+            String sql, Flowable<List<Object>> parameterGroups,
             List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls) {
         log.debug("Update.create {}", sql);
         Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql,
@@ -49,30 +57,12 @@ public final class Call {
 
     private static <T> Single<T> createWithOneParameter(NamedCallableStatement stmt,
             List<Object> parameters, List<ParameterPlaceholder> parameterPlaceholders,
-            Class<T> cls) {
+            Class<T> cls1) {
         return Single.fromCallable(() -> {
             CallableStatement st = stmt.stmt;
-            Util.incrementCounter(st.getConnection());
-            setParameters(st, parameters, parameterPlaceholders, stmt.names);
-            int pos = 0;
-            ParameterPlaceholder p = null;
-            for (int j = 0; j < parameterPlaceholders.size(); j++) {
-                p = parameterPlaceholders.get(j);
-                if (p instanceof OutParameterPlaceholder) {
-                    pos = j + 1;
-                    break;
-                }
-            }
-            st.execute();
-            return Util.mapObject(st, cls, pos, p.type());
+            List<PlaceAndType> outs = execute(stmt, parameters, parameterPlaceholders, 2, st);
+            return Util.mapObject(st, cls1, outs.get(0).pos, outs.get(0).type);
         });
-    }
-
-    public static <T1> Flowable<Notification<T1>> createWithOneOutParameter(
-            Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
-            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls) {
-        return connection.toFlowable().flatMap(con -> createWithOneParameter(con, sql,
-                parameterGroups, parameterPlaceholders, cls));
     }
 
     // TWO
@@ -163,5 +153,15 @@ public final class Call {
         }
         return ps;
     }
+
+    // public static <T1> Flowable<T1> createWithOneResultSet(Single<Connection>
+    // connection,
+    // String sql, Flowable<List<Object>> parameterGroups,
+    // List<ParameterPlaceholder> params,
+    // Function<? super ResultSet, ? extends T1> f1) {
+    // return connection.toFlowable().flatMap(
+    // con -> createWithOneResultSet(con, sql, parameterGroups,
+    // parameterPlaceholders, f));
+    // }
 
 }
