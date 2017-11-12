@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
@@ -85,6 +84,15 @@ public final class CallableBuilder {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public Flowable<List<Object>> parameterGroups() {
+        int numInParameters = params.stream() //
+                .filter(x -> x instanceof InParameterPlaceholder) //
+                .collect(Collectors.counting()).intValue();
+        return (Flowable<List<Object>>) (Flowable<?>) inStream.buffer(numInParameters);
+
+    }
+
     public Completable perform() {
         // TODO
         return null;
@@ -155,14 +163,9 @@ public final class CallableBuilder {
         }
 
         public Flowable<T1> build() {
-            int numInParameters = b.params.stream() //
-                    .filter(x -> x instanceof InParameterPlaceholder) //
-                    .collect(Collectors.counting()).intValue();
-            @SuppressWarnings("unchecked")
-            Flowable<List<Object>> parameterGroups = (Flowable<List<Object>>) (Flowable<?>) b.inStream
-                    .buffer(numInParameters);
             return Call
-                    .createWithOneOutParameter(b.connection, b.sql, parameterGroups, b.params, cls) //
+                    .createWithOneOutParameter(b.connection, b.sql, b.parameterGroups(), b.params,
+                            cls) //
                     .dematerialize();
         }
     }
@@ -190,14 +193,8 @@ public final class CallableBuilder {
         }
 
         public Flowable<Tuple2<T1, T2>> build() {
-            int numInParameters = b.params.stream() //
-                    .filter(x -> x instanceof InParameterPlaceholder) //
-                    .collect(Collectors.counting()).intValue();
-            @SuppressWarnings("unchecked")
-            Flowable<List<Object>> parameterGroups = (Flowable<List<Object>>) (Flowable<?>) b.inStream
-                    .buffer(numInParameters);
             return Call
-                    .createWithTwoOutParameters(b.connection, b.sql, parameterGroups, b.params,
+                    .createWithTwoOutParameters(b.connection, b.sql, b.parameterGroups(), b.params,
                             cls1, cls2) //
                     .dematerialize();
         }
