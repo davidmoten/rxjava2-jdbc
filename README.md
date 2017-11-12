@@ -670,7 +670,7 @@ Output:
 
 Using raw JDBC
 ----------------
-Many nifty things in JDBC (like `CallableStatements`) are not directly supported by *rxjava2-jdbc* but you can get acccess to the underlying `Connection`s from the `Database` object by using `Database.apply` or `Database.member()`.
+Many nifty things in JDBC (like `CallableStatements`) are not yet directly supported by *rxjava2-jdbc* (although is being worked on now) but you can get acccess to the underlying `Connection`s from the `Database` object by using `Database.apply` or `Database.member()`.
 
 Here's an example where you want to return something from a `Connection` (say you called a stored procedure and returned an integer):
 
