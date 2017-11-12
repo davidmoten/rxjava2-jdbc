@@ -97,16 +97,28 @@ public final class DatabaseCreator {
     }
 
     private static void addStoredProcs(Connection c) throws SQLException {
-        exec(c, "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'APP.examples',0)");
+        exec(c, "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'APP.examples', 0)");
 
         {
-            String sql = "CREATE PROCEDURE APP.getGiven" //
+            String sql = "CREATE PROCEDURE APP.getGiven1" //
                     + " (IN a INTEGER," //
                     + " OUT b INTEGER)" //
                     + " PARAMETER STYLE JAVA" //
                     + " LANGUAGE JAVA" //
                     + " EXTERNAL NAME" //
-                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.getGiven'";
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.getGiven1'";
+            exec(c, sql);
+        }
+
+        {
+            String sql = "CREATE PROCEDURE APP.getGiven2" //
+                    + " (IN a INTEGER," //
+                    + " OUT b INTEGER," //
+                    + " OUT c INTEGER)" //
+                    + " PARAMETER STYLE JAVA" //
+                    + " LANGUAGE JAVA" //
+                    + " EXTERNAL NAME" //
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.getGiven2'";
             exec(c, sql);
         }
         {

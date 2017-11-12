@@ -37,7 +37,7 @@ public final class CallableBuilder {
     interface OutParameterPlaceholder extends ParameterPlaceholder {
 
     }
-    
+
     interface InParameterPlaceholder extends ParameterPlaceholder {
 
     }
@@ -100,7 +100,7 @@ public final class CallableBuilder {
         this.inStream = f;
         return this;
     }
-    
+
     public CallableBuilder in(Object... objects) {
         in(Flowable.fromArray(objects));
         return this;
@@ -161,7 +161,8 @@ public final class CallableBuilder {
             @SuppressWarnings("unchecked")
             Flowable<List<Object>> parameterGroups = (Flowable<List<Object>>) (Flowable<?>) b.inStream
                     .buffer(numInParameters);
-            return Call.create(b.connection, b.sql, parameterGroups, b.params, cls) //
+            return Call
+                    .createWithOneOutParameter(b.connection, b.sql, parameterGroups, b.params, cls) //
                     .dematerialize();
         }
     }
@@ -178,10 +179,16 @@ public final class CallableBuilder {
             this.cls2 = cls2;
         }
 
-        public Single<Tuple2<T1, T2>> build() {
-
-            // TODO Auto-generated method stub
-            return null;
+        public Flowable<Tuple2<T1, T2>> build() {
+            int numInParameters = b.params.stream() //
+                    .filter(x -> x instanceof InParameterPlaceholder) //
+                    .collect(Collectors.counting()).intValue();
+            @SuppressWarnings("unchecked")
+            Flowable<List<Object>> parameterGroups = (Flowable<List<Object>>) (Flowable<?>) b.inStream
+                    .buffer(numInParameters);
+            return Call
+                    .createWithTwoOutParameters(b.connection, b.sql, parameterGroups, b.params, cls1, cls2) //
+                    .dematerialize();
         }
     }
 

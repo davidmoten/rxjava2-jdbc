@@ -11,6 +11,7 @@ import org.davidmoten.rx.jdbc.CallableBuilder.In;
 import org.davidmoten.rx.jdbc.CallableBuilder.InOut;
 import org.davidmoten.rx.jdbc.CallableBuilder.OutParameterPlaceholder;
 import org.davidmoten.rx.jdbc.CallableBuilder.ParameterPlaceholder;
+import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,7 @@ public final class Call {
         // prevent instantiation
     }
 
-    public static <T1> Flowable<Notification<T1>> create(Connection con, String sql,
+    public static <T1> Flowable<Notification<T1>> createWithOneParameter(Connection con, String sql,
             Flowable<List<Object>> parameterGroups,
             List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls) {
         log.debug("Update.create {}", sql);
@@ -36,8 +37,8 @@ public final class Call {
                 parameterPlaceholders);
         final Function<NamedCallableStatement, Flowable<Notification<T1>>> flowableFactory = //
                 stmt -> parameterGroups //
-                        .flatMap(parameters -> create(stmt, parameters, parameterPlaceholders, cls)
-                                .toFlowable()) //
+                        .flatMap(parameters -> createWithOneParameter(stmt, parameters,
+                                parameterPlaceholders, cls).toFlowable()) //
                         .materialize() //
                         .doOnComplete(() -> Util.commit(stmt.stmt)) //
                         .doOnError(e -> Util.rollback(stmt.stmt));
@@ -45,8 +46,9 @@ public final class Call {
         return Flowable.using(resourceFactory, flowableFactory, disposer, true);
     }
 
-    private static <T> Single<T> create(NamedCallableStatement stmt, List<Object> parameters,
-            List<ParameterPlaceholder> parameterPlaceholders, Class<T> cls) {
+    private static <T> Single<T> createWithOneParameter(NamedCallableStatement stmt,
+            List<Object> parameters, List<ParameterPlaceholder> parameterPlaceholders,
+            Class<T> cls) {
         return Single.fromCallable(() -> {
             CallableStatement st = stmt.stmt;
             Util.incrementCounter(st.getConnection());
@@ -65,11 +67,60 @@ public final class Call {
         });
     }
 
-    public static <T1> Flowable<Notification<T1>> create(Single<Connection> connection, String sql,
-            Flowable<List<Object>> parameterGroups,
+    public static <T1> Flowable<Notification<T1>> createWithOneOutParameter(
+            Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
             List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls) {
-        return connection.toFlowable()
-                .flatMap(con -> create(con, sql, parameterGroups, parameterPlaceholders, cls));
+        return connection.toFlowable().flatMap(con -> createWithOneParameter(con, sql,
+                parameterGroups, parameterPlaceholders, cls));
+    }
+
+    // TWO
+
+    public static <T1, T2> Flowable<Notification<Tuple2<T1, T2>>> createWithTwoParameters(
+            Connection con, String sql, Flowable<List<Object>> parameterGroups,
+            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2) {
+        log.debug("Update.create {}", sql);
+        Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql,
+                parameterPlaceholders);
+        final Function<NamedCallableStatement, Flowable<Notification<Tuple2<T1, T2>>>> flowableFactory = //
+                stmt -> parameterGroups //
+                        .flatMap(parameters -> createWithTwoParameters(stmt, parameters,
+                                parameterPlaceholders, cls1, cls2).toFlowable()) //
+                        .materialize() //
+                        .doOnComplete(() -> Util.commit(stmt.stmt)) //
+                        .doOnError(e -> Util.rollback(stmt.stmt));
+        Consumer<NamedCallableStatement> disposer = Util::closeCallableStatementAndConnection;
+        return Flowable.using(resourceFactory, flowableFactory, disposer, true);
+    }
+
+    private static <T1, T2> Single<Tuple2<T1, T2>> createWithTwoParameters(
+            NamedCallableStatement stmt, List<Object> parameters,
+            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2) {
+        return Single.fromCallable(() -> {
+            CallableStatement st = stmt.stmt;
+            Util.incrementCounter(st.getConnection());
+            setParameters(st, parameters, parameterPlaceholders, stmt.names);
+            int pos = 0;
+            ParameterPlaceholder p = null;
+            for (int j = 0; j < parameterPlaceholders.size(); j++) {
+                p = parameterPlaceholders.get(j);
+                if (p instanceof OutParameterPlaceholder) {
+                    pos = j + 1;
+                    break;
+                }
+            }
+            st.execute();
+            T1 o1 = Util.mapObject(st, cls1, pos, p.type());
+            T2 o2 = Util.mapObject(st, cls2, pos, p.type());
+            return Tuple2.create(o1, o2);
+        });
+    }
+
+    public static <T1, T2> Flowable<Notification<Tuple2<T1, T2>>> createWithTwoOutParameters(
+            Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
+            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2) {
+        return connection.toFlowable().flatMap(con -> createWithTwoParameters(con, sql,
+                parameterGroups, parameterPlaceholders, cls1, cls2));
     }
 
     static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters,

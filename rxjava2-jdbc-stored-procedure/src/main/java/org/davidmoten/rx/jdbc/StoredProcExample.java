@@ -8,8 +8,13 @@ import java.sql.SQLException;
 
 public class StoredProcExample {
 
-    public static void getGiven(int a, int[] b) {
+    public static void getGiven1(int a, int[] b) {
         b[0] = a;
+    }
+
+    public static void getGiven2(int a, int[] b, int c[]) {
+        b[0] = a;
+        c[0] = a + 1;
     }
 
     public static void getPersonCount(int minScore, int[] count) throws SQLException {
