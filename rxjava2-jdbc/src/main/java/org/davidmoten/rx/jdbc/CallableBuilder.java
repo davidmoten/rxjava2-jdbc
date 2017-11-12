@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
@@ -36,8 +37,12 @@ public final class CallableBuilder {
     interface OutParameterPlaceholder extends ParameterPlaceholder {
 
     }
+    
+    interface InParameterPlaceholder extends ParameterPlaceholder {
 
-    static final class In implements ParameterPlaceholder {
+    }
+
+    static final class In implements InParameterPlaceholder {
         final Type type;
 
         In(Type type) {
@@ -50,7 +55,7 @@ public final class CallableBuilder {
         }
     }
 
-    static final class InOut implements OutParameterPlaceholder {
+    static final class InOut implements InParameterPlaceholder, OutParameterPlaceholder {
         final Type type;
         final Class<?> cls;
 
@@ -151,12 +156,13 @@ public final class CallableBuilder {
 
         public Flowable<T1> build() {
             int numInParameters = b.params.stream() //
-                    .filter(x -> x instanceof In) //
+                    .filter(x -> x instanceof InParameterPlaceholder) //
                     .collect(Collectors.counting()).intValue();
             @SuppressWarnings("unchecked")
             Flowable<List<Object>> parameterGroups = (Flowable<List<Object>>) (Flowable<?>) b.inStream
                     .buffer(numInParameters);
-            return Call.create(b.connection, b.sql, parameterGroups, b.params, cls).dematerialize();
+            return Call.create(b.connection, b.sql, parameterGroups, b.params, cls) //
+                    .dematerialize();
         }
     }
 

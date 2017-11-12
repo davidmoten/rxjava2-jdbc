@@ -1,5 +1,6 @@
 package org.davidmoten.rx.jdbc;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -47,8 +48,9 @@ public final class Call {
     private static <T> Single<T> create(NamedCallableStatement stmt, List<Object> parameters,
             List<ParameterPlaceholder> parameterPlaceholders, Class<T> cls) {
         return Single.fromCallable(() -> {
-            Util.incrementCounter(stmt.stmt.getConnection());
-            setParameters(stmt.stmt, parameters, parameterPlaceholders, stmt.names);
+            CallableStatement st = stmt.stmt;
+            Util.incrementCounter(st.getConnection());
+            setParameters(st, parameters, parameterPlaceholders, stmt.names);
             int pos = 0;
             ParameterPlaceholder p = null;
             for (int j = 0; j < parameterPlaceholders.size(); j++) {
@@ -58,8 +60,8 @@ public final class Call {
                     break;
                 }
             }
-            stmt.stmt.execute();
-            return Util.mapObject(stmt.stmt, cls, pos, p.type());
+            st.execute();
+            return Util.mapObject(st, cls, pos, p.type());
         });
     }
 

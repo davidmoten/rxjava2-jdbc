@@ -2480,7 +2480,7 @@ public class DatabaseTest {
     }
 
     @Test
-    public void testCallableApi() {
+    public void testCallableApi() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
                 .call("call getPersonCount(?,?)") //
