@@ -217,6 +217,21 @@ public final class CallableBuilder {
                 Function<? super ResultSet, ? extends T2> f2) {
             return new CallableResultSets2Builder<T1, T2>(b, f1, f2);
         }
+
+        public CallableResultSets1Builder<T1> in(Flowable<?> f) {
+            b.in(f);
+            return this;
+        }
+
+        public CallableResultSets1Builder<T1> in(Object... objects) {
+            return in(Flowable.fromArray(objects));
+        }
+
+        public Flowable<T1> build() {
+            // TODO
+            return null;
+        }
+
     }
 
     public static final class CallableResultSets2Builder<T1, T2> {
@@ -245,6 +260,14 @@ public final class CallableBuilder {
         }
 
         public Flowable<T2> query2() {
+            return null;
+        }
+
+    }
+
+    public static final class CallableResultSet1<T1> {
+
+        public Flowable<T1> query1() {
             return null;
         }
 
