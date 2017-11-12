@@ -134,8 +134,8 @@ public final class CallableBuilder {
             this.cls = cls;
         }
 
-        public CallableBuilder1<T1> in() {
-            b.in();
+        public CallableBuilder1<T1> in(Type type) {
+            b.in(type);
             return this;
         }
 
@@ -179,6 +179,16 @@ public final class CallableBuilder {
             this.cls2 = cls2;
         }
 
+        public CallableBuilder2<T1, T2> in(Flowable<?> f) {
+            b.in(f);
+            return this;
+        }
+
+        public CallableBuilder2<T1, T2> in(Object... objects) {
+            in(Flowable.fromArray(objects));
+            return this;
+        }
+
         public Flowable<Tuple2<T1, T2>> build() {
             int numInParameters = b.params.stream() //
                     .filter(x -> x instanceof InParameterPlaceholder) //
@@ -187,7 +197,8 @@ public final class CallableBuilder {
             Flowable<List<Object>> parameterGroups = (Flowable<List<Object>>) (Flowable<?>) b.inStream
                     .buffer(numInParameters);
             return Call
-                    .createWithTwoOutParameters(b.connection, b.sql, parameterGroups, b.params, cls1, cls2) //
+                    .createWithTwoOutParameters(b.connection, b.sql, parameterGroups, b.params,
+                            cls1, cls2) //
                     .dematerialize();
         }
     }

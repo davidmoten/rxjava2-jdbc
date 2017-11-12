@@ -4,6 +4,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -100,18 +101,20 @@ public final class Call {
             CallableStatement st = stmt.stmt;
             Util.incrementCounter(st.getConnection());
             setParameters(st, parameters, parameterPlaceholders, stmt.names);
-            int pos = 0;
             ParameterPlaceholder p = null;
+            List<Integer> outs = new ArrayList<Integer>();
             for (int j = 0; j < parameterPlaceholders.size(); j++) {
                 p = parameterPlaceholders.get(j);
                 if (p instanceof OutParameterPlaceholder) {
-                    pos = j + 1;
-                    break;
+                    outs.add(j + 1);
+                    if (outs.size() == 2) {
+                        break;
+                    }
                 }
             }
             st.execute();
-            T1 o1 = Util.mapObject(st, cls1, pos, p.type());
-            T2 o2 = Util.mapObject(st, cls2, pos, p.type());
+            T1 o1 = Util.mapObject(st, cls1, outs.get(0), p.type());
+            T2 o2 = Util.mapObject(st, cls2, outs.get(1), p.type());
             return Tuple2.create(o1, o2);
         });
     }
