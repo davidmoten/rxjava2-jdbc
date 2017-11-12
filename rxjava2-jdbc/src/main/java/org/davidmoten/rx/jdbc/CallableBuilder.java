@@ -34,11 +34,9 @@ public final class CallableBuilder {
     }
 
     interface OutParameterPlaceholder extends ParameterPlaceholder {
-
     }
 
     interface InParameterPlaceholder extends ParameterPlaceholder {
-
     }
 
     static final class In implements InParameterPlaceholder {
@@ -129,7 +127,7 @@ public final class CallableBuilder {
     }
 
     public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
-        return new CallableResultSets1Builder<T>(this, Util.autoMap(cls));
+        return map(Util.autoMap(cls));
     }
 
     public static final class CallableBuilder1<T1> {
@@ -212,7 +210,7 @@ public final class CallableBuilder {
         }
 
         public <T2> CallableResultSets2Builder<T1, T2> autoMap(Class<T2> cls) {
-            return new CallableResultSets2Builder<T1, T2>(b, f1, Util.autoMap(cls));
+            return map(Util.autoMap(cls));
         }
 
         public <T2> CallableResultSets2Builder<T1, T2> map(
