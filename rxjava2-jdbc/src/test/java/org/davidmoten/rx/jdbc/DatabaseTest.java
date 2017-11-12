@@ -2483,14 +2483,14 @@ public class DatabaseTest {
     public void testCallableApi() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
-                .call("call getPersonCount(?,?)") //
+                .call("call getGiven(?,?)") //
                 .in(Type.INTEGER) //
                 .out(Type.INTEGER, Integer.class) //
                 .in(0, 10, 20) //
                 .build() //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
-                .assertValues(2, 2, 2) //
+                .assertValues(0, 10, 20) //
                 .assertComplete();
     }
 

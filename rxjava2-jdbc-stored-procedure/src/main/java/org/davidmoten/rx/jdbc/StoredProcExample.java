@@ -8,13 +8,17 @@ import java.sql.SQLException;
 
 public class StoredProcExample {
 
+    public static void getGiven(int a, int[] b) {
+        b[0] = a;
+    }
+
     public static void getPersonCount(int minScore, int[] count) throws SQLException {
         try (Connection con = DriverManager.getConnection("jdbc:default:connection");
                 PreparedStatement stmt = prepareStatement(con, minScore);
                 ResultSet rs = stmt.executeQuery()) {
             rs.next();
             count[0] = rs.getInt(1);
-            System.out.println("returning getPersonCount="+ count[0]);
+            System.out.println("returning getPersonCount=" + count[0]);
         }
     }
 

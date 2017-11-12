@@ -267,7 +267,6 @@ public enum Util {
     }
 
     static void closeCallableStatementAndConnection(NamedCallableStatement stmt) {
-        System.out.println("closing callable statement" + stmt);
         closePreparedStatementAndConnection(stmt.stmt);
     }
 
@@ -369,7 +368,6 @@ public enum Util {
     }
 
     public static void commit(PreparedStatement ps) throws SQLException {
-        System.out.println("commiting " + ps);
         ps.getConnection().commit();
     }
 
