@@ -99,24 +99,41 @@ public final class Call {
             List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2) {
         return Single.fromCallable(() -> {
             CallableStatement st = stmt.stmt;
-            Util.incrementCounter(st.getConnection());
-            setParameters(st, parameters, parameterPlaceholders, stmt.names);
-            ParameterPlaceholder p = null;
-            List<Integer> outs = new ArrayList<Integer>();
-            for (int j = 0; j < parameterPlaceholders.size(); j++) {
-                p = parameterPlaceholders.get(j);
-                if (p instanceof OutParameterPlaceholder) {
-                    outs.add(j + 1);
-                    if (outs.size() == 2) {
-                        break;
-                    }
-                }
-            }
-            st.execute();
-            T1 o1 = Util.mapObject(st, cls1, outs.get(0), p.type());
-            T2 o2 = Util.mapObject(st, cls2, outs.get(1), p.type());
+            List<PlaceAndType> outs = execute(stmt, parameters, parameterPlaceholders, 2, st);
+            T1 o1 = Util.mapObject(st, cls1, outs.get(0).pos, outs.get(0).type);
+            T2 o2 = Util.mapObject(st, cls2, outs.get(1).pos, outs.get(1).type);
             return Tuple2.create(o1, o2);
         });
+    }
+
+    private static List<PlaceAndType> execute(NamedCallableStatement stmt, List<Object> parameters,
+            List<ParameterPlaceholder> parameterPlaceholders, int count, CallableStatement st)
+            throws SQLException {
+        Util.incrementCounter(st.getConnection());
+        setParameters(st, parameters, parameterPlaceholders, stmt.names);
+        List<PlaceAndType> outs = new ArrayList<PlaceAndType>(count);
+        for (int j = 0; j < parameterPlaceholders.size(); j++) {
+            ParameterPlaceholder p = parameterPlaceholders.get(j);
+            if (p instanceof OutParameterPlaceholder) {
+                outs.add(new PlaceAndType(j + 1, p.type()));
+                if (outs.size() == count) {
+                    break;
+                }
+            }
+        }
+        st.execute();
+        return outs;
+    }
+
+    private static final class PlaceAndType {
+        final int pos;
+        final Type type;
+
+        PlaceAndType(int pos, Type type) {
+            this.pos = pos;
+            this.type = type;
+        }
+
     }
 
     public static <T1, T2> Flowable<Notification<Tuple2<T1, T2>>> createWithTwoOutParameters(
