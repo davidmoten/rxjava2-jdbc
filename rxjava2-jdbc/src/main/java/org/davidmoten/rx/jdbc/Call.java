@@ -77,7 +77,14 @@ public final class Call {
 
     // TWO
 
-    public static <T1, T2> Flowable<Notification<Tuple2<T1, T2>>> createWithTwoParameters(
+    public static <T1, T2> Flowable<Notification<Tuple2<T1, T2>>> createWithTwoOutParameters(
+            Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
+            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2) {
+        return connection.toFlowable().flatMap(con -> createWithTwoParameters(con, sql,
+                parameterGroups, parameterPlaceholders, cls1, cls2));
+    }
+
+    private static <T1, T2> Flowable<Notification<Tuple2<T1, T2>>> createWithTwoParameters(
             Connection con, String sql, Flowable<List<Object>> parameterGroups,
             List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2) {
         log.debug("Update.create {}", sql);
@@ -134,13 +141,6 @@ public final class Call {
             this.type = type;
         }
 
-    }
-
-    public static <T1, T2> Flowable<Notification<Tuple2<T1, T2>>> createWithTwoOutParameters(
-            Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
-            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2) {
-        return connection.toFlowable().flatMap(con -> createWithTwoParameters(con, sql,
-                parameterGroups, parameterPlaceholders, cls1, cls2));
     }
 
     static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters,
