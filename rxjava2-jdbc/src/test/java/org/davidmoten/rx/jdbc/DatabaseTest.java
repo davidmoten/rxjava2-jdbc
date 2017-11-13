@@ -2490,7 +2490,6 @@ public class DatabaseTest {
                 .build() //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
-                .assertValueCount(3) //
                 .assertValues(0, 10, 20) //
                 .assertComplete();
     }
