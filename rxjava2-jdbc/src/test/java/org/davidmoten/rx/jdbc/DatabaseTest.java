@@ -2480,6 +2480,41 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testCallableApiReturningOneOutParameter() throws InterruptedException {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call getGiven1(?,?)") //
+                .in(Type.INTEGER) //
+                .out(Type.INTEGER, Integer.class) //
+                .in(0, 10, 20) //
+                .build() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
+                .assertValueCount(3) //
+                .assertValues(0, 10, 20) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testCallableApiReturningTwoOutParameters() throws InterruptedException {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call getGiven2(?,?,?)") //
+                .in(Type.INTEGER) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .in(0, 10, 20) //
+                .build() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
+                .assertValueCount(3) //
+                .assertValueAt(0, x -> x._1() == 0 && x._2() == 1) //
+                .assertValueAt(1, x -> x._1() == 10 && x._2() == 11) //
+                .assertValueAt(2, x -> x._1() == 20 && x._2() == 21) //
+                .assertComplete();
+    }
+
+    @Test
     public void testCallableApiReturningOneResultSet() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
@@ -2497,26 +2532,6 @@ public class DatabaseTest {
                 .assertValueAt(4, p -> "FRED".equalsIgnoreCase(p.name()) && p.score() == 24)
                 .assertValueAt(5, p -> "SARAH".equalsIgnoreCase(p.name()) && p.score() == 26)
                 .assertValueCount(6) //
-                .assertComplete();
-    }
-
-    @Test
-    public void testCallableApiReturningTwoOutParameters() throws InterruptedException {
-        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
-        db //
-                .call("call getGiven2(?,?,?)") //
-                .in(Type.INTEGER) //
-                .out(Type.INTEGER, Integer.class) //
-                .out(Type.INTEGER, Integer.class) //
-                .in(0, 10, 20) //
-                .build() //
-                .doOnNext(System.out::println) //
-                .test() //
-                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
-                .assertValueCount(3) //
-                .assertValueAt(0, x -> x._1() == 0 && x._2() == 1) //
-                .assertValueAt(1, x -> x._1() == 10 && x._2() == 11) //
-                .assertValueAt(2, x -> x._1() == 20 && x._2() == 21) //
                 .assertComplete();
     }
 

@@ -267,8 +267,7 @@ public final class Call {
             List<Object> parameters) throws SQLException {
         List<PlaceAndType> outs = execute(stmt, parameters, parameterPlaceholders,
                 Integer.MAX_VALUE, stmt.stmt);
-        // TODO size exactly
-        List<Object> list = new ArrayList<>();
+        List<Object> list = new ArrayList<>(outs.size());
         for (PlaceAndType p : outs) {
             // TODO convert to a desired return type?
             list.add(stmt.stmt.getObject(p.pos));
