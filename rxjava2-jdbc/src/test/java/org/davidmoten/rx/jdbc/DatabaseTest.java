@@ -2487,7 +2487,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .in(0, 10, 20) //
                 .build() //
-                .flatMap(crs -> crs.query1()) //
+                .flatMap(x -> x.query1()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
                 .assertValueAt(0, p -> "FRED".equalsIgnoreCase(p.name()) && p.score() == 24)
