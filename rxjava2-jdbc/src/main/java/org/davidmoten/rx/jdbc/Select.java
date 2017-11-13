@@ -32,7 +32,7 @@ final class Select {
                 .flatMap(con -> create(con, sql, parameterGroups, fetchSize, mapper, eagerDispose));
     }
 
-    private static <T> Flowable<T> create(Connection con, String sql,
+     static <T> Flowable<T> create(Connection con, String sql,
             Flowable<List<Object>> parameterGroups, int fetchSize,
             Function<? super ResultSet, T> mapper, boolean eagerDispose) {
         log.debug("Select.create called with con={}", con);

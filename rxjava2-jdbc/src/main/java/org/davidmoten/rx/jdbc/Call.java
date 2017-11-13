@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet1;
 import org.davidmoten.rx.jdbc.CallableBuilder.In;
 import org.davidmoten.rx.jdbc.CallableBuilder.InOut;
 import org.davidmoten.rx.jdbc.CallableBuilder.OutParameterPlaceholder;
@@ -17,9 +18,11 @@ import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import io.reactivex.Notification;
 import io.reactivex.Single;
+import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
@@ -154,14 +157,57 @@ public final class Call {
         return ps;
     }
 
-    // public static <T1> Flowable<T1> createWithOneResultSet(Single<Connection>
-    // connection,
-    // String sql, Flowable<List<Object>> parameterGroups,
-    // List<ParameterPlaceholder> params,
-    // Function<? super ResultSet, ? extends T1> f1) {
-    // return connection.toFlowable().flatMap(
-    // con -> createWithOneResultSet(con, sql, parameterGroups,
-    // parameterPlaceholders, f));
-    // }
+    public static <T1> Flowable<Notification<CallableResultSet1<T1>>> createWithOneResultSet(
+            Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
+            List<ParameterPlaceholder> parameterPlaceholders,
+            Function<? super ResultSet, ? extends T1> f1, int fetchSize) {
+        return connection.toFlowable().flatMap(con -> createWithOneResultSet(con, sql,
+                parameterGroups, parameterPlaceholders, f1, fetchSize));
+    }
+
+    private static <T1> Flowable<Notification<CallableResultSet1<T1>>> createWithOneResultSet(
+            Connection con, String sql, Flowable<List<Object>> parameterGroups,
+            List<ParameterPlaceholder> parameterPlaceholders,
+            Function<? super ResultSet, ? extends T1> f1, int fetchSize) {
+        log.debug("Update.create {}", sql);
+        Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql,
+                parameterPlaceholders);
+        final Function<NamedCallableStatement, Flowable<Notification<CallableResultSet1<T1>>>> flowableFactory = //
+                stmt -> parameterGroups //
+                        .flatMap(parameters -> {
+                            List<PlaceAndType> outs = execute(stmt, parameters,
+                                    parameterPlaceholders, 1, stmt.stmt);
+                            // TODO size exactly
+                            List<Object> list = new ArrayList<>();
+                            for (PlaceAndType p : outs) {
+                                // TODO convert to a desired return type (e.g. BigInteger to
+                                // Integer)
+                                list.add(stmt.stmt.getObject(p.pos));
+                            }
+                            ResultSet rs = stmt.stmt.getResultSet();
+                            Callable<ResultSet> initialState = () -> rs;
+                            BiConsumer<ResultSet, Emitter<T1>> generator = (rs, emitter) -> {
+                                log.debug("getting row from ps={}, rs={}", ps, rs);
+                                if (rs.next()) {
+                                    T1 v = f1.apply(rs);
+                                    log.debug("emitting {}", v);
+                                    emitter.onNext(v);
+                                } else {
+                                    log.debug("completed");
+                                    emitter.onComplete();
+                                }
+                            };
+                            Consumer<ResultSet> disposeState = Util::closeSilently;
+                            Flowable<T1> flowable1 = Flowable.generate(initialState, generator,
+                                    disposeState);
+                            return Single.just(new CallableResultSet1<T1>(list, flowable1))
+                                    .toFlowable();
+                        }) //
+                        .materialize() //
+                        .doOnComplete(() -> Util.commit(stmt.stmt)) //
+                        .doOnError(e -> Util.rollback(stmt.stmt));
+        Consumer<NamedCallableStatement> disposer = Util::closeCallableStatementAndConnection;
+        return Flowable.using(resourceFactory, flowableFactory, disposer, true);
+    }
 
 }

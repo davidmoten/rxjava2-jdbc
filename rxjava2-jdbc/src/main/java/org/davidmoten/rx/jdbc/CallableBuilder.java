@@ -270,8 +270,20 @@ public final class CallableBuilder {
 
     public static final class CallableResultSet1<T1> {
 
+        private final List<Object> outs;
+        private final Flowable<T1> query1;
+
+        public CallableResultSet1(List<Object> outs, Flowable<T1> query1) {
+            this.outs = outs;
+            this.query1 = query1;
+        }
+
         public Flowable<T1> query1() {
-            return null;
+            return query1;
+        }
+
+        public List<Object> outs() {
+            return outs;
         }
 
     }
