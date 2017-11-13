@@ -35,6 +35,15 @@ public class StoredProcExample {
         return stmt;
     }
 
+    public static void returnResultSetOne(ResultSet[] rs1) throws SQLException {
+        try (Connection con = DriverManager.getConnection("jdbc:default:connection")) {
+            // don't close the statement!
+            PreparedStatement stmt = con
+                    .prepareStatement("select name, score from person order by name");
+            rs1[0] = stmt.executeQuery();
+        }
+    }
+
     public static void returnResultSets(int minScore, ResultSet[] rs1, ResultSet[] rs2)
             throws SQLException {
         try (Connection con = DriverManager.getConnection("jdbc:default:connection")) {

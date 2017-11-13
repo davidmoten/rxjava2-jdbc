@@ -3,11 +3,13 @@ package org.davidmoten.rx.jdbc;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 
+import com.github.davidmoten.guavamini.Lists;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Completable;
@@ -87,8 +89,11 @@ public final class CallableBuilder {
         int numInParameters = params.stream() //
                 .filter(x -> x instanceof InParameterPlaceholder) //
                 .collect(Collectors.counting()).intValue();
-        return (Flowable<List<Object>>) (Flowable<?>) inStream.buffer(numInParameters);
-
+        if (numInParameters == 0) {
+            return inStream.map(x -> Collections.singletonList(x));
+        } else {
+            return (Flowable<List<Object>>) (Flowable<?>) inStream.buffer(numInParameters);
+        }
     }
 
     public Completable perform() {
@@ -227,12 +232,11 @@ public final class CallableBuilder {
             return in(Flowable.fromArray(objects));
         }
 
-        public Flowable<T1> build() {
-            return null;
-            // return Call
-            // .createWithOneResultSet(b.connection, b.sql, b.parameterGroups(), b.params,
-            // f1) //
-            // .dematerialize();
+        public Flowable<CallableResultSet1<T1>> build() {
+            return Call
+                    .createWithOneResultSet(b.connection, b.sql, b.parameterGroups(), b.params, f1,
+                            0) //
+                    .dematerialize();
         }
 
     }

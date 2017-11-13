@@ -180,14 +180,13 @@ public final class Call {
                             // TODO size exactly
                             List<Object> list = new ArrayList<>();
                             for (PlaceAndType p : outs) {
-                                // TODO convert to a desired return type (e.g. BigInteger to
-                                // Integer)
+                                // TODO convert to a desired return type?
                                 list.add(stmt.stmt.getObject(p.pos));
                             }
-                            ResultSet rs = stmt.stmt.getResultSet();
-                            Callable<ResultSet> initialState = () -> rs;
+                            ResultSet rsActual = stmt.stmt.getResultSet();
+                            Callable<ResultSet> initialState = () -> rsActual;
                             BiConsumer<ResultSet, Emitter<T1>> generator = (rs, emitter) -> {
-                                log.debug("getting row from ps={}, rs={}", ps, rs);
+                                log.debug("getting row from ps={}, rs={}", stmt.stmt, rs);
                                 if (rs.next()) {
                                     T1 v = f1.apply(rs);
                                     log.debug("emitting {}", v);

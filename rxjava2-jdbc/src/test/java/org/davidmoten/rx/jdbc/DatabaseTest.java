@@ -2480,19 +2480,23 @@ public class DatabaseTest {
     }
 
     @Test
-    @Ignore
-    public void testCallableApiReturningTwoResultSets() throws InterruptedException {
+    public void testCallableApiReturningOneResultSet() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
-                .call("call returnResultSets(?)") //
-                .in(Type.INTEGER) //
+                .call("call returnResultSetOne()") //
                 .autoMap(Person2.class) //
                 .in(0, 10, 20) //
                 .build() //
+                .flatMap(crs -> crs.query1()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
                 .assertValueAt(0, p -> "FRED".equalsIgnoreCase(p.name()) && p.score() == 24)
                 .assertValueAt(1, p -> "SARAH".equalsIgnoreCase(p.name()) && p.score() == 26)
+                .assertValueAt(2, p -> "FRED".equalsIgnoreCase(p.name()) && p.score() == 24)
+                .assertValueAt(3, p -> "SARAH".equalsIgnoreCase(p.name()) && p.score() == 26)
+                .assertValueAt(4, p -> "FRED".equalsIgnoreCase(p.name()) && p.score() == 24)
+                .assertValueAt(5, p -> "SARAH".equalsIgnoreCase(p.name()) && p.score() == 26)
+                .assertValueCount(6) //
                 .assertComplete();
     }
 
