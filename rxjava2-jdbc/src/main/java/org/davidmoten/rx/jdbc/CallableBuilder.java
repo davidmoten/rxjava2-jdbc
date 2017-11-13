@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 
-import com.github.davidmoten.guavamini.Lists;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Completable;
@@ -254,22 +253,37 @@ public final class CallableBuilder {
             this.f2 = f2;
         }
 
-        public Single<CallableResultSet2<T1, T2>> build() {
-            // TODO Auto-generated method stub
-            return null;
+        public Flowable<CallableResultSet2<T1, T2>> build() {
+            return Call
+                    .createWithTwoResultSets(b.connection, b.sql, b.parameterGroups(), b.params, f1,
+                            f2, 0) //
+                    .dematerialize();
         }
     }
 
     public static final class CallableResultSet2<T1, T2> {
 
+        private final List<Object> outs;
+        private final Flowable<T1> query1;
+        private final Flowable<T2> query2;
+
+        public CallableResultSet2(List<Object> outs, Flowable<T1> query1, Flowable<T2> query2) {
+            this.outs = outs;
+            this.query1 = query1;
+            this.query2 = query2;
+        }
+
         public Flowable<T1> query1() {
-            return null;
+            return query1;
         }
 
         public Flowable<T2> query2() {
-            return null;
+            return query2;
         }
 
+        public List<Object> outs() {
+            return outs;
+        }
     }
 
     public static final class CallableResultSet1<T1> {
