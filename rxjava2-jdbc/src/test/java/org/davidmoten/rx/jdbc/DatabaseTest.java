@@ -2518,6 +2518,9 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .in(0, 10, 20) //
                 .build() //
+                .doOnNext(x -> {
+                    assertTrue(x.outs().isEmpty());
+                }) //
                 .flatMap(x -> x.results()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -2652,7 +2655,11 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .in(0, 10) //
                 .build() //
-                // just zip the first and last result sets
+                .doOnNext(x -> {
+                    assertEquals(0, x.outs().size());
+                    assertEquals(10, x.results().size());
+                }) //
+                   // just zip the first and last result sets
                 .flatMap(x -> x.results(0) //
                         .zipWith(x.results(9), //
                                 (y, z) -> ((Person2) y).name() + ((Person2) z).name()))
