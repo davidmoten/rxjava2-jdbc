@@ -2460,7 +2460,7 @@ public class DatabaseTest {
     public void testCallableApiReturningOneOutParameter() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
-                .call("call getGiven1(?,?)") //
+                .call("call in1out1(?,?)") //
                 .in(Type.INTEGER) //
                 .out(Type.INTEGER, Integer.class) //
                 .in(0, 10, 20) //
@@ -2475,7 +2475,7 @@ public class DatabaseTest {
     public void testCallableApiReturningTwoOutParameters() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
-                .call("call getGiven2(?,?,?)") //
+                .call("call in1out2(?,?,?)") //
                 .in(Type.INTEGER) //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
@@ -2494,7 +2494,7 @@ public class DatabaseTest {
     public void testCallableApiReturningThreeOutParameters() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
-                .call("call getGiven3(?,?,?,?)") //
+                .call("call in1out3(?,?,?,?)") //
                 .in(Type.INTEGER) //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //

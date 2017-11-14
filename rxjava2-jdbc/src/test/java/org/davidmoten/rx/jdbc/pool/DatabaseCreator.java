@@ -100,30 +100,30 @@ public final class DatabaseCreator {
         exec(c, "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'APP.examples', 0)");
 
         {
-            String sql = "CREATE PROCEDURE APP.getGiven1" //
+            String sql = "CREATE PROCEDURE APP.in1out1" //
                     + " (IN a INTEGER," //
                     + " OUT b INTEGER)" //
                     + " PARAMETER STYLE JAVA" //
                     + " LANGUAGE JAVA" //
                     + " EXTERNAL NAME" //
-                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.getGiven1'";
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.in1out1'";
             exec(c, sql);
         }
 
         {
-            String sql = "CREATE PROCEDURE APP.getGiven2" //
+            String sql = "CREATE PROCEDURE APP.in1out2" //
                     + " (IN a INTEGER," //
                     + " OUT b INTEGER," //
                     + " OUT c INTEGER)" //
                     + " PARAMETER STYLE JAVA" //
                     + " LANGUAGE JAVA" //
                     + " EXTERNAL NAME" //
-                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.getGiven2'";
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.in1out2'";
             exec(c, sql);
         }
         
         {
-            String sql = "CREATE PROCEDURE APP.getGiven3" //
+            String sql = "CREATE PROCEDURE APP.in1out3" //
                     + " (IN a INTEGER," //
                     + " OUT b INTEGER," //
                     + " OUT c INTEGER," //
@@ -131,7 +131,7 @@ public final class DatabaseCreator {
                     + " PARAMETER STYLE JAVA" //
                     + " LANGUAGE JAVA" //
                     + " EXTERNAL NAME" //
-                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.getGiven3'";
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.in1out3'";
             exec(c, sql);
         }
 

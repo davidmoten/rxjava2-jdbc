@@ -7,17 +7,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class StoredProcExample {
+    
+    public static void in0out0rs0() {
+    }
 
-    public static void getGiven1(int a, int[] b) {
+    public static void in1out1(int a, int[] b) {
         b[0] = a;
     }
 
-    public static void getGiven2(int a, int[] b, int c[]) {
+    public static void in1out2(int a, int[] b, int c[]) {
         b[0] = a;
         c[0] = a + 1;
     }
 
-    public static void getGiven3(int a, int[] b, int c[], int d[]) {
+    public static void in1out3(int a, int[] b, int c[], int d[]) {
         b[0] = a;
         c[0] = a + 1;
         d[0] = a + 2;
