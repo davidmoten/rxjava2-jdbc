@@ -106,7 +106,7 @@ public final class CallableBuilder {
     }
 
     public CallableBuilder in(Flowable<?> f) {
-        Preconditions.checkArgument(inStream == null, "you can only specify in flowable once");
+        Preconditions.checkArgument(inStream == null, "you can only specify in flowable once, current="+ inStream);
         this.inStream = f;
         return this;
     }
@@ -165,9 +165,7 @@ public final class CallableBuilder {
         }
 
         public Flowable<T1> build() {
-            return Call
-                    .createWithOneOutParameter(b.connection, b.sql, b.parameterGroups(), b.params,
-                            cls) //
+            return Call.createWithOneOutParameter(b.connection, b.sql, b.parameterGroups(), b.params, cls) //
                     .dematerialize();
         }
     }
@@ -195,9 +193,7 @@ public final class CallableBuilder {
         }
 
         public Flowable<Tuple2<T1, T2>> build() {
-            return Call
-                    .createWithTwoOutParameters(b.connection, b.sql, b.parameterGroups(), b.params,
-                            cls1, cls2) //
+            return Call.createWithTwoOutParameters(b.connection, b.sql, b.parameterGroups(), b.params, cls1, cls2) //
                     .dematerialize();
         }
     }
@@ -207,8 +203,7 @@ public final class CallableBuilder {
         private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
 
-        CallableResultSets1Builder(CallableBuilder b,
-                Function<? super ResultSet, ? extends T1> function) {
+        CallableResultSets1Builder(CallableBuilder b, Function<? super ResultSet, ? extends T1> function) {
             this.b = b;
             this.f1 = function;
         }
@@ -217,8 +212,7 @@ public final class CallableBuilder {
             return map(Util.autoMap(cls));
         }
 
-        public <T2> CallableResultSets2Builder<T1, T2> map(
-                Function<? super ResultSet, ? extends T2> f2) {
+        public <T2> CallableResultSets2Builder<T1, T2> map(Function<? super ResultSet, ? extends T2> f2) {
             return new CallableResultSets2Builder<T1, T2>(b, f1, f2);
         }
 
@@ -232,9 +226,7 @@ public final class CallableBuilder {
         }
 
         public Flowable<CallableResultSet1<T1>> build() {
-            return Call
-                    .createWithOneResultSet(b.connection, b.sql, b.parameterGroups(), b.params, f1,
-                            0) //
+            return Call.createWithOneResultSet(b.connection, b.sql, b.parameterGroups(), b.params, f1, 0) //
                     .dematerialize();
         }
 
@@ -253,10 +245,18 @@ public final class CallableBuilder {
             this.f2 = f2;
         }
 
+        public CallableResultSets2Builder<T1, T2> in(Flowable<?> f) {
+            b.in(f);
+            return this;
+        }
+
+        public CallableResultSets2Builder<T1, T2> in(Object... objects) {
+            in(Flowable.fromArray(objects));
+            return this;
+        }
+
         public Flowable<CallableResultSet2<T1, T2>> build() {
-            return Call
-                    .createWithTwoResultSets(b.connection, b.sql, b.parameterGroups(), b.params, f1,
-                            f2, 0) //
+            return Call.createWithTwoResultSets(b.connection, b.sql, b.parameterGroups(), b.params, f1, f2, 0) //
                     .dematerialize();
         }
     }
