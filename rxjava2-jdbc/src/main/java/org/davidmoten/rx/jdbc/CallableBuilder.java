@@ -165,7 +165,7 @@ public final class CallableBuilder {
             in(Flowable.fromArray(objects));
             return this;
         }
-        
+
         public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
             return new CallableResultSets1Builder<T>(b, function);
         }
@@ -206,7 +206,7 @@ public final class CallableBuilder {
             in(Flowable.fromArray(objects));
             return this;
         }
-        
+
         public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
             return new CallableResultSets1Builder<T>(b, function);
         }
@@ -244,7 +244,7 @@ public final class CallableBuilder {
             in(Flowable.fromArray(objects));
             return this;
         }
-        
+
         public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
             return new CallableResultSets1Builder<T>(b, function);
         }
@@ -259,7 +259,7 @@ public final class CallableBuilder {
                     .dematerialize();
         }
     }
-    
+
     public static final class CallableBuilder4<T1, T2, T3, T4> {
 
         private final CallableBuilder b;
@@ -285,7 +285,7 @@ public final class CallableBuilder {
             in(Flowable.fromArray(objects));
             return this;
         }
-        
+
         public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
             return new CallableResultSets1Builder<T>(b, function);
         }
@@ -296,7 +296,8 @@ public final class CallableBuilder {
 
         public Flowable<Tuple4<T1, T2, T3, T4>> build() {
             return Call
-                    .createWithFourOutParameters(b.connection, b.sql, b.parameterGroups(), b.params, cls1, cls2, cls3, cls4) //
+                    .createWithFourOutParameters(b.connection, b.sql, b.parameterGroups(), b.params, cls1, cls2, cls3,
+                            cls4) //
                     .dematerialize();
         }
     }
@@ -364,6 +365,58 @@ public final class CallableBuilder {
         }
     }
 
+    public static final class CallableResultSets3Builder<T1, T2, T3> {
+
+        private final CallableBuilder b;
+        private final Function<? super ResultSet, ? extends T1> f1;
+        private final Function<? super ResultSet, ? extends T2> f2;
+        private final Function<? super ResultSet, ? extends T3> f3;
+
+        CallableResultSets3Builder(CallableBuilder b, Function<? super ResultSet, ? extends T1> f1,
+                Function<? super ResultSet, ? extends T2> f2, Function<? super ResultSet, ? extends T3> f3) {
+            this.b = b;
+            this.f1 = f1;
+            this.f2 = f2;
+            this.f3 = f3;
+        }
+
+        public CallableResultSets3Builder<T1, T2, T3> in(Flowable<?> f) {
+            b.in(f);
+            return this;
+        }
+
+        public CallableResultSets3Builder<T1, T2, T3> in(Object... objects) {
+            in(Flowable.fromArray(objects));
+            return this;
+        }
+
+        public Flowable<CallableResultSet3<T1, T2, T3>> build() {
+            return Call.createWithThreeResultSets(b.connection, b.sql, b.parameterGroups(), b.params, f1, f2, f3, 0) //
+                    .dematerialize();
+        }
+    }
+
+    public static final class CallableResultSet1<T1> {
+
+        private final List<Object> outs;
+        private final Flowable<T1> query1;
+
+        public CallableResultSet1(List<Object> outs, Flowable<T1> query1) {
+            this.outs = outs;
+            this.query1 = query1;
+        }
+
+        public Flowable<T1> query1() {
+            return query1;
+        }
+
+        public List<Object> outs() {
+            return outs;
+        }
+
+    }
+
+    
     public static final class CallableResultSet2<T1, T2> {
 
         private final List<Object> outs;
@@ -389,24 +442,35 @@ public final class CallableBuilder {
         }
     }
 
-    public static final class CallableResultSet1<T1> {
+    public static final class CallableResultSet3<T1, T2, T3> {
 
         private final List<Object> outs;
         private final Flowable<T1> query1;
+        private final Flowable<T2> query2;
+        private final Flowable<T3> query3;
 
-        public CallableResultSet1(List<Object> outs, Flowable<T1> query1) {
+        public CallableResultSet3(List<Object> outs, Flowable<T1> query1, Flowable<T2> query2, Flowable<T3> query3) {
             this.outs = outs;
             this.query1 = query1;
+            this.query2 = query2;
+            this.query3 = query3;
         }
 
         public Flowable<T1> query1() {
             return query1;
         }
 
+        public Flowable<T2> query2() {
+            return query2;
+        }
+
+        public Flowable<T3> query3() {
+            return query3;
+        }
+
         public List<Object> outs() {
             return outs;
         }
-
     }
 
 }

@@ -12,6 +12,7 @@ import java.util.concurrent.Callable;
 
 import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet1;
 import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet2;
+import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet3;
 import org.davidmoten.rx.jdbc.CallableBuilder.In;
 import org.davidmoten.rx.jdbc.CallableBuilder.InOut;
 import org.davidmoten.rx.jdbc.CallableBuilder.OutParameterPlaceholder;
@@ -204,6 +205,44 @@ public final class Call {
                             stmt.stmt.getMoreResults(Statement.KEEP_CURRENT_RESULT);
                             final Flowable<T2> flowable2 = createFlowable(stmt, f2);
                             return Single.just(new CallableResultSet2<T1, T2>(outputValues, flowable1, flowable2))
+                                    .toFlowable();
+                        }) //
+                        .materialize() //
+                        .doOnComplete(() -> Util.commit(stmt.stmt)) //
+                        .doOnError(e -> Util.rollback(stmt.stmt));
+        Consumer<NamedCallableStatement> disposer = Util::closeCallableStatementAndConnection;
+        return Flowable.using(resourceFactory, flowableFactory, disposer, true);
+    }
+
+    /////////////////////////
+    // Three ResultSets
+    /////////////////////////
+
+    public static <T1, T2, T3> Flowable<Notification<CallableResultSet3<T1, T2, T3>>> createWithThreeResultSets(
+            Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
+            List<ParameterPlaceholder> parameterPlaceholders, Function<? super ResultSet, ? extends T1> f1,
+            Function<? super ResultSet, ? extends T2> f2, Function<? super ResultSet, ? extends T3> f3, int fetchSize) {
+        return connection.toFlowable().flatMap(con -> createWithThreeResultSets(con, sql, parameterGroups,
+                parameterPlaceholders, f1, f2, f3, fetchSize));
+    }
+
+    private static <T1, T2, T3> Flowable<Notification<CallableResultSet3<T1, T2, T3>>> createWithThreeResultSets(
+            Connection con, String sql, Flowable<List<Object>> parameterGroups,
+            List<ParameterPlaceholder> parameterPlaceholders, Function<? super ResultSet, ? extends T1> f1,
+            Function<? super ResultSet, ? extends T2> f2, Function<? super ResultSet, ? extends T3> f3, int fetchSize) {
+        Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql, parameterPlaceholders);
+        final Function<NamedCallableStatement, Flowable<Notification<CallableResultSet3<T1, T2, T3>>>> flowableFactory = //
+                stmt -> parameterGroups //
+                        .flatMap(parameters -> {
+                            List<Object> outputValues = executeAndReturnOutputValues(parameterPlaceholders, stmt,
+                                    parameters);
+                            final Flowable<T1> flowable1 = createFlowable(stmt, f1);
+                            stmt.stmt.getMoreResults(Statement.KEEP_CURRENT_RESULT);
+                            final Flowable<T2> flowable2 = createFlowable(stmt, f2);
+                            stmt.stmt.getMoreResults(Statement.KEEP_CURRENT_RESULT);
+                            final Flowable<T3> flowable3 = createFlowable(stmt, f3);
+                            return Single.just(
+                                    new CallableResultSet3<T1, T2, T3>(outputValues, flowable1, flowable2, flowable3))
                                     .toFlowable();
                         }) //
                         .materialize() //
