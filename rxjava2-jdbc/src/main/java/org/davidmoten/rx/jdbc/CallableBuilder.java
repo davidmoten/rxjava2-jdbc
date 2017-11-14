@@ -364,6 +364,11 @@ public final class CallableBuilder {
             this.f1 = function;
         }
 
+        public CallableResultSets1Builder<T1> out(Type type, Class<?> cls5) {
+            b.out(type, cls5);
+            return this;
+        }
+
         public <T2> CallableResultSets2Builder<T1, T2> autoMap(Class<T2> cls) {
             return map(Util.autoMap(cls));
         }
@@ -399,6 +404,11 @@ public final class CallableBuilder {
             this.b = b;
             this.f1 = f1;
             this.f2 = f2;
+        }
+
+        public CallableResultSets2Builder<T1, T2> out(Type type, Class<?> cls5) {
+            b.out(type, cls5);
+            return this;
         }
 
         public CallableResultSets2Builder<T1, T2> in(Flowable<?> f) {
@@ -440,6 +450,11 @@ public final class CallableBuilder {
             this.f3 = f3;
         }
 
+        public CallableResultSets3Builder<T1, T2, T3> out(Type type, Class<?> cls5) {
+            b.out(type, cls5);
+            return this;
+        }
+
         public CallableResultSets3Builder<T1, T2, T3> in(Flowable<?> f) {
             b.in(f);
             return this;
@@ -450,8 +465,52 @@ public final class CallableBuilder {
             return this;
         }
 
+        public <T> CallableResultSetsNBuilder autoMap(Class<T> cls) {
+            return map(Util.autoMap(cls));
+        }
+
+        @SuppressWarnings("unchecked")
+        public CallableResultSetsNBuilder map(Function<? super ResultSet, ?> f) {
+            return new CallableResultSetsNBuilder(b, Lists.newArrayList(f1, f2, f3, f));
+        }
+
         public Flowable<CallableResultSet3<T1, T2, T3>> build() {
             return Call.createWithThreeResultSets(b.connection, b.sql, b.parameterGroups(), b.params, f1, f2, f3, 0) //
+                    .dematerialize();
+        }
+    }
+
+    public static final class CallableResultSetsNBuilder {
+
+        private final CallableBuilder b;
+        private final List<Function<? super ResultSet, ?>> functions;
+
+        CallableResultSetsNBuilder(CallableBuilder b, List<Function<? super ResultSet, ?>> functions) {
+            this.b = b;
+            this.functions = functions;
+        }
+
+        public CallableResultSetsNBuilder in(Flowable<?> f) {
+            b.in(f);
+            return this;
+        }
+
+        public CallableResultSetsNBuilder in(Object... objects) {
+            in(Flowable.fromArray(objects));
+            return this;
+        }
+
+        public <T> CallableResultSetsNBuilder autoMap(Class<T> cls) {
+            return map(Util.autoMap(cls));
+        }
+
+        public CallableResultSetsNBuilder map(Function<? super ResultSet, ?> f) {
+            functions.add(f);
+            return this;
+        }
+
+        public Flowable<CallableResultSetN> build() {
+            return Call.createWithNResultSets(b.connection, b.sql, b.parameterGroups(), b.params, functions, 0) //
                     .dematerialize();
         }
     }
@@ -525,6 +584,25 @@ public final class CallableBuilder {
 
         public Flowable<T3> query3() {
             return query3;
+        }
+
+        public List<Object> outs() {
+            return outs;
+        }
+    }
+
+    public static final class CallableResultSetN {
+
+        private final List<Object> outs;
+        private final List<Flowable<?>> flowables;
+
+        public CallableResultSetN(List<Object> outs, List<Flowable<?>> flowables) {
+            this.outs = outs;
+            this.flowables = flowables;
+        }
+
+        public List<Flowable<?>> flowables() {
+            return flowables;
         }
 
         public List<Object> outs() {

@@ -13,6 +13,7 @@ import java.util.concurrent.Callable;
 import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet1;
 import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet2;
 import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet3;
+import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSetN;
 import org.davidmoten.rx.jdbc.CallableBuilder.In;
 import org.davidmoten.rx.jdbc.CallableBuilder.InOut;
 import org.davidmoten.rx.jdbc.CallableBuilder.OutParameterPlaceholder;
@@ -23,6 +24,8 @@ import org.davidmoten.rx.jdbc.tuple.Tuple4;
 import org.davidmoten.rx.jdbc.tuple.TupleN;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.davidmoten.guavamini.Lists;
 
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
@@ -291,6 +294,42 @@ public final class Call {
         return Flowable.using(resourceFactory, flowableFactory, disposer, true);
     }
 
+    /////////////////////////
+    // N ResultSets
+    /////////////////////////
+
+    public static Flowable<Notification<CallableResultSetN>> createWithNResultSets(Single<Connection> connection,
+            String sql, Flowable<List<Object>> parameterGroups, List<ParameterPlaceholder> parameterPlaceholders,
+            List<Function<? super ResultSet, ?>> functions, int fetchSize) {
+        return connection.toFlowable().flatMap(
+                con -> createWithNResultSets(con, sql, parameterGroups, parameterPlaceholders, functions, fetchSize));
+    }
+
+    private static Flowable<Notification<CallableResultSetN>> createWithNResultSets(Connection con, String sql,
+            Flowable<List<Object>> parameterGroups, List<ParameterPlaceholder> parameterPlaceholders,
+            List<Function<? super ResultSet, ?>> functions, int fetchSize) {
+        Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql, parameterPlaceholders);
+        final Function<NamedCallableStatement, Flowable<Notification<CallableResultSetN>>> flowableFactory = //
+                stmt -> parameterGroups //
+                        .flatMap(parameters -> {
+                            List<Object> outputValues = executeAndReturnOutputValues(parameterPlaceholders, stmt,
+                                    parameters);
+                            List<Flowable<?>> flowables = Lists.newArrayList();
+                            int i = 0;
+                            do {
+                                Function<? super ResultSet, ?> f = functions.get(i);
+                                flowables.add(createFlowable(stmt, f));
+                                i++;
+                            } while (stmt.stmt.getMoreResults(Statement.KEEP_CURRENT_RESULT));
+                            return Single.just(new CallableResultSetN(outputValues, flowables)).toFlowable();
+                        }) //
+                        .materialize() //
+                        .doOnComplete(() -> Util.commit(stmt.stmt)) //
+                        .doOnError(e -> Util.rollback(stmt.stmt));
+        Consumer<NamedCallableStatement> disposer = Util::closeCallableStatementAndConnection;
+        return Flowable.using(resourceFactory, flowableFactory, disposer, true);
+    }
+
     ////////////////////////////////////
     // Utilty Methods
     ///////////////////////////////////
@@ -323,7 +362,7 @@ public final class Call {
             }
         } else {
             // TODO
-            throw new RuntimeException("not implemented yet");
+            throw new RuntimeException("named paramters not implemented yet for CallableStatement yet");
             // Util.setNamedParameters(ps, params, names);
         }
         return ps;
