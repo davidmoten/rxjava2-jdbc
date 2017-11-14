@@ -165,6 +165,17 @@ public final class DatabaseCreator {
             exec(c, sql);
         }
         {
+            String sql = "CREATE PROCEDURE APP.rs10" //
+                    + " ()" //
+                    + " PARAMETER STYLE JAVA" //
+                    + " LANGUAGE JAVA" //
+                    + " READS SQL DATA" //
+                    + " DYNAMIC RESULT SETS 10" //
+                    + " EXTERNAL NAME" //
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.rs10'";
+            exec(c, sql);
+        }
+        {
             String sql = "CREATE PROCEDURE APP.GETPERSONCOUNT" //
                     + " (IN MIN_SCORE INTEGER," //
                     + " OUT COUNT INTEGER)" //

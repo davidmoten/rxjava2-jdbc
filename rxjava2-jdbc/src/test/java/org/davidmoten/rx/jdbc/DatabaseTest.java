@@ -2549,6 +2549,42 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testCallableApiReturningTwoResultSetsSwitchOrder1() throws InterruptedException {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call in1out0rs2(?)") //
+                .autoMap(Person2.class) //
+                .in(Type.INTEGER) //
+                .autoMap(Person2.class) //
+                .in(0, 10, 20) //
+                .build() //
+                .doOnNext(x -> assertTrue(x.outs().isEmpty())) //
+                .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y.name() + z.name())) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValues("FREDSARAH", "SARAHFRED", "FREDSARAH", "SARAHFRED", "FREDSARAH", "SARAHFRED") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testCallableApiReturningTwoResultSetsSwitchOrder2() throws InterruptedException {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call in1out0rs2(?)") //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .in(Type.INTEGER) //
+                .in(0, 10, 20) //
+                .build() //
+                .doOnNext(x -> assertTrue(x.outs().isEmpty())) //
+                .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y.name() + z.name())) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValues("FREDSARAH", "SARAHFRED", "FREDSARAH", "SARAHFRED", "FREDSARAH", "SARAHFRED") //
+                .assertComplete();
+    }
+
+    @Test
     public void testCallableApiReturningTwoOutputThreeResultSets() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
@@ -2596,6 +2632,34 @@ public class DatabaseTest {
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValueCount(2) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testCallableApiReturningTenResultSets() {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call rs10()") //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .in(0, 10) //
+                .build() //
+                // just zip the first and last result sets
+                .flatMap(x -> x.results(0) //
+                        .zipWith(x.results(9), //
+                                (y, z) -> ((Person2) y).name() + ((Person2) z).name()))
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValues("FREDSARAH", "SARAHFRED", "FREDSARAH", "SARAHFRED") //
                 .assertComplete();
     }
 

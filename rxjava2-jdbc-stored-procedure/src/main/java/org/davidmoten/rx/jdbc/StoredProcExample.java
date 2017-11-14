@@ -26,8 +26,7 @@ public class StoredProcExample {
         d[0] = a + 2;
     }
 
-    public static void out10(int[] a, int[] b, int[] c, int[] d, int[] e, int[] f, int[] g, int[] h, int[] i,
-            int[] j) {
+    public static void out10(int[] a, int[] b, int[] c, int[] d, int[] e, int[] f, int[] g, int[] h, int[] i, int[] j) {
         a[0] = 1;
         b[0] = 2;
         c[0] = 3;
@@ -38,6 +37,22 @@ public class StoredProcExample {
         h[0] = 8;
         i[0] = 9;
         j[0] = 10;
+    }
+
+    public static void rs10(ResultSet[] a, ResultSet[] b, ResultSet[] c, ResultSet[] d, ResultSet[] e, ResultSet[] f,
+            ResultSet[] g, ResultSet[] h, ResultSet[] i, ResultSet[] j) throws SQLException {
+        try (Connection con = DriverManager.getConnection("jdbc:default:connection")) {
+            setRs1(con, a);
+            setRs2(con, b);
+            setRs1(con, c);
+            setRs2(con, d);
+            setRs1(con, e);
+            setRs2(con, f);
+            setRs1(con, g);
+            setRs2(con, h);
+            setRs1(con, i);
+            setRs2(con, j);
+        }
     }
 
     public static void getPersonCount(int minScore, int[] count) throws SQLException {
@@ -87,19 +102,20 @@ public class StoredProcExample {
         b[0] = 2;
         try (Connection con = DriverManager.getConnection("jdbc:default:connection")) {
             // don't close the statement!
-            {
-                PreparedStatement stmt = con.prepareStatement("select name, score from person order by name");
-                c[0] = stmt.executeQuery();
-            }
-            {
-                PreparedStatement stmt = con.prepareStatement("select name, score from person order by name desc");
-                d[0] = stmt.executeQuery();
-            }
-            {
-                PreparedStatement stmt = con.prepareStatement("select name, score from person order by name");
-                e[0] = stmt.executeQuery();
-            }
+            setRs1(con, c);
+            setRs2(con, d);
+            setRs1(con, e);
         }
+    }
+
+    private static void setRs1(Connection con, ResultSet[] c) throws SQLException {
+        PreparedStatement stmt = con.prepareStatement("select name, score from person order by name");
+        c[0] = stmt.executeQuery();
+    }
+
+    private static void setRs2(Connection con, ResultSet[] c) throws SQLException {
+        PreparedStatement stmt = con.prepareStatement("select name, score from person order by name desc");
+        c[0] = stmt.executeQuery();
     }
 
     public static void in2out2(int a, int b, String[] name, int[] total) {

@@ -209,6 +209,11 @@ public final class CallableBuilder {
             return this;
         }
 
+        public CallableBuilder2<T1, T2> in(Type type) {
+            b.in(type);
+            return this;
+        }
+
         public CallableBuilder2<T1, T2> in(Object... objects) {
             in(Flowable.fromArray(objects));
             return this;
@@ -257,6 +262,11 @@ public final class CallableBuilder {
             return this;
         }
 
+        public CallableBuilder3<T1, T2, T3> in(Type type) {
+            b.in(type);
+            return this;
+        }
+
         public CallableBuilder3<T1, T2, T3> in(Object... objects) {
             in(Flowable.fromArray(objects));
             return this;
@@ -300,6 +310,11 @@ public final class CallableBuilder {
 
         public CallableBuilder4<T1, T2, T3, T4> in(Flowable<?> f) {
             b.in(f);
+            return this;
+        }
+
+        public CallableBuilder4<T1, T2, T3, T4> in(Type type) {
+            b.in(type);
             return this;
         }
 
@@ -402,6 +417,11 @@ public final class CallableBuilder {
             return this;
         }
 
+        public CallableResultSets1Builder<T1> in(Type type) {
+            b.in(type);
+            return this;
+        }
+
         public CallableResultSets1Builder<T1> in(Object... objects) {
             return in(Flowable.fromArray(objects));
         }
@@ -438,6 +458,11 @@ public final class CallableBuilder {
 
         public CallableResultSets2Builder<T1, T2> in(Flowable<?> f) {
             b.in(f);
+            return this;
+        }
+
+        public CallableResultSets2Builder<T1, T2> in(Type type) {
+            b.in(type);
             return this;
         }
 
@@ -643,6 +668,10 @@ public final class CallableBuilder {
 
         public List<Flowable<?>> results() {
             return flowables;
+        }
+        
+        public Flowable<?> results(int index) {
+            return flowables.get(index);
         }
 
         public List<Object> outs() {
