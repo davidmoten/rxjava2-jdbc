@@ -42,7 +42,7 @@ public class StoredProcExample {
         return stmt;
     }
 
-    public static void returnResultSetOne(ResultSet[] rs1) throws SQLException {
+    public static void in0out0rs1(ResultSet[] rs1) throws SQLException {
         try (Connection con = DriverManager.getConnection("jdbc:default:connection")) {
             // don't close the statement!
             PreparedStatement stmt = con.prepareStatement("select name, score from person order by name");
@@ -50,7 +50,7 @@ public class StoredProcExample {
         }
     }
 
-    public static void returnResultSets(int minScore, ResultSet[] rs1, ResultSet[] rs2) throws SQLException {
+    public static void in1out0rs2(int minScore, ResultSet[] rs1, ResultSet[] rs2) throws SQLException {
         try (Connection con = DriverManager.getConnection("jdbc:default:connection")) {
             // don't close the statement!
             {
@@ -68,7 +68,7 @@ public class StoredProcExample {
         }
     }
 
-    public static void twoInTwoOut(int a, int b, String[] name, int[] total) {
+    public static void in2out2(int a, int b, String[] name, int[] total) {
         name[0] = "FREDDY";
         total[0] = a + b;
     }

@@ -2442,7 +2442,7 @@ public class DatabaseTest {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db.apply(con -> {
             try (Statement stmt = con.createStatement()) {
-                CallableStatement st = con.prepareCall("call returnResultSets(?)");
+                CallableStatement st = con.prepareCall("call in1out0rs2(?)");
                 st.setInt(1, 0);
                 st.execute();
                 ResultSet rs1 = st.getResultSet();
@@ -2514,7 +2514,7 @@ public class DatabaseTest {
     public void testCallableApiReturningOneResultSet() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
-                .call("call returnResultSetOne()") //
+                .call("call in0out0rs1()") //
                 .autoMap(Person2.class) //
                 .in(0, 10, 20) //
                 .build() //
@@ -2534,7 +2534,7 @@ public class DatabaseTest {
     public void testCallableApiReturningTwoResultSets() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
-                .call("call returnResultSets(?)") //
+                .call("call in1out0rs2(?)") //
                 .in(Type.INTEGER) //
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //

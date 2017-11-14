@@ -136,14 +136,14 @@ public final class DatabaseCreator {
         }
 
         {
-            String sql = "CREATE PROCEDURE APP.returnResultSetOne" //
+            String sql = "CREATE PROCEDURE APP.in0out0rs1" //
                     + " ()" //
                     + " PARAMETER STYLE JAVA" //
                     + " LANGUAGE JAVA" //
                     + " READS SQL DATA" //
                     + " DYNAMIC RESULT SETS 1" //
                     + " EXTERNAL NAME" //
-                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.returnResultSetOne'";
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.in0out0rs1'";
             exec(c, sql);
         }
         {
@@ -158,13 +158,13 @@ public final class DatabaseCreator {
         }
 
         {
-            String sql = "CREATE PROCEDURE APP.RETURNRESULTSETS(in min_score integer)" //
+            String sql = "CREATE PROCEDURE APP.in1out0rs2(in min_score integer)" //
                     + " PARAMETER STYLE JAVA" //
                     + " LANGUAGE JAVA" //
                     + " READS SQL DATA" //
                     + " DYNAMIC RESULT SETS 2" //
                     + " EXTERNAL NAME" //
-                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.returnResultSets'";
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.in1out0rs2'";
             exec(c, sql);
         }
 
