@@ -26,6 +26,20 @@ public class StoredProcExample {
         d[0] = a + 2;
     }
 
+    public static void out10(int[] a, int[] b, int[] c, int[] d, int[] e, int[] f, int[] g, int[] h, int[] i,
+            int[] j) {
+        a[0] = 1;
+        b[0] = 2;
+        c[0] = 3;
+        d[0] = 4;
+        e[0] = 5;
+        f[0] = 6;
+        g[0] = 7;
+        h[0] = 8;
+        i[0] = 9;
+        j[0] = 10;
+    }
+
     public static void getPersonCount(int minScore, int[] count) throws SQLException {
         try (Connection con = DriverManager.getConnection("jdbc:default:connection");
                 PreparedStatement stmt = prepareStatement(con, minScore);

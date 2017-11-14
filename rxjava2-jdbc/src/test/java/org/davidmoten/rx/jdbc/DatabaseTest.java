@@ -2029,7 +2029,7 @@ public class DatabaseTest {
                     .getAs(Long.class) //
                     .firstOrError() //
                     .test() //
-                    .awaitDone(TIMEOUT_SECONDS * 10000, TimeUnit.SECONDS) //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                     // TODO make a more accurate comparison using the current TZ
                     .assertValue(x -> Math.abs(x - 1234) <= TimeUnit.HOURS.toMillis(24)) //
                     .assertComplete();
@@ -2466,7 +2466,7 @@ public class DatabaseTest {
                 .in(0, 10, 20) //
                 .build() //
                 .test() //
-                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(0, 10, 20) //
                 .assertComplete();
     }
@@ -2482,7 +2482,7 @@ public class DatabaseTest {
                 .in(0, 10, 20) //
                 .build() //
                 .test() //
-                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValueCount(3) //
                 .assertValueAt(0, x -> x._1() == 0 && x._2() == 1) //
                 .assertValueAt(1, x -> x._1() == 10 && x._2() == 11) //
@@ -2502,7 +2502,7 @@ public class DatabaseTest {
                 .in(0, 10, 20) //
                 .build() //
                 .test() //
-                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValueCount(3) //
                 .assertValueAt(0, x -> x._1() == 0 && x._2() == 1 && x._3() == 2) //
                 .assertValueAt(1, x -> x._1() == 10 && x._2() == 11 && x._3() == 12) //
@@ -2520,7 +2520,7 @@ public class DatabaseTest {
                 .build() //
                 .flatMap(x -> x.query1()) //
                 .test() //
-                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValueAt(0, p -> "FRED".equalsIgnoreCase(p.name()) && p.score() == 24)
                 .assertValueAt(1, p -> "SARAH".equalsIgnoreCase(p.name()) && p.score() == 26)
                 .assertValueAt(2, p -> "FRED".equalsIgnoreCase(p.name()) && p.score() == 24)
@@ -2543,7 +2543,7 @@ public class DatabaseTest {
                 .doOnNext(x -> assertTrue(x.outs().isEmpty())) //
                 .flatMap(x -> x.query1().zipWith(x.query2(), (y, z) -> y.name() + z.name())) //
                 .test() //
-                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues("FREDSARAH", "SARAHFRED", "FREDSARAH", "SARAHFRED", "FREDSARAH", "SARAHFRED") //
                 .assertComplete();
     }
@@ -2568,10 +2568,34 @@ public class DatabaseTest {
                 .flatMap(x -> x.query1().zipWith(x.query2(), (y, z) -> y.name() + z.name()).zipWith(x.query3(),
                         (y, z) -> y + z.name())) //
                 .test() //
-                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValues("FREDSARAHFRED", "SARAHFREDSARAH", "FREDSARAHFRED", "SARAHFREDSARAH", "FREDSARAHFRED",
                         "SARAHFREDSARAH") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testCallableApiReturningTenOutParameters() {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call out10(?,?,?,?,?,?,?,?,?,?)") //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .in(0, 10) //
+                .build() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValueCount(2) //
                 .assertComplete();
     }
 

@@ -20,6 +20,7 @@ import org.davidmoten.rx.jdbc.CallableBuilder.ParameterPlaceholder;
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
 import org.davidmoten.rx.jdbc.tuple.Tuple4;
+import org.davidmoten.rx.jdbc.tuple.TupleN;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,6 +146,46 @@ public final class Call {
             T3 o3 = Util.mapObject(st, cls3, outs.get(2).pos, outs.get(2).type);
             T4 o4 = Util.mapObject(st, cls4, outs.get(3).pos, outs.get(3).type);
             return Tuple4.create(o1, o2, o3, o4);
+        });
+    }
+
+    /////////////////////////
+    // N Out Parameters
+    /////////////////////////
+
+    public static Flowable<?> createWithNParameters( //
+            Single<Connection> connection, //
+            String sql, //
+            Flowable<List<Object>> parameterGroups, //
+            List<ParameterPlaceholder> parameterPlaceholders, //
+            List<Class<?>> outClasses) {
+        return connection //
+                .toFlowable() //
+                .flatMap( //
+                        con -> createWithParameters( //
+                                con, //
+                                sql, //
+                                parameterGroups, //
+                                parameterPlaceholders, //
+                                (stmt, parameters) -> createWithNParameters(stmt, parameters, parameterPlaceholders,
+                                        outClasses)));
+    }
+
+    private static Single<TupleN<Object>> createWithNParameters( //
+            NamedCallableStatement stmt, //
+            List<Object> parameters, //
+            List<ParameterPlaceholder> parameterPlaceholders, //
+            List<Class<?>> outClasses) {
+        return Single.fromCallable(() -> {
+            CallableStatement st = stmt.stmt;
+            List<PlaceAndType> outs = execute(stmt, parameters, parameterPlaceholders, Integer.MAX_VALUE, st);
+            Object[] outputs = new Object[outClasses.size()];
+            System.out.println("outputs.length=" + outputs.length);
+            for (int i = 0; i < outClasses.size(); i++) {
+                outputs[i] = Util.mapObject(st, outClasses.get(i), outs.get(i).pos, outs.get(i).type);
+                System.out.println("outputs[" + i + "]=" + outputs[i]);
+            }
+            return TupleN.create(outputs);
         });
     }
 

@@ -10,7 +10,9 @@ import java.util.stream.Collectors;
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
 import org.davidmoten.rx.jdbc.tuple.Tuple4;
+import org.davidmoten.rx.jdbc.tuple.TupleN;
 
+import com.github.davidmoten.guavamini.Lists;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Completable;
@@ -235,6 +237,11 @@ public final class CallableBuilder {
             this.cls3 = cls3;
         }
 
+        public <T4> CallableBuilder4<T1, T2, T3, T4> out(Type type, Class<T4> cls4) {
+            b.out(type, cls4);
+            return new CallableBuilder4<T1, T2, T3, T4>(b, cls1, cls2, cls3, cls4);
+        }
+
         public CallableBuilder3<T1, T2, T3> in(Flowable<?> f) {
             b.in(f);
             return this;
@@ -286,6 +293,11 @@ public final class CallableBuilder {
             return this;
         }
 
+        public CallableBuilderN out(Type type, Class<?> cls5) {
+            b.out(type, cls5);
+            return new CallableBuilderN(b, Lists.newArrayList(cls1, cls2, cls3, cls4, cls5));
+        }
+
         public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
             return new CallableResultSets1Builder<T>(b, function);
         }
@@ -300,6 +312,46 @@ public final class CallableBuilder {
                             cls4) //
                     .dematerialize();
         }
+    }
+
+    public static final class CallableBuilderN {
+
+        private final CallableBuilder b;
+        private final List<Class<?>> outClasses;
+
+        public CallableBuilderN(CallableBuilder b, List<Class<?>> outClasses) {
+            this.b = b;
+            this.outClasses = outClasses;
+        }
+
+        public CallableBuilderN in(Flowable<?> f) {
+            b.in(f);
+            return this;
+        }
+
+        public CallableBuilderN in(Object... objects) {
+            in(Flowable.fromArray(objects));
+            return this;
+        }
+
+        public CallableBuilderN out(Type type, Class<?> cls) {
+            b.out(type, cls);
+            return new CallableBuilderN(b, createList(outClasses, cls));
+        }
+
+        public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+            return new CallableResultSets1Builder<T>(b, function);
+        }
+
+        public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
+            return map(Util.autoMap(cls));
+        }
+
+        public Flowable<TupleN<Object>> build() {
+            return Call.createWithNParameters(b.connection, b.sql, b.parameterGroups(), b.params, outClasses) //
+                    .dematerialize();
+        }
+
     }
 
     public static final class CallableResultSets1Builder<T1> {
@@ -478,6 +530,12 @@ public final class CallableBuilder {
         public List<Object> outs() {
             return outs;
         }
+    }
+
+    private static <T> List<T> createList(List<T> list, T t) {
+        ArrayList<T> r = new ArrayList<>(list);
+        r.add(t);
+        return r;
     }
 
 }

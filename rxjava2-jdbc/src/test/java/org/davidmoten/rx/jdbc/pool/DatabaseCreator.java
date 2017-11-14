@@ -134,6 +134,24 @@ public final class DatabaseCreator {
                     + " 'org.davidmoten.rx.jdbc.StoredProcExample.in1out3'";
             exec(c, sql);
         }
+        {
+            String sql = "CREATE PROCEDURE APP.out10" //
+                    + " (OUT a INTEGER," //
+                    + " OUT b INTEGER," //
+                    + " OUT c INTEGER," //
+                    + " OUT d INTEGER," //
+                    + " OUT e INTEGER," //
+                    + " OUT f INTEGER," //
+                    + " OUT g INTEGER," //
+                    + " OUT h INTEGER," //
+                    + " OUT i INTEGER," //
+                    + " OUT j INTEGER)" //
+                    + " PARAMETER STYLE JAVA" //
+                    + " LANGUAGE JAVA" //
+                    + " EXTERNAL NAME" //
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.out10'";
+            exec(c, sql);
+        }
 
         {
             String sql = "CREATE PROCEDURE APP.in0out0rs1" //
