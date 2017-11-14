@@ -359,6 +359,14 @@ public final class CallableBuilder {
             return this;
         }
 
+        public <T3> CallableResultSets3Builder<T1, T2, T3> autoMap(Class<T3> cls) {
+            return map(Util.autoMap(cls));
+        }
+
+        public <T3> CallableResultSets3Builder<T1, T2, T3> map(Function<? super ResultSet, ? extends T3> f3) {
+            return new CallableResultSets3Builder<T1, T2, T3>(b, f1, f2, f3);
+        }
+
         public Flowable<CallableResultSet2<T1, T2>> build() {
             return Call.createWithTwoResultSets(b.connection, b.sql, b.parameterGroups(), b.params, f1, f2, 0) //
                     .dematerialize();
@@ -416,7 +424,6 @@ public final class CallableBuilder {
 
     }
 
-    
     public static final class CallableResultSet2<T1, T2> {
 
         private final List<Object> outs;

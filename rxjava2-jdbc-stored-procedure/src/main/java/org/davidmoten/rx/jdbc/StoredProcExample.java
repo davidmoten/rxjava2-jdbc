@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class StoredProcExample {
-    
+
     public static void in0out0rs0() {
     }
 
@@ -64,6 +64,26 @@ public class StoredProcExample {
                         .prepareStatement("select name, score from person where score >= ? order by name desc");
                 stmt.setInt(1, minScore);
                 rs2[0] = stmt.executeQuery();
+            }
+        }
+    }
+
+    public static void in0out2rs3(int[] a, int[] b, ResultSet[] c, ResultSet[] d, ResultSet[] e) throws SQLException {
+        a[0] = 1;
+        b[0] = 2;
+        try (Connection con = DriverManager.getConnection("jdbc:default:connection")) {
+            // don't close the statement!
+            {
+                PreparedStatement stmt = con.prepareStatement("select name, score from person order by name");
+                c[0] = stmt.executeQuery();
+            }
+            {
+                PreparedStatement stmt = con.prepareStatement("select name, score from person order by name desc");
+                d[0] = stmt.executeQuery();
+            }
+            {
+                PreparedStatement stmt = con.prepareStatement("select name, score from person order by name");
+                e[0] = stmt.executeQuery();
             }
         }
     }

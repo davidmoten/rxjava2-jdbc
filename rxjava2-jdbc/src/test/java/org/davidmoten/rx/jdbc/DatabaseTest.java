@@ -2548,6 +2548,33 @@ public class DatabaseTest {
                 .assertComplete();
     }
 
+    @Test
+    public void testCallableApiReturningTwoOutputThreeResultSets() throws InterruptedException {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call in0out2rs3(?, ?)") //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .in(0, 10, 20) //
+                .build() //
+                .doOnNext(x -> {
+                    assertEquals(2, x.outs().size());
+                    assertEquals(1, x.outs().get(0));
+                    assertEquals(2, x.outs().get(1));
+                }) //
+                .flatMap(x -> x.query1().zipWith(x.query2(), (y, z) -> y.name() + z.name()).zipWith(x.query3(),
+                        (y, z) -> y + z.name())) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValues("FREDSARAHFRED", "SARAHFREDSARAH", "FREDSARAHFRED", "SARAHFREDSARAH", "FREDSARAHFRED",
+                        "SARAHFREDSARAH") //
+                .assertComplete();
+    }
+
     public interface PersonWithDefaultMethod {
         @Column
         String name();

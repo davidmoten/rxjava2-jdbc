@@ -121,7 +121,7 @@ public final class DatabaseCreator {
                     + " 'org.davidmoten.rx.jdbc.StoredProcExample.in1out2'";
             exec(c, sql);
         }
-        
+
         {
             String sql = "CREATE PROCEDURE APP.in1out3" //
                     + " (IN a INTEGER," //
@@ -168,8 +168,18 @@ public final class DatabaseCreator {
             exec(c, sql);
         }
 
-        exec(c, "CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY("
-                + "'derby.database.classpath', 'APP.examples')");
+        {
+            String sql = "CREATE PROCEDURE APP.in0out2rs3(OUT a INTEGER, OUT b INTEGER)" //
+                    + " PARAMETER STYLE JAVA" //
+                    + " LANGUAGE JAVA" //
+                    + " READS SQL DATA" //
+                    + " DYNAMIC RESULT SETS 3" //
+                    + " EXTERNAL NAME" //
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.in0out2rs3'";
+            exec(c, sql);
+        }
+
+        exec(c, "CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY(" + "'derby.database.classpath', 'APP.examples')");
     }
 
     public static Database create(int maxSize, boolean big, Scheduler scheduler) {
@@ -239,13 +249,12 @@ public final class DatabaseCreator {
                     "create table person (name varchar(50) primary key, score int not null, date_of_birth date, registered timestamp)")
                     .execute();
             if (big) {
-                List<String> lines = IOUtils.readLines(
-                        DatabaseCreator.class.getResourceAsStream("/big.txt"),
+                List<String> lines = IOUtils.readLines(DatabaseCreator.class.getResourceAsStream("/big.txt"),
                         StandardCharsets.UTF_8);
                 lines.stream().map(line -> line.split("\t")).forEach(items -> {
                     try {
-                        c.prepareStatement("insert into person(name,score) values('" + items[0]
-                                + "'," + Integer.parseInt(items[1]) + ")").execute();
+                        c.prepareStatement("insert into person(name,score) values('" + items[0] + "',"
+                                + Integer.parseInt(items[1]) + ")").execute();
                     } catch (SQLException e) {
                         throw new SQLRuntimeException(e);
                     }
