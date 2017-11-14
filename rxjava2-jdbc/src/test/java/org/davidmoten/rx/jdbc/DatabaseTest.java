@@ -2321,16 +2321,6 @@ public class DatabaseTest {
         }
     }
 
-    // @Test
-    // public void testDefaultMethod() throws NoSuchMethodException,
-    // IllegalAccessException {
-    // MethodHandles.lookup().findSpecial(PersonWithDefaultMethod.class,
-    // "nameLower",
-    // MethodType.methodType(String.class, new Class[] {}),
-    // PersonWithDefaultMethod.class)
-    //// .bindTo(x);
-    // }
-
     @Test(expected = AutomappedInterfaceInaccessibleException.class)
     public void testAutomappedObjectsWhenDefaultMethodInvokedAndIsNonPublicThrows() {
         PersonWithDefaultMethodNonPublic p = Database.test() //
