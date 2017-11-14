@@ -180,10 +180,8 @@ public final class Call {
             CallableStatement st = stmt.stmt;
             List<PlaceAndType> outs = execute(stmt, parameters, parameterPlaceholders, Integer.MAX_VALUE, st);
             Object[] outputs = new Object[outClasses.size()];
-            System.out.println("outputs.length=" + outputs.length);
             for (int i = 0; i < outClasses.size(); i++) {
                 outputs[i] = Util.mapObject(st, outClasses.get(i), outs.get(i).pos, outs.get(i).type);
-                System.out.println("outputs[" + i + "]=" + outputs[i]);
             }
             return TupleN.create(outputs);
         });
