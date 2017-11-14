@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
+import org.davidmoten.rx.jdbc.tuple.Tuple4;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
@@ -164,6 +165,14 @@ public final class CallableBuilder {
             in(Flowable.fromArray(objects));
             return this;
         }
+        
+        public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+            return new CallableResultSets1Builder<T>(b, function);
+        }
+
+        public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
+            return map(Util.autoMap(cls));
+        }
 
         public Flowable<T1> build() {
             return Call.createWithOneOutParameter(b.connection, b.sql, b.parameterGroups(), b.params, cls) //
@@ -197,6 +206,14 @@ public final class CallableBuilder {
             in(Flowable.fromArray(objects));
             return this;
         }
+        
+        public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+            return new CallableResultSets1Builder<T>(b, function);
+        }
+
+        public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
+            return map(Util.autoMap(cls));
+        }
 
         public Flowable<Tuple2<T1, T2>> build() {
             return Call.createWithTwoOutParameters(b.connection, b.sql, b.parameterGroups(), b.params, cls1, cls2) //
@@ -227,10 +244,59 @@ public final class CallableBuilder {
             in(Flowable.fromArray(objects));
             return this;
         }
+        
+        public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+            return new CallableResultSets1Builder<T>(b, function);
+        }
+
+        public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
+            return map(Util.autoMap(cls));
+        }
 
         public Flowable<Tuple3<T1, T2, T3>> build() {
             return Call
                     .createWithThreeOutParameters(b.connection, b.sql, b.parameterGroups(), b.params, cls1, cls2, cls3) //
+                    .dematerialize();
+        }
+    }
+    
+    public static final class CallableBuilder4<T1, T2, T3, T4> {
+
+        private final CallableBuilder b;
+        private final Class<T1> cls1;
+        private final Class<T2> cls2;
+        private final Class<T3> cls3;
+        private final Class<T4> cls4;
+
+        public CallableBuilder4(CallableBuilder b, Class<T1> cls1, Class<T2> cls2, Class<T3> cls3, Class<T4> cls4) {
+            this.b = b;
+            this.cls1 = cls1;
+            this.cls2 = cls2;
+            this.cls3 = cls3;
+            this.cls4 = cls4;
+        }
+
+        public CallableBuilder4<T1, T2, T3, T4> in(Flowable<?> f) {
+            b.in(f);
+            return this;
+        }
+
+        public CallableBuilder4<T1, T2, T3, T4> in(Object... objects) {
+            in(Flowable.fromArray(objects));
+            return this;
+        }
+        
+        public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+            return new CallableResultSets1Builder<T>(b, function);
+        }
+
+        public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
+            return map(Util.autoMap(cls));
+        }
+
+        public Flowable<Tuple4<T1, T2, T3, T4>> build() {
+            return Call
+                    .createWithFourOutParameters(b.connection, b.sql, b.parameterGroups(), b.params, cls1, cls2, cls3, cls4) //
                     .dematerialize();
         }
     }

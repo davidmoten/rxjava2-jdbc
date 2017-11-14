@@ -18,6 +18,7 @@ import org.davidmoten.rx.jdbc.CallableBuilder.OutParameterPlaceholder;
 import org.davidmoten.rx.jdbc.CallableBuilder.ParameterPlaceholder;
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
+import org.davidmoten.rx.jdbc.tuple.Tuple4;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,7 +118,35 @@ public final class Call {
             return Tuple3.create(o1, o2, o3);
         });
     }
-    
+
+    /////////////////////////
+    // Four Out Parameters
+    /////////////////////////
+
+    public static <T1, T2, T3, T4> Flowable<Notification<Tuple4<T1, T2, T3, T4>>> createWithFourOutParameters(
+            Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
+            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2, Class<T3> cls3,
+            Class<T4> cls4) {
+        return connection.toFlowable()
+                .flatMap(con -> createWithParameters(con, sql, parameterGroups, parameterPlaceholders,
+                        (stmt, parameters) -> createWithFourParameters(stmt, parameters, parameterPlaceholders, cls1,
+                                cls2, cls3, cls4)));
+    }
+
+    private static <T1, T2, T3, T4> Single<Tuple4<T1, T2, T3, T4>> createWithFourParameters(NamedCallableStatement stmt,
+            List<Object> parameters, List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2,
+            Class<T3> cls3, Class<T4> cls4) {
+        return Single.fromCallable(() -> {
+            CallableStatement st = stmt.stmt;
+            List<PlaceAndType> outs = execute(stmt, parameters, parameterPlaceholders, 4, st);
+            T1 o1 = Util.mapObject(st, cls1, outs.get(0).pos, outs.get(0).type);
+            T2 o2 = Util.mapObject(st, cls2, outs.get(1).pos, outs.get(1).type);
+            T3 o3 = Util.mapObject(st, cls3, outs.get(2).pos, outs.get(2).type);
+            T4 o4 = Util.mapObject(st, cls4, outs.get(3).pos, outs.get(3).type);
+            return Tuple4.create(o1, o2, o3, o4);
+        });
+    }
+
     /////////////////////////
     // One ResultSet
     /////////////////////////
