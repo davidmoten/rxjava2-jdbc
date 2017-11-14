@@ -2530,6 +2530,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .in(0, 10, 20) //
                 .build() //
+                .doOnNext(x -> assertTrue(x.outs().isEmpty())) //
                 .flatMap(x -> x.query1().zipWith(x.query2(), (y, z) -> y.name() + z.name())) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
