@@ -2518,7 +2518,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .in(0, 10, 20) //
                 .build() //
-                .flatMap(x -> x.query1()) //
+                .flatMap(x -> x.results()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValueAt(0, p -> "FRED".equalsIgnoreCase(p.name()) && p.score() == 24)
@@ -2541,7 +2541,7 @@ public class DatabaseTest {
                 .in(0, 10, 20) //
                 .build() //
                 .doOnNext(x -> assertTrue(x.outs().isEmpty())) //
-                .flatMap(x -> x.query1().zipWith(x.query2(), (y, z) -> y.name() + z.name())) //
+                .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y.name() + z.name())) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues("FREDSARAH", "SARAHFRED", "FREDSARAH", "SARAHFRED", "FREDSARAH", "SARAHFRED") //
@@ -2565,7 +2565,7 @@ public class DatabaseTest {
                     assertEquals(1, x.outs().get(0));
                     assertEquals(2, x.outs().get(1));
                 }) //
-                .flatMap(x -> x.query1().zipWith(x.query2(), (y, z) -> y.name() + z.name()).zipWith(x.query3(),
+                .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y.name() + z.name()).zipWith(x.results3(),
                         (y, z) -> y + z.name())) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
