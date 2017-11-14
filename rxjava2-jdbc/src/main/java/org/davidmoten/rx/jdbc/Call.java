@@ -25,6 +25,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Notification;
 import io.reactivex.Single;
 import io.reactivex.functions.BiConsumer;
+import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
@@ -40,33 +41,15 @@ public final class Call {
     // One Out Parameter
     /////////////////////////
 
-    public static <T1> Flowable<Notification<T1>> createWithOneOutParameter(
-            Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
-            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls) {
-        return connection.toFlowable().flatMap(con -> createWithOneParameter(con, sql,
-                parameterGroups, parameterPlaceholders, cls));
+    public static <T1> Flowable<Notification<T1>> createWithOneOutParameter(Single<Connection> connection, String sql,
+            Flowable<List<Object>> parameterGroups, List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls) {
+        return connection.toFlowable()
+                .flatMap(con -> createWithParameters(con, sql, parameterGroups, parameterPlaceholders,
+                        (stmt, parameters) -> createWithOneParameter(stmt, parameters, parameterPlaceholders, cls)));
     }
 
-    private static <T1> Flowable<Notification<T1>> createWithOneParameter(Connection con,
-            String sql, Flowable<List<Object>> parameterGroups,
-            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls) {
-        log.debug("Update.create {}", sql);
-        Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql,
-                parameterPlaceholders);
-        final Function<NamedCallableStatement, Flowable<Notification<T1>>> flowableFactory = //
-                stmt -> parameterGroups //
-                        .flatMap(parameters -> createWithOneParameter(stmt, parameters,
-                                parameterPlaceholders, cls).toFlowable()) //
-                        .materialize() //
-                        .doOnComplete(() -> Util.commit(stmt.stmt)) //
-                        .doOnError(e -> Util.rollback(stmt.stmt));
-        Consumer<NamedCallableStatement> disposer = Util::closeCallableStatementAndConnection;
-        return Flowable.using(resourceFactory, flowableFactory, disposer, true);
-    }
-
-    private static <T> Single<T> createWithOneParameter(NamedCallableStatement stmt,
-            List<Object> parameters, List<ParameterPlaceholder> parameterPlaceholders,
-            Class<T> cls1) {
+    private static <T> Single<T> createWithOneParameter(NamedCallableStatement stmt, List<Object> parameters,
+            List<ParameterPlaceholder> parameterPlaceholders, Class<T> cls1) {
         return Single.fromCallable(() -> {
             CallableStatement st = stmt.stmt;
             List<PlaceAndType> outs = execute(stmt, parameters, parameterPlaceholders, 2, st);
@@ -81,30 +64,13 @@ public final class Call {
     public static <T1, T2> Flowable<Notification<Tuple2<T1, T2>>> createWithTwoOutParameters(
             Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
             List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2) {
-        return connection.toFlowable().flatMap(con -> createWithTwoParameters(con, sql,
-                parameterGroups, parameterPlaceholders, cls1, cls2));
+        return connection.toFlowable()
+                .flatMap(con -> createWithParameters(con, sql, parameterGroups, parameterPlaceholders,
+                        (stmt, parameters) -> createWithTwoParameters(stmt, parameters, parameterPlaceholders, cls1, cls2)));
     }
 
-    private static <T1, T2> Flowable<Notification<Tuple2<T1, T2>>> createWithTwoParameters(
-            Connection con, String sql, Flowable<List<Object>> parameterGroups,
-            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2) {
-        log.debug("Update.create {}", sql);
-        Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql,
-                parameterPlaceholders);
-        final Function<NamedCallableStatement, Flowable<Notification<Tuple2<T1, T2>>>> flowableFactory = //
-                stmt -> parameterGroups //
-                        .flatMap(parameters -> createWithTwoParameters(stmt, parameters,
-                                parameterPlaceholders, cls1, cls2).toFlowable()) //
-                        .materialize() //
-                        .doOnComplete(() -> Util.commit(stmt.stmt)) //
-                        .doOnError(e -> Util.rollback(stmt.stmt));
-        Consumer<NamedCallableStatement> disposer = Util::closeCallableStatementAndConnection;
-        return Flowable.using(resourceFactory, flowableFactory, disposer, true);
-    }
-
-    private static <T1, T2> Single<Tuple2<T1, T2>> createWithTwoParameters(
-            NamedCallableStatement stmt, List<Object> parameters,
-            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2) {
+    private static <T1, T2> Single<Tuple2<T1, T2>> createWithTwoParameters(NamedCallableStatement stmt,
+            List<Object> parameters, List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2) {
         return Single.fromCallable(() -> {
             CallableStatement st = stmt.stmt;
             List<PlaceAndType> outs = execute(stmt, parameters, parameterPlaceholders, 2, st);
@@ -131,27 +97,24 @@ public final class Call {
 
     public static <T1> Flowable<Notification<CallableResultSet1<T1>>> createWithOneResultSet(
             Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
-            List<ParameterPlaceholder> parameterPlaceholders,
-            Function<? super ResultSet, ? extends T1> f1, int fetchSize) {
-        return connection.toFlowable().flatMap(con -> createWithOneResultSet(con, sql,
-                parameterGroups, parameterPlaceholders, f1, fetchSize));
+            List<ParameterPlaceholder> parameterPlaceholders, Function<? super ResultSet, ? extends T1> f1,
+            int fetchSize) {
+        return connection.toFlowable().flatMap(
+                con -> createWithOneResultSet(con, sql, parameterGroups, parameterPlaceholders, f1, fetchSize));
     }
 
-    private static <T1> Flowable<Notification<CallableResultSet1<T1>>> createWithOneResultSet(
-            Connection con, String sql, Flowable<List<Object>> parameterGroups,
-            List<ParameterPlaceholder> parameterPlaceholders,
+    private static <T1> Flowable<Notification<CallableResultSet1<T1>>> createWithOneResultSet(Connection con,
+            String sql, Flowable<List<Object>> parameterGroups, List<ParameterPlaceholder> parameterPlaceholders,
             Function<? super ResultSet, ? extends T1> f1, int fetchSize) {
         log.debug("Update.create {}", sql);
-        Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql,
-                parameterPlaceholders);
+        Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql, parameterPlaceholders);
         final Function<NamedCallableStatement, Flowable<Notification<CallableResultSet1<T1>>>> flowableFactory = //
                 stmt -> parameterGroups //
                         .flatMap(parameters -> {
-                            List<Object> outputValues = executeAndReturnOutputValues(
-                                    parameterPlaceholders, stmt, parameters);
+                            List<Object> outputValues = executeAndReturnOutputValues(parameterPlaceholders, stmt,
+                                    parameters);
                             Flowable<T1> flowable1 = createFlowable(stmt, f1);
-                            return Single.just(new CallableResultSet1<T1>(outputValues, flowable1))
-                                    .toFlowable();
+                            return Single.just(new CallableResultSet1<T1>(outputValues, flowable1)).toFlowable();
                         }) //
                         .materialize() //
                         .doOnComplete(() -> Util.commit(stmt.stmt)) //
@@ -166,30 +129,26 @@ public final class Call {
 
     public static <T1, T2> Flowable<Notification<CallableResultSet2<T1, T2>>> createWithTwoResultSets(
             Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
-            List<ParameterPlaceholder> parameterPlaceholders,
-            Function<? super ResultSet, ? extends T1> f1,
+            List<ParameterPlaceholder> parameterPlaceholders, Function<? super ResultSet, ? extends T1> f1,
             Function<? super ResultSet, ? extends T2> f2, int fetchSize) {
-        return connection.toFlowable().flatMap(con -> createWithTwoResultSets(con, sql,
-                parameterGroups, parameterPlaceholders, f1, f2, fetchSize));
+        return connection.toFlowable().flatMap(
+                con -> createWithTwoResultSets(con, sql, parameterGroups, parameterPlaceholders, f1, f2, fetchSize));
     }
 
-    private static <T1, T2> Flowable<Notification<CallableResultSet2<T1, T2>>> createWithTwoResultSets(
-            Connection con, String sql, Flowable<List<Object>> parameterGroups,
-            List<ParameterPlaceholder> parameterPlaceholders,
-            Function<? super ResultSet, ? extends T1> f1,
-            Function<? super ResultSet, ? extends T2> f2, int fetchSize) {
-        Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql,
-                parameterPlaceholders);
+    private static <T1, T2> Flowable<Notification<CallableResultSet2<T1, T2>>> createWithTwoResultSets(Connection con,
+            String sql, Flowable<List<Object>> parameterGroups, List<ParameterPlaceholder> parameterPlaceholders,
+            Function<? super ResultSet, ? extends T1> f1, Function<? super ResultSet, ? extends T2> f2, int fetchSize) {
+        Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql, parameterPlaceholders);
         final Function<NamedCallableStatement, Flowable<Notification<CallableResultSet2<T1, T2>>>> flowableFactory = //
                 stmt -> parameterGroups //
                         .flatMap(parameters -> {
-                            List<Object> outputValues = executeAndReturnOutputValues(
-                                    parameterPlaceholders, stmt, parameters);
+                            List<Object> outputValues = executeAndReturnOutputValues(parameterPlaceholders, stmt,
+                                    parameters);
                             final Flowable<T1> flowable1 = createFlowable(stmt, f1);
                             stmt.stmt.getMoreResults(Statement.KEEP_CURRENT_RESULT);
                             final Flowable<T2> flowable2 = createFlowable(stmt, f2);
-                            return Single.just(new CallableResultSet2<T1, T2>(outputValues,
-                                    flowable1, flowable2)).toFlowable();
+                            return Single.just(new CallableResultSet2<T1, T2>(outputValues, flowable1, flowable2))
+                                    .toFlowable();
                         }) //
                         .materialize() //
                         .doOnComplete(() -> Util.commit(stmt.stmt)) //
@@ -202,9 +161,22 @@ public final class Call {
     // Utilty Methods
     ///////////////////////////////////
 
+    private static <T> Flowable<Notification<T>> createWithParameters(Connection con, String sql,
+            Flowable<List<Object>> parameterGroups, List<ParameterPlaceholder> parameterPlaceholders,
+            BiFunction<NamedCallableStatement, List<Object>, Single<T>> single) {
+        Callable<NamedCallableStatement> resourceFactory = () -> Util.prepareCall(con, sql, parameterPlaceholders);
+        final Function<NamedCallableStatement, Flowable<Notification<T>>> flowableFactory = //
+                stmt -> parameterGroups //
+                        .flatMap(parameters -> single.apply(stmt, parameters).toFlowable()) //
+                        .materialize() //
+                        .doOnComplete(() -> Util.commit(stmt.stmt)) //
+                        .doOnError(e -> Util.rollback(stmt.stmt));
+        Consumer<NamedCallableStatement> disposer = Util::closeCallableStatementAndConnection;
+        return Flowable.using(resourceFactory, flowableFactory, disposer, true);
+    }
+
     static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters,
-            List<ParameterPlaceholder> parameterPlaceholders, List<String> names)
-            throws SQLException {
+            List<ParameterPlaceholder> parameterPlaceholders, List<String> names) throws SQLException {
         // TODO handle Parameter objects (named)
         if (names.isEmpty()) {
             int i = 0;
@@ -224,8 +196,7 @@ public final class Call {
     }
 
     private static List<PlaceAndType> execute(NamedCallableStatement stmt, List<Object> parameters,
-            List<ParameterPlaceholder> parameterPlaceholders, int outCount, CallableStatement st)
-            throws SQLException {
+            List<ParameterPlaceholder> parameterPlaceholders, int outCount, CallableStatement st) throws SQLException {
         Util.incrementCounter(st.getConnection());
         setParameters(st, parameters, parameterPlaceholders, stmt.names);
         int initialSize = outCount == Integer.MAX_VALUE ? 16 : outCount;
@@ -262,11 +233,9 @@ public final class Call {
         return Flowable.generate(initialState, generator, disposeState);
     }
 
-    private static List<Object> executeAndReturnOutputValues(
-            List<ParameterPlaceholder> parameterPlaceholders, NamedCallableStatement stmt,
-            List<Object> parameters) throws SQLException {
-        List<PlaceAndType> outs = execute(stmt, parameters, parameterPlaceholders,
-                Integer.MAX_VALUE, stmt.stmt);
+    private static List<Object> executeAndReturnOutputValues(List<ParameterPlaceholder> parameterPlaceholders,
+            NamedCallableStatement stmt, List<Object> parameters) throws SQLException {
+        List<PlaceAndType> outs = execute(stmt, parameters, parameterPlaceholders, Integer.MAX_VALUE, stmt.stmt);
         List<Object> list = new ArrayList<>(outs.size());
         for (PlaceAndType p : outs) {
             // TODO convert to a desired return type?
