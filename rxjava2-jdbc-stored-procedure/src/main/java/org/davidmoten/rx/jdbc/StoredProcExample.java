@@ -17,6 +17,12 @@ public class StoredProcExample {
         c[0] = a + 1;
     }
 
+    public static void getGiven3(int a, int[] b, int c[], int d[]) {
+        b[0] = a;
+        c[0] = a + 1;
+        d[0] = a + 2;
+    }
+
     public static void getPersonCount(int minScore, int[] count) throws SQLException {
         try (Connection con = DriverManager.getConnection("jdbc:default:connection");
                 PreparedStatement stmt = prepareStatement(con, minScore);
@@ -27,10 +33,8 @@ public class StoredProcExample {
         }
     }
 
-    private static PreparedStatement prepareStatement(Connection con, int minScore)
-            throws SQLException {
-        PreparedStatement stmt = con
-                .prepareStatement("select count(*) from app.person where score>?");
+    private static PreparedStatement prepareStatement(Connection con, int minScore) throws SQLException {
+        PreparedStatement stmt = con.prepareStatement("select count(*) from app.person where score>?");
         stmt.setInt(1, minScore);
         return stmt;
     }
@@ -38,25 +42,23 @@ public class StoredProcExample {
     public static void returnResultSetOne(ResultSet[] rs1) throws SQLException {
         try (Connection con = DriverManager.getConnection("jdbc:default:connection")) {
             // don't close the statement!
-            PreparedStatement stmt = con
-                    .prepareStatement("select name, score from person order by name");
+            PreparedStatement stmt = con.prepareStatement("select name, score from person order by name");
             rs1[0] = stmt.executeQuery();
         }
     }
 
-    public static void returnResultSets(int minScore, ResultSet[] rs1, ResultSet[] rs2)
-            throws SQLException {
+    public static void returnResultSets(int minScore, ResultSet[] rs1, ResultSet[] rs2) throws SQLException {
         try (Connection con = DriverManager.getConnection("jdbc:default:connection")) {
             // don't close the statement!
             {
-                PreparedStatement stmt = con.prepareStatement(
-                        "select name, score from person where score >= ? order by name");
+                PreparedStatement stmt = con
+                        .prepareStatement("select name, score from person where score >= ? order by name");
                 stmt.setInt(1, minScore);
                 rs1[0] = stmt.executeQuery();
             }
             {
-                PreparedStatement stmt = con.prepareStatement(
-                        "select name, score from person where score >= ? order by name desc");
+                PreparedStatement stmt = con
+                        .prepareStatement("select name, score from person where score >= ? order by name desc");
                 stmt.setInt(1, minScore);
                 rs2[0] = stmt.executeQuery();
             }

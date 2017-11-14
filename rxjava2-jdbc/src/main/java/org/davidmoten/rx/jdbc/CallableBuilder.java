@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
+import org.davidmoten.rx.jdbc.tuple.Tuple3;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
@@ -106,7 +107,7 @@ public final class CallableBuilder {
     }
 
     public CallableBuilder in(Flowable<?> f) {
-        Preconditions.checkArgument(inStream == null, "you can only specify in flowable once, current="+ inStream);
+        Preconditions.checkArgument(inStream == null, "you can only specify in flowable once, current=" + inStream);
         this.inStream = f;
         return this;
     }
@@ -182,6 +183,11 @@ public final class CallableBuilder {
             this.cls2 = cls2;
         }
 
+        public <T3> CallableBuilder3<T1, T2, T3> out(Type type, Class<T3> cls3) {
+            b.out(type, cls3);
+            return new CallableBuilder3<T1, T2, T3>(b, cls1, cls2, cls3);
+        }
+
         public CallableBuilder2<T1, T2> in(Flowable<?> f) {
             b.in(f);
             return this;
@@ -194,6 +200,37 @@ public final class CallableBuilder {
 
         public Flowable<Tuple2<T1, T2>> build() {
             return Call.createWithTwoOutParameters(b.connection, b.sql, b.parameterGroups(), b.params, cls1, cls2) //
+                    .dematerialize();
+        }
+    }
+
+    public static final class CallableBuilder3<T1, T2, T3> {
+
+        private final CallableBuilder b;
+        private final Class<T1> cls1;
+        private final Class<T2> cls2;
+        private final Class<T3> cls3;
+
+        public CallableBuilder3(CallableBuilder b, Class<T1> cls1, Class<T2> cls2, Class<T3> cls3) {
+            this.b = b;
+            this.cls1 = cls1;
+            this.cls2 = cls2;
+            this.cls3 = cls3;
+        }
+
+        public CallableBuilder3<T1, T2, T3> in(Flowable<?> f) {
+            b.in(f);
+            return this;
+        }
+
+        public CallableBuilder3<T1, T2, T3> in(Object... objects) {
+            in(Flowable.fromArray(objects));
+            return this;
+        }
+
+        public Flowable<Tuple3<T1, T2, T3>> build() {
+            return Call
+                    .createWithThreeOutParameters(b.connection, b.sql, b.parameterGroups(), b.params, cls1, cls2, cls3) //
                     .dematerialize();
         }
     }

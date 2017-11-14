@@ -17,6 +17,7 @@ import org.davidmoten.rx.jdbc.CallableBuilder.InOut;
 import org.davidmoten.rx.jdbc.CallableBuilder.OutParameterPlaceholder;
 import org.davidmoten.rx.jdbc.CallableBuilder.ParameterPlaceholder;
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
+import org.davidmoten.rx.jdbc.tuple.Tuple3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,6 +92,32 @@ public final class Call {
 
     }
 
+    /////////////////////////
+    // Three Out Parameters
+    /////////////////////////
+
+    public static <T1, T2, T3> Flowable<Notification<Tuple3<T1, T2, T3>>> createWithThreeOutParameters(
+            Single<Connection> connection, String sql, Flowable<List<Object>> parameterGroups,
+            List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2, Class<T3> cls3) {
+        return connection.toFlowable()
+                .flatMap(con -> createWithParameters(con, sql, parameterGroups, parameterPlaceholders,
+                        (stmt, parameters) -> createWithThreeParameters(stmt, parameters, parameterPlaceholders, cls1,
+                                cls2, cls3)));
+    }
+
+    private static <T1, T2, T3> Single<Tuple3<T1, T2, T3>> createWithThreeParameters(NamedCallableStatement stmt,
+            List<Object> parameters, List<ParameterPlaceholder> parameterPlaceholders, Class<T1> cls1, Class<T2> cls2,
+            Class<T3> cls3) {
+        return Single.fromCallable(() -> {
+            CallableStatement st = stmt.stmt;
+            List<PlaceAndType> outs = execute(stmt, parameters, parameterPlaceholders, 3, st);
+            T1 o1 = Util.mapObject(st, cls1, outs.get(0).pos, outs.get(0).type);
+            T2 o2 = Util.mapObject(st, cls2, outs.get(1).pos, outs.get(1).type);
+            T3 o3 = Util.mapObject(st, cls3, outs.get(2).pos, outs.get(2).type);
+            return Tuple3.create(o1, o2, o3);
+        });
+    }
+    
     /////////////////////////
     // One ResultSet
     /////////////////////////
@@ -243,4 +270,5 @@ public final class Call {
         }
         return list;
     }
+
 }

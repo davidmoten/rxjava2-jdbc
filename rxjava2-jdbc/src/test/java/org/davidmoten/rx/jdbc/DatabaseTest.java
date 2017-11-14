@@ -2501,6 +2501,26 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testCallableApiReturningThreeOutParameters() throws InterruptedException {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call getGiven3(?,?,?,?)") //
+                .in(Type.INTEGER) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .in(0, 10, 20) //
+                .build() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS * 1000, TimeUnit.SECONDS) //
+                .assertValueCount(3) //
+                .assertValueAt(0, x -> x._1() == 0 && x._2() == 1 && x._3() == 2) //
+                .assertValueAt(1, x -> x._1() == 10 && x._2() == 11 && x._3() == 12) //
+                .assertValueAt(2, x -> x._1() == 20 && x._2() == 21 && x._3() == 22) //
+                .assertComplete();
+    }
+
+    @Test
     public void testCallableApiReturningOneResultSet() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
