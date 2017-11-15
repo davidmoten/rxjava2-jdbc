@@ -34,52 +34,6 @@ public final class CallableBuilder {
         this.connection = connection;
     }
 
-    interface ParameterPlaceholder {
-    }
-
-    interface OutParameterPlaceholder extends ParameterPlaceholder {
-        Type type();
-    }
-
-    interface InParameterPlaceholder extends ParameterPlaceholder {
-    }
-
-    static final class In implements InParameterPlaceholder {
-    }
-
-    // singleton instance of In
-    private static final In IN = new In();
-
-    static final class InOut implements InParameterPlaceholder, OutParameterPlaceholder {
-        final Type type;
-        final Class<?> cls;
-
-        InOut(Type type, Class<?> cls) {
-            this.type = type;
-            this.cls = cls;
-        }
-
-        @Override
-        public Type type() {
-            return type;
-        }
-    }
-
-    static final class Out implements OutParameterPlaceholder {
-        final Type type;
-        final Class<?> cls;
-
-        public Out(Type type, Class<?> cls) {
-            this.type = type;
-            this.cls = cls;
-        }
-
-        @Override
-        public Type type() {
-            return type;
-        }
-    }
-
     @SuppressWarnings("unchecked")
     public Flowable<List<Object>> parameterGroups() {
         int numInParameters = params.stream() //
@@ -102,11 +56,11 @@ public final class CallableBuilder {
         this.inStream = f;
         return build();
     }
-    
+
     public Completable once() {
         return in(1);
     }
-    
+
     public Completable in(Object... objects) {
         return in(Flowable.fromArray(objects));
     }
@@ -128,7 +82,7 @@ public final class CallableBuilder {
     public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
         return map(Util.autoMap(cls));
     }
-    
+
     private Completable build() {
         return Call.createWithZeroOutParameters(connection, sql, parameterGroups(), params);
     }
@@ -685,6 +639,52 @@ public final class CallableBuilder {
         ArrayList<T> r = new ArrayList<>(list);
         r.add(t);
         return r;
+    }
+
+    interface ParameterPlaceholder {
+    }
+
+    interface OutParameterPlaceholder extends ParameterPlaceholder {
+        Type type();
+    }
+
+    interface InParameterPlaceholder extends ParameterPlaceholder {
+    }
+
+    static final class In implements InParameterPlaceholder {
+    }
+
+    // singleton instance of In
+    private static final In IN = new In();
+
+    static final class InOut implements InParameterPlaceholder, OutParameterPlaceholder {
+        final Type type;
+        final Class<?> cls;
+
+        InOut(Type type, Class<?> cls) {
+            this.type = type;
+            this.cls = cls;
+        }
+
+        @Override
+        public Type type() {
+            return type;
+        }
+    }
+
+    static final class Out implements OutParameterPlaceholder {
+        final Type type;
+        final Class<?> cls;
+
+        public Out(Type type, Class<?> cls) {
+            this.type = type;
+            this.cls = cls;
+        }
+
+        @Override
+        public Type type() {
+            return type;
+        }
     }
 
 }

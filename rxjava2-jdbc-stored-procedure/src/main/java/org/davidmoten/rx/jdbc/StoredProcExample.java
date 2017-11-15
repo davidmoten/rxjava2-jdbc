@@ -12,6 +12,10 @@ public class StoredProcExample {
         // do nothing
     }
 
+    public static void inout1(int a[]) {
+        a[0] = a[0] + 1;
+    }
+
     public static void in1out1(int a, int[] b) {
         b[0] = a;
     }
