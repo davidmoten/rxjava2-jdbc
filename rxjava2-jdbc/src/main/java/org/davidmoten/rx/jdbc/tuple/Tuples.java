@@ -10,6 +10,8 @@ import java.util.List;
 import org.davidmoten.rx.jdbc.ResultSetMapper;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 
+import com.github.davidmoten.guavamini.Preconditions;
+
 /**
  * Utility methods for tuples.
  */
@@ -23,6 +25,7 @@ public final class Tuples {
     }
 
     public static <T> ResultSetMapper<T> single(final Class<T> cls) {
+        Preconditions.checkNotNull(cls, "cls cannot be null");
         return new ResultSetMapper<T>() {
 
             @Override
@@ -35,6 +38,8 @@ public final class Tuples {
 
     public static <T1, T2> ResultSetMapper<Tuple2<T1, T2>> tuple(final Class<T1> cls1,
             final Class<T2> cls2) {
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
         return new ResultSetMapper<Tuple2<T1, T2>>() {
 
             @Override
@@ -46,6 +51,9 @@ public final class Tuples {
 
     public static <T1, T2, T3> ResultSetMapper<Tuple3<T1, T2, T3>> tuple(final Class<T1> cls1,
             final Class<T2> cls2, final Class<T3> cls3) {
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
+        Preconditions.checkNotNull(cls3, "cls3 cannot be null");
         return new ResultSetMapper<Tuple3<T1, T2, T3>>() {
             @Override
             public Tuple3<T1, T2, T3> apply(ResultSet rs) {
@@ -54,10 +62,14 @@ public final class Tuples {
             }
         };
     }
-
+    
     public static <T1, T2, T3, T4> ResultSetMapper<Tuple4<T1, T2, T3, T4>> tuple(
             final Class<T1> cls1, final Class<T2> cls2, final Class<T3> cls3,
             final Class<T4> cls4) {
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
+        Preconditions.checkNotNull(cls3, "cls3 cannot be null");
+        Preconditions.checkNotNull(cls4, "cls4 cannot be null");
         return new ResultSetMapper<Tuple4<T1, T2, T3, T4>>() {
             @Override
             public Tuple4<T1, T2, T3, T4> apply(ResultSet rs) {
@@ -71,6 +83,12 @@ public final class Tuples {
     public static <T1, T2, T3, T4, T5> ResultSetMapper<Tuple5<T1, T2, T3, T4, T5>> tuple(
             final Class<T1> cls1, final Class<T2> cls2, final Class<T3> cls3, final Class<T4> cls4,
             final Class<T5> cls5) {
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
+        Preconditions.checkNotNull(cls3, "cls3 cannot be null");
+        Preconditions.checkNotNull(cls4, "cls4 cannot be null");
+        Preconditions.checkNotNull(cls5, "cls5 cannot be null");
+
         return new ResultSetMapper<Tuple5<T1, T2, T3, T4, T5>>() {
             @Override
             public Tuple5<T1, T2, T3, T4, T5> apply(ResultSet rs) {
@@ -84,7 +102,12 @@ public final class Tuples {
     public static <T1, T2, T3, T4, T5, T6> ResultSetMapper<Tuple6<T1, T2, T3, T4, T5, T6>> tuple(
             final Class<T1> cls1, final Class<T2> cls2, final Class<T3> cls3, final Class<T4> cls4,
             final Class<T5> cls5, final Class<T6> cls6) {
-
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
+        Preconditions.checkNotNull(cls3, "cls3 cannot be null");
+        Preconditions.checkNotNull(cls4, "cls4 cannot be null");
+        Preconditions.checkNotNull(cls5, "cls5 cannot be null");
+        Preconditions.checkNotNull(cls6, "cls6 cannot be null");
         return new ResultSetMapper<Tuple6<T1, T2, T3, T4, T5, T6>>() {
             @Override
             public Tuple6<T1, T2, T3, T4, T5, T6> apply(ResultSet rs) {
@@ -99,7 +122,13 @@ public final class Tuples {
     public static <T1, T2, T3, T4, T5, T6, T7> ResultSetMapper<Tuple7<T1, T2, T3, T4, T5, T6, T7>> tuple(
             final Class<T1> cls1, final Class<T2> cls2, final Class<T3> cls3, final Class<T4> cls4,
             final Class<T5> cls5, final Class<T6> cls6, final Class<T7> cls7) {
-
+        Preconditions.checkNotNull(cls1, "cls1 cannot be null");
+        Preconditions.checkNotNull(cls2, "cls2 cannot be null");
+        Preconditions.checkNotNull(cls3, "cls3 cannot be null");
+        Preconditions.checkNotNull(cls4, "cls4 cannot be null");
+        Preconditions.checkNotNull(cls5, "cls5 cannot be null");
+        Preconditions.checkNotNull(cls6, "cls6 cannot be null");
+        Preconditions.checkNotNull(cls7, "cls7 cannot be null");
         return new ResultSetMapper<Tuple7<T1, T2, T3, T4, T5, T6, T7>>() {
             @Override
             public Tuple7<T1, T2, T3, T4, T5, T6, T7> apply(ResultSet rs) {
@@ -112,6 +141,7 @@ public final class Tuples {
     }
 
     public static <T> ResultSetMapper<TupleN<T>> tupleN(final Class<T> cls) {
+        Preconditions.checkNotNull(cls, "cls cannot be null");
         return new ResultSetMapper<TupleN<T>>() {
             @Override
             public TupleN<T> apply(ResultSet rs) {
