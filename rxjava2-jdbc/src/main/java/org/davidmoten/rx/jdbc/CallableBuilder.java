@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 import org.davidmoten.rx.jdbc.callable.internal.Getter1;
 import org.davidmoten.rx.jdbc.callable.internal.Getter2;
 import org.davidmoten.rx.jdbc.callable.internal.Getter3;
+import org.davidmoten.rx.jdbc.callable.internal.Getter4;
+import org.davidmoten.rx.jdbc.callable.internal.GetterN;
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
 import org.davidmoten.rx.jdbc.tuple.Tuple4;
@@ -396,7 +398,7 @@ public final class CallableBuilder implements Getter1 {
 
     }
 
-    public static final class CallableResultSets2Builder<T1, T2> implements Getter3<T1,T2> {
+    public static final class CallableResultSets2Builder<T1, T2> implements Getter3<T1, T2> {
 
         private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
@@ -447,7 +449,7 @@ public final class CallableBuilder implements Getter1 {
         }
     }
 
-    public static final class CallableResultSets3Builder<T1, T2, T3> {
+    public static final class CallableResultSets3Builder<T1, T2, T3> implements Getter4<T1, T2, T3> {
 
         private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
@@ -500,7 +502,7 @@ public final class CallableBuilder implements Getter1 {
         }
     }
 
-    public static final class CallableResultSets4Builder<T1, T2, T3, T4> {
+    public static final class CallableResultSets4Builder<T1, T2, T3, T4> implements GetterN {
 
         private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
