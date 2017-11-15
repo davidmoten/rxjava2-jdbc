@@ -16,6 +16,7 @@ import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet3;
 import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSetN;
 import org.davidmoten.rx.jdbc.CallableBuilder.In;
 import org.davidmoten.rx.jdbc.CallableBuilder.InOut;
+import org.davidmoten.rx.jdbc.CallableBuilder.InParameterPlaceholder;
 import org.davidmoten.rx.jdbc.CallableBuilder.OutParameterPlaceholder;
 import org.davidmoten.rx.jdbc.CallableBuilder.ParameterPlaceholder;
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
@@ -355,7 +356,7 @@ public final class Call {
             int i = 0;
             for (int j = 0; j < parameterPlaceholders.size() && i < parameters.size(); j++) {
                 ParameterPlaceholder p = parameterPlaceholders.get(j);
-                if (p instanceof In || p instanceof InOut) {
+                if (p instanceof InParameterPlaceholder) {
                     Util.setParameter(ps, j + 1, parameters.get(i));
                     i++;
                 }
@@ -377,7 +378,7 @@ public final class Call {
         for (int j = 0; j < parameterPlaceholders.size(); j++) {
             ParameterPlaceholder p = parameterPlaceholders.get(j);
             if (p instanceof OutParameterPlaceholder) {
-                outs.add(new PlaceAndType(j + 1, p.type()));
+                outs.add(new PlaceAndType(j + 1, ((OutParameterPlaceholder) p).type()));
                 if (outs.size() == outCount) {
                     break;
                 }

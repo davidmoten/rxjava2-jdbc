@@ -2461,7 +2461,7 @@ public class DatabaseTest {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
                 .call("call in1out1(?,?)") //
-                .in(Type.INTEGER) //
+                .in() //
                 .out(Type.INTEGER, Integer.class) //
                 .in(0, 10, 20) //
                 .build() //
@@ -2476,7 +2476,7 @@ public class DatabaseTest {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
                 .call("call in1out2(?,?,?)") //
-                .in(Type.INTEGER) //
+                .in() //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
                 .in(0, 10, 20) //
@@ -2495,7 +2495,7 @@ public class DatabaseTest {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
                 .call("call in1out3(?,?,?,?)") //
-                .in(Type.INTEGER) //
+                .in() //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
@@ -2538,7 +2538,7 @@ public class DatabaseTest {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
                 .call("call in1out0rs2(?)") //
-                .in(Type.INTEGER) //
+                .in() //
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
                 .in(0, 10, 20) //
@@ -2557,7 +2557,7 @@ public class DatabaseTest {
         db //
                 .call("call in1out0rs2(?)") //
                 .autoMap(Person2.class) //
-                .in(Type.INTEGER) //
+                .in() //
                 .autoMap(Person2.class) //
                 .in(0, 10, 20) //
                 .build() //
@@ -2576,7 +2576,7 @@ public class DatabaseTest {
                 .call("call in1out0rs2(?)") //
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
-                .in(Type.INTEGER) //
+                .in() //
                 .in(0, 10, 20) //
                 .build() //
                 .doOnNext(x -> assertTrue(x.outs().isEmpty())) //

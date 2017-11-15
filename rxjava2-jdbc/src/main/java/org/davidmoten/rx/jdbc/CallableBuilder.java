@@ -35,27 +35,20 @@ public final class CallableBuilder {
     }
 
     interface ParameterPlaceholder {
-        Type type();
     }
 
     interface OutParameterPlaceholder extends ParameterPlaceholder {
+        Type type();
     }
 
     interface InParameterPlaceholder extends ParameterPlaceholder {
     }
 
     static final class In implements InParameterPlaceholder {
-        final Type type;
-
-        In(Type type) {
-            this.type = type;
-        }
-
-        @Override
-        public Type type() {
-            return type;
-        }
     }
+
+    // singleton instance of In
+    private static final In IN = new In();
 
     static final class InOut implements InParameterPlaceholder, OutParameterPlaceholder {
         final Type type;
@@ -104,8 +97,8 @@ public final class CallableBuilder {
         return null;
     }
 
-    public CallableBuilder in(Type type) {
-        params.add(new In(type));
+    public CallableBuilder in() {
+        params.add(IN);
         return this;
     }
 
@@ -148,8 +141,8 @@ public final class CallableBuilder {
             this.cls = cls;
         }
 
-        public CallableBuilder1<T1> in(Type type) {
-            b.in(type);
+        public CallableBuilder1<T1> in() {
+            b.in();
             return this;
         }
 
@@ -209,8 +202,8 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableBuilder2<T1, T2> in(Type type) {
-            b.in(type);
+        public CallableBuilder2<T1, T2> in() {
+            b.in();
             return this;
         }
 
@@ -262,8 +255,8 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableBuilder3<T1, T2, T3> in(Type type) {
-            b.in(type);
+        public CallableBuilder3<T1, T2, T3> in() {
+            b.in();
             return this;
         }
 
@@ -313,8 +306,8 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableBuilder4<T1, T2, T3, T4> in(Type type) {
-            b.in(type);
+        public CallableBuilder4<T1, T2, T3, T4> in() {
+            b.in();
             return this;
         }
 
@@ -361,6 +354,11 @@ public final class CallableBuilder {
 
         public CallableBuilderN in(Flowable<?> f) {
             b.in(f);
+            return this;
+        }
+
+        public CallableBuilderN in() {
+            b.in();
             return this;
         }
 
@@ -417,8 +415,8 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableResultSets1Builder<T1> in(Type type) {
-            b.in(type);
+        public CallableResultSets1Builder<T1> in() {
+            b.in();
             return this;
         }
 
@@ -461,8 +459,8 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableResultSets2Builder<T1, T2> in(Type type) {
-            b.in(type);
+        public CallableResultSets2Builder<T1, T2> in() {
+            b.in();
             return this;
         }
 
@@ -510,6 +508,11 @@ public final class CallableBuilder {
             return this;
         }
 
+        public CallableResultSets3Builder<T1, T2, T3> in() {
+            b.in();
+            return this;
+        }
+
         public CallableResultSets3Builder<T1, T2, T3> in(Flowable<?> f) {
             b.in(f);
             return this;
@@ -548,6 +551,11 @@ public final class CallableBuilder {
         CallableResultSetsNBuilder(CallableBuilder b, List<Function<? super ResultSet, ?>> functions) {
             this.b = b;
             this.functions = functions;
+        }
+
+        public CallableResultSetsNBuilder in() {
+            b.in();
+            return this;
         }
 
         public CallableResultSetsNBuilder in(Flowable<?> f) {
@@ -669,7 +677,7 @@ public final class CallableBuilder {
         public List<Flowable<?>> results() {
             return flowables;
         }
-        
+
         public Flowable<?> results(int index) {
             return flowables.get(index);
         }
