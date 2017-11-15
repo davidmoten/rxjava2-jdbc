@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.davidmoten.rx.jdbc.callable.internal.Getter1;
+import org.davidmoten.rx.jdbc.callable.internal.Getter2;
 import org.davidmoten.rx.jdbc.tuple.Tuple2;
 import org.davidmoten.rx.jdbc.tuple.Tuple3;
 import org.davidmoten.rx.jdbc.tuple.Tuple4;
@@ -20,7 +22,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
 
-public final class CallableBuilder {
+public final class CallableBuilder implements Getter1 {
 
     final String sql;
     final List<ParameterPlaceholder> params = new ArrayList<>();
@@ -75,19 +77,20 @@ public final class CallableBuilder {
         return new CallableBuilder1<T>(this, cls);
     }
 
-    public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+    @Override
+    public <T> CallableResultSets1Builder<T> get(Function<? super ResultSet, ? extends T> function) {
         return new CallableResultSets1Builder<T>(this, function);
     }
 
     public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
-        return map(Util.autoMap(cls));
+        return get(Util.autoMap(cls));
     }
 
     private Completable build() {
         return Call.createWithZeroOutParameters(connection, sql, parameterGroups(), params);
     }
 
-    public static final class CallableBuilder1<T1> {
+    public static final class CallableBuilder1<T1> implements Getter1 {
 
         private final CallableBuilder b;
         private final Class<T1> cls;
@@ -121,12 +124,13 @@ public final class CallableBuilder {
             return in(Flowable.fromArray(objects));
         }
 
-        public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+        @Override
+        public <T> CallableResultSets1Builder<T> get(Function<? super ResultSet, ? extends T> function) {
             return new CallableResultSets1Builder<T>(b, function);
         }
 
         public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
-            return map(Util.autoMap(cls));
+            return get(Util.autoMap(cls));
         }
 
         private Flowable<T1> build() {
@@ -135,7 +139,7 @@ public final class CallableBuilder {
         }
     }
 
-    public static final class CallableBuilder2<T1, T2> {
+    public static final class CallableBuilder2<T1, T2> implements Getter1 {
 
         private final CallableBuilder b;
         private final Class<T1> cls1;
@@ -171,12 +175,13 @@ public final class CallableBuilder {
             return new CallableBuilder3<T1, T2, T3>(b, cls1, cls2, cls3);
         }
 
-        public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+        @Override
+        public <T> CallableResultSets1Builder<T> get(Function<? super ResultSet, ? extends T> function) {
             return new CallableResultSets1Builder<T>(b, function);
         }
 
         public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
-            return map(Util.autoMap(cls));
+            return get(Util.autoMap(cls));
         }
 
         private Flowable<Tuple2<T1, T2>> build() {
@@ -185,7 +190,7 @@ public final class CallableBuilder {
         }
     }
 
-    public static final class CallableBuilder3<T1, T2, T3> {
+    public static final class CallableBuilder3<T1, T2, T3> implements Getter1 {
 
         private final CallableBuilder b;
         private final Class<T1> cls1;
@@ -223,12 +228,13 @@ public final class CallableBuilder {
             return new CallableBuilder4<T1, T2, T3, T4>(b, cls1, cls2, cls3, cls4);
         }
 
-        public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+        @Override
+        public <T> CallableResultSets1Builder<T> get(Function<? super ResultSet, ? extends T> function) {
             return new CallableResultSets1Builder<T>(b, function);
         }
 
         public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
-            return map(Util.autoMap(cls));
+            return get(Util.autoMap(cls));
         }
 
         private Flowable<Tuple3<T1, T2, T3>> build() {
@@ -238,7 +244,7 @@ public final class CallableBuilder {
         }
     }
 
-    public static final class CallableBuilder4<T1, T2, T3, T4> {
+    public static final class CallableBuilder4<T1, T2, T3, T4> implements Getter1 {
 
         private final CallableBuilder b;
         private final Class<T1> cls1;
@@ -278,12 +284,13 @@ public final class CallableBuilder {
             return new CallableBuilderN(b, Lists.newArrayList(cls1, cls2, cls3, cls4, cls5));
         }
 
-        public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+        @Override
+        public <T> CallableResultSets1Builder<T> get(Function<? super ResultSet, ? extends T> function) {
             return new CallableResultSets1Builder<T>(b, function);
         }
 
         public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
-            return map(Util.autoMap(cls));
+            return get(Util.autoMap(cls));
         }
 
         private Flowable<Tuple4<T1, T2, T3, T4>> build() {
@@ -294,7 +301,7 @@ public final class CallableBuilder {
         }
     }
 
-    public static final class CallableBuilderN {
+    public static final class CallableBuilderN implements Getter1 {
 
         private final CallableBuilder b;
         private final List<Class<?>> outClasses;
@@ -323,12 +330,13 @@ public final class CallableBuilder {
             return new CallableBuilderN(b, createList(outClasses, cls));
         }
 
-        public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
+        @Override
+        public <T> CallableResultSets1Builder<T> get(Function<? super ResultSet, ? extends T> function) {
             return new CallableResultSets1Builder<T>(b, function);
         }
 
         public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
-            return map(Util.autoMap(cls));
+            return get(Util.autoMap(cls));
         }
 
         private Flowable<TupleN<Object>> build() {
@@ -338,7 +346,7 @@ public final class CallableBuilder {
 
     }
 
-    public static final class CallableResultSets1Builder<T1> {
+    public static final class CallableResultSets1Builder<T1> implements Getter2<T1> {
 
         private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
@@ -354,10 +362,10 @@ public final class CallableBuilder {
         }
 
         public <T2> CallableResultSets2Builder<T1, T2> autoMap(Class<T2> cls) {
-            return map(Util.autoMap(cls));
+            return get(Util.autoMap(cls));
         }
 
-        public <T2> CallableResultSets2Builder<T1, T2> map(Function<? super ResultSet, ? extends T2> f2) {
+        public <T2> CallableResultSets2Builder<T1, T2> get(Function<? super ResultSet, ? extends T2> f2) {
             return new CallableResultSets2Builder<T1, T2>(b, f1, f2);
         }
 
@@ -425,10 +433,10 @@ public final class CallableBuilder {
         }
 
         public <T3> CallableResultSets3Builder<T1, T2, T3> autoMap(Class<T3> cls) {
-            return map(Util.autoMap(cls));
+            return get(Util.autoMap(cls));
         }
 
-        public <T3> CallableResultSets3Builder<T1, T2, T3> map(Function<? super ResultSet, ? extends T3> f3) {
+        public <T3> CallableResultSets3Builder<T1, T2, T3> get(Function<? super ResultSet, ? extends T3> f3) {
             return new CallableResultSets3Builder<T1, T2, T3>(b, f1, f2, f3);
         }
 
@@ -478,10 +486,10 @@ public final class CallableBuilder {
         }
 
         public <T4> CallableResultSets4Builder<T1, T2, T3, T4> autoMap(Class<T4> cls) {
-            return map(Util.autoMap(cls));
+            return get(Util.autoMap(cls));
         }
 
-        public <T4> CallableResultSets4Builder<T1, T2, T3, T4> map(Function<? super ResultSet, ? extends T4> f4) {
+        public <T4> CallableResultSets4Builder<T1, T2, T3, T4> get(Function<? super ResultSet, ? extends T4> f4) {
             return new CallableResultSets4Builder<T1, T2, T3, T4>(b, f1, f2, f3, f4);
         }
 
@@ -534,11 +542,11 @@ public final class CallableBuilder {
         }
 
         public <T> CallableResultSetsNBuilder autoMap(Class<T> cls) {
-            return map(Util.autoMap(cls));
+            return get(Util.autoMap(cls));
         }
 
         @SuppressWarnings("unchecked")
-        public CallableResultSetsNBuilder map(Function<? super ResultSet, ?> f5) {
+        public CallableResultSetsNBuilder get(Function<? super ResultSet, ?> f5) {
             return new CallableResultSetsNBuilder(b, Lists.newArrayList(f1, f2, f3, f4, f5));
         }
 
@@ -578,10 +586,10 @@ public final class CallableBuilder {
         }
 
         public <T> CallableResultSetsNBuilder autoMap(Class<T> cls) {
-            return map(Util.autoMap(cls));
+            return get(Util.autoMap(cls));
         }
 
-        public CallableResultSetsNBuilder map(Function<? super ResultSet, ?> f) {
+        public CallableResultSetsNBuilder get(Function<? super ResultSet, ?> f) {
             functions.add(f);
             return this;
         }
