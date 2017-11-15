@@ -117,6 +117,16 @@ public final class DatabaseCreator {
             exec(c, sql);
         }
         {
+            String sql = "CREATE PROCEDURE APP.inout2" //
+                    + " (INOUT a INTEGER, " //
+                    + " INOUT b INTEGER)" //
+                    + " PARAMETER STYLE JAVA" //
+                    + " LANGUAGE JAVA" //
+                    + " EXTERNAL NAME" //
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.inout2'";
+            exec(c, sql);
+        }
+        {
             String sql = "CREATE PROCEDURE APP.in1out1" //
                     + " (IN a INTEGER," //
                     + " OUT b INTEGER)" //

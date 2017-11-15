@@ -2480,6 +2480,20 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testCallableApiTwoInOutParameters() {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call inout2(?, ?)") //
+                .inOut(Type.INTEGER, Integer.class) //
+                .inOut(Type.INTEGER, Integer.class) //
+                .in(4, 10) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(x -> x._1() == 5 && x._2() == 12) //
+                .assertComplete();
+    }
+
+    @Test
     public void testCallableApiReturningOneOutParameter() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
