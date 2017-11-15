@@ -14,8 +14,6 @@ import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet1;
 import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet2;
 import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet3;
 import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSetN;
-import org.davidmoten.rx.jdbc.CallableBuilder.In;
-import org.davidmoten.rx.jdbc.CallableBuilder.InOut;
 import org.davidmoten.rx.jdbc.CallableBuilder.InParameterPlaceholder;
 import org.davidmoten.rx.jdbc.CallableBuilder.OutParameterPlaceholder;
 import org.davidmoten.rx.jdbc.CallableBuilder.ParameterPlaceholder;
@@ -28,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.davidmoten.guavamini.Lists;
 
+import io.reactivex.Completable;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import io.reactivex.Notification;
@@ -43,6 +42,28 @@ public final class Call {
 
     private Call() {
         // prevent instantiation
+    }
+
+    /////////////////////////
+    // No Parameters
+    /////////////////////////
+
+    public static Completable createWithZeroOutParameters(Single<Connection> connection, String sql,
+            Flowable<List<Object>> parameterGroups, List<ParameterPlaceholder> parameterPlaceholders) {
+        return connection.toFlowable()
+                .flatMap(con -> Call.<Object>createWithParameters(con, sql, parameterGroups, parameterPlaceholders,
+                        (stmt, parameters) -> createWithZeroOutParameters(stmt, parameters, parameterPlaceholders)))
+                .dematerialize() //
+                .ignoreElements();
+    }
+
+    private static Single<Object> createWithZeroOutParameters(NamedCallableStatement stmt, List<Object> parameters,
+            List<ParameterPlaceholder> parameterPlaceholders) {
+        return Single.fromCallable(() -> {
+            CallableStatement st = stmt.stmt;
+            execute(stmt, parameters, parameterPlaceholders, 0, st);
+            return 1;
+        });
     }
 
     /////////////////////////

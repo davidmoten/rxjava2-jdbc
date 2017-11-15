@@ -2457,6 +2457,17 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testCallableApiNoParameters() throws InterruptedException {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call zero()") //
+                .once()
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertComplete();
+    }
+
+    @Test
     public void testCallableApiReturningOneOutParameter() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //

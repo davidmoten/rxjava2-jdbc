@@ -8,7 +8,7 @@ import java.sql.SQLException;
 
 public class StoredProcExample {
 
-    public static void in0out0rs0() {
+    public static void zero() {
     }
 
     public static void in1out1(int a, int[] b) {

@@ -100,6 +100,14 @@ public final class DatabaseCreator {
         exec(c, "call sqlj.install_jar('target/rxjava2-jdbc-stored-procedure.jar', 'APP.examples', 0)");
 
         {
+            String sql = "CREATE PROCEDURE APP.zero()" //
+                    + " PARAMETER STYLE JAVA" //
+                    + " LANGUAGE JAVA" //
+                    + " EXTERNAL NAME" //
+                    + " 'org.davidmoten.rx.jdbc.StoredProcExample.zero'";
+            exec(c, sql);
+        }
+        {
             String sql = "CREATE PROCEDURE APP.in1out1" //
                     + " (IN a INTEGER," //
                     + " OUT b INTEGER)" //

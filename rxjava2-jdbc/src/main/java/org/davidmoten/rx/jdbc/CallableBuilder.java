@@ -92,25 +92,23 @@ public final class CallableBuilder {
         }
     }
 
-    public Completable perform() {
-        // TODO
-        return null;
-    }
-
     public CallableBuilder in() {
         params.add(IN);
         return this;
     }
 
-    public CallableBuilder in(Flowable<?> f) {
+    public Completable in(Flowable<?> f) {
         Preconditions.checkArgument(inStream == null, "you can only specify in flowable once, current=" + inStream);
         this.inStream = f;
-        return this;
+        return build();
     }
-
-    public CallableBuilder in(Object... objects) {
-        in(Flowable.fromArray(objects));
-        return this;
+    
+    public Completable once() {
+        return in(1);
+    }
+    
+    public Completable in(Object... objects) {
+        return in(Flowable.fromArray(objects));
     }
 
     public <T> CallableBuilder1<T> inOut(Type type, Class<T> cls) {
@@ -129,6 +127,10 @@ public final class CallableBuilder {
 
     public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
         return map(Util.autoMap(cls));
+    }
+    
+    private Completable build() {
+        return Call.createWithZeroOutParameters(connection, sql, parameterGroups(), params);
     }
 
     public static final class CallableBuilder1<T1> {
