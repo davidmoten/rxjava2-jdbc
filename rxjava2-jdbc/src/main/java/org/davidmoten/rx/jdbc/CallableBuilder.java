@@ -156,14 +156,13 @@ public final class CallableBuilder {
             return new CallableBuilder2<T1, T2>(b, cls, cls2);
         }
 
-        public CallableBuilder1<T1> in(Flowable<?> f) {
+        public Flowable<T1> in(Flowable<?> f) {
             b.in(f);
-            return this;
+            return build();
         }
 
-        public CallableBuilder1<T1> in(Object... objects) {
-            in(Flowable.fromArray(objects));
-            return this;
+        public Flowable<T1> in(Object... objects) {
+            return in(Flowable.fromArray(objects));
         }
 
         public <T> CallableResultSets1Builder<T> map(Function<? super ResultSet, T> function) {
@@ -174,7 +173,7 @@ public final class CallableBuilder {
             return map(Util.autoMap(cls));
         }
 
-        public Flowable<T1> build() {
+        private Flowable<T1> build() {
             return Call.createWithOneOutParameter(b.connection, b.sql, b.parameterGroups(), b.params, cls) //
                     .dematerialize();
         }
@@ -197,9 +196,9 @@ public final class CallableBuilder {
             return new CallableBuilder3<T1, T2, T3>(b, cls1, cls2, cls3);
         }
 
-        public CallableBuilder2<T1, T2> in(Flowable<?> f) {
+        public Flowable<Tuple2<T1, T2>> in(Flowable<?> f) {
             b.in(f);
-            return this;
+            return build();
         }
 
         public CallableBuilder2<T1, T2> in() {
@@ -207,9 +206,8 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableBuilder2<T1, T2> in(Object... objects) {
-            in(Flowable.fromArray(objects));
-            return this;
+        public Flowable<Tuple2<T1, T2>> in(Object... objects) {
+            return in(Flowable.fromArray(objects));
         }
 
         public <T3> CallableBuilder3<T1, T2, T3> inOut(Type type, Class<T3> cls3) {
@@ -225,7 +223,7 @@ public final class CallableBuilder {
             return map(Util.autoMap(cls));
         }
 
-        public Flowable<Tuple2<T1, T2>> build() {
+        private Flowable<Tuple2<T1, T2>> build() {
             return Call.createWithTwoOutParameters(b.connection, b.sql, b.parameterGroups(), b.params, cls1, cls2) //
                     .dematerialize();
         }
@@ -250,9 +248,9 @@ public final class CallableBuilder {
             return new CallableBuilder4<T1, T2, T3, T4>(b, cls1, cls2, cls3, cls4);
         }
 
-        public CallableBuilder3<T1, T2, T3> in(Flowable<?> f) {
+        public Flowable<Tuple3<T1, T2, T3>> in(Flowable<?> f) {
             b.in(f);
-            return this;
+            return build();
         }
 
         public CallableBuilder3<T1, T2, T3> in() {
@@ -260,9 +258,8 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableBuilder3<T1, T2, T3> in(Object... objects) {
-            in(Flowable.fromArray(objects));
-            return this;
+        public Flowable<Tuple3<T1, T2, T3>> in(Object... objects) {
+            return in(Flowable.fromArray(objects));
         }
 
         public <T4> CallableBuilder4<T1, T2, T3, T4> inOut(Type type, Class<T4> cls4) {
@@ -278,7 +275,7 @@ public final class CallableBuilder {
             return map(Util.autoMap(cls));
         }
 
-        public Flowable<Tuple3<T1, T2, T3>> build() {
+        private Flowable<Tuple3<T1, T2, T3>> build() {
             return Call
                     .createWithThreeOutParameters(b.connection, b.sql, b.parameterGroups(), b.params, cls1, cls2, cls3) //
                     .dematerialize();
@@ -301,9 +298,9 @@ public final class CallableBuilder {
             this.cls4 = cls4;
         }
 
-        public CallableBuilder4<T1, T2, T3, T4> in(Flowable<?> f) {
+        public Flowable<Tuple4<T1, T2, T3, T4>> in(Flowable<?> f) {
             b.in(f);
-            return this;
+            return build();
         }
 
         public CallableBuilder4<T1, T2, T3, T4> in() {
@@ -311,9 +308,8 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableBuilder4<T1, T2, T3, T4> in(Object... objects) {
-            in(Flowable.fromArray(objects));
-            return this;
+        public Flowable<Tuple4<T1, T2, T3, T4>> in(Object... objects) {
+            return in(Flowable.fromArray(objects));
         }
 
         public CallableBuilderN inOut(Type type, Class<T3> cls5) {
@@ -334,7 +330,7 @@ public final class CallableBuilder {
             return map(Util.autoMap(cls));
         }
 
-        public Flowable<Tuple4<T1, T2, T3, T4>> build() {
+        private Flowable<Tuple4<T1, T2, T3, T4>> build() {
             return Call
                     .createWithFourOutParameters(b.connection, b.sql, b.parameterGroups(), b.params, cls1, cls2, cls3,
                             cls4) //
@@ -352,9 +348,9 @@ public final class CallableBuilder {
             this.outClasses = outClasses;
         }
 
-        public CallableBuilderN in(Flowable<?> f) {
+        public Flowable<TupleN<Object>> in(Flowable<?> f) {
             b.in(f);
-            return this;
+            return build();
         }
 
         public CallableBuilderN in() {
@@ -362,9 +358,8 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableBuilderN in(Object... objects) {
-            in(Flowable.fromArray(objects));
-            return this;
+        public Flowable<TupleN<Object>> in(Object... objects) {
+            return in(Flowable.fromArray(objects));
         }
 
         public CallableBuilderN out(Type type, Class<?> cls) {
@@ -380,7 +375,7 @@ public final class CallableBuilder {
             return map(Util.autoMap(cls));
         }
 
-        public Flowable<TupleN<Object>> build() {
+        private Flowable<TupleN<Object>> build() {
             return Call.createWithNParameters(b.connection, b.sql, b.parameterGroups(), b.params, outClasses) //
                     .dematerialize();
         }
@@ -410,9 +405,9 @@ public final class CallableBuilder {
             return new CallableResultSets2Builder<T1, T2>(b, f1, f2);
         }
 
-        public CallableResultSets1Builder<T1> in(Flowable<?> f) {
+        public Flowable<CallableResultSet1<T1>> in(Flowable<?> f) {
             b.in(f);
-            return this;
+            return build();
         }
 
         public CallableResultSets1Builder<T1> in() {
@@ -420,7 +415,7 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableResultSets1Builder<T1> in(Object... objects) {
+        public Flowable<CallableResultSet1<T1>> in(Object... objects) {
             return in(Flowable.fromArray(objects));
         }
 
@@ -429,7 +424,7 @@ public final class CallableBuilder {
             return this;
         }
 
-        public Flowable<CallableResultSet1<T1>> build() {
+        private Flowable<CallableResultSet1<T1>> build() {
             return Call.createWithOneResultSet(b.connection, b.sql, b.parameterGroups(), b.params, f1, 0) //
                     .dematerialize();
         }
@@ -454,9 +449,9 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableResultSets2Builder<T1, T2> in(Flowable<?> f) {
+        public Flowable<CallableResultSet2<T1, T2>> in(Flowable<?> f) {
             b.in(f);
-            return this;
+            return build();
         }
 
         public CallableResultSets2Builder<T1, T2> in() {
@@ -464,9 +459,8 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableResultSets2Builder<T1, T2> in(Object... objects) {
-            in(Flowable.fromArray(objects));
-            return this;
+        public Flowable<CallableResultSet2<T1, T2>> in(Object... objects) {
+            return in(Flowable.fromArray(objects));
         }
 
         public CallableResultSets2Builder<T1, T2> inOut(Type type, Class<?> cls) {
@@ -482,7 +476,7 @@ public final class CallableBuilder {
             return new CallableResultSets3Builder<T1, T2, T3>(b, f1, f2, f3);
         }
 
-        public Flowable<CallableResultSet2<T1, T2>> build() {
+        private Flowable<CallableResultSet2<T1, T2>> build() {
             return Call.createWithTwoResultSets(b.connection, b.sql, b.parameterGroups(), b.params, f1, f2, 0) //
                     .dematerialize();
         }
@@ -513,14 +507,13 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableResultSets3Builder<T1, T2, T3> in(Flowable<?> f) {
+        public Flowable<CallableResultSet3<T1, T2, T3>> in(Flowable<?> f) {
             b.in(f);
-            return this;
+            return build();
         }
 
-        public CallableResultSets3Builder<T1, T2, T3> in(Object... objects) {
-            in(Flowable.fromArray(objects));
-            return this;
+        public Flowable<CallableResultSet3<T1, T2, T3>> in(Object... objects) {
+            return in(Flowable.fromArray(objects));
         }
 
         public CallableResultSets3Builder<T1, T2, T3> inOut(Type type, Class<?> cls) {
@@ -537,7 +530,7 @@ public final class CallableBuilder {
             return new CallableResultSetsNBuilder(b, Lists.newArrayList(f1, f2, f3, f));
         }
 
-        public Flowable<CallableResultSet3<T1, T2, T3>> build() {
+        private Flowable<CallableResultSet3<T1, T2, T3>> build() {
             return Call.createWithThreeResultSets(b.connection, b.sql, b.parameterGroups(), b.params, f1, f2, f3, 0) //
                     .dematerialize();
         }
@@ -558,14 +551,13 @@ public final class CallableBuilder {
             return this;
         }
 
-        public CallableResultSetsNBuilder in(Flowable<?> f) {
+        public Flowable<CallableResultSetN> in(Flowable<?> f) {
             b.in(f);
-            return this;
+            return build();
         }
 
-        public CallableResultSetsNBuilder in(Object... objects) {
-            in(Flowable.fromArray(objects));
-            return this;
+        public Flowable<CallableResultSetN> in(Object... objects) {
+            return in(Flowable.fromArray(objects));
         }
 
         public CallableResultSetsNBuilder inOut(Type type, Class<?> cls) {
@@ -582,7 +574,7 @@ public final class CallableBuilder {
             return this;
         }
 
-        public Flowable<CallableResultSetN> build() {
+        private Flowable<CallableResultSetN> build() {
             return Call.createWithNResultSets(b.connection, b.sql, b.parameterGroups(), b.params, functions, 0) //
                     .dematerialize();
         }
