@@ -2712,6 +2712,21 @@ public class DatabaseTest {
                 .assertComplete();
     }
 
+    @Test
+    public void testCallableApiReturningOneResultSetGetAs() throws InterruptedException {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call in0out0rs1()") //
+                .getAs(String.class, Integer.class) //
+                .in(1) //
+                .flatMap(x -> x.results()) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueAt(0, p -> "FRED".equalsIgnoreCase(p._1()) && p._2() == 24) //
+                .assertValueAt(1, p -> "SARAH".equalsIgnoreCase(p._1()) && p._2() == 26) //
+                .assertComplete();
+    }
+
     public interface PersonWithDefaultMethod {
         @Column
         String name();
