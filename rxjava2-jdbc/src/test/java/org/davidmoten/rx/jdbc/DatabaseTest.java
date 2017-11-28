@@ -130,8 +130,19 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testBlockingForEachWhenError() {
+        try {
+            Flowable //
+                    .error(new RuntimeException("boo")) //
+                    .blockingForEach(System.out::println);
+        } catch (RuntimeException e) {
+            assertEquals("boo", e.getMessage());
+        }
+    }
+
+    @Test
     public void testSelectUsingQuestionMarkAndInClauseIssue10() {
-        
+
         Database.test() //
                 .select("select score from person where name in (?)") //
                 .parameters("FRED", "JOSEPH") //
