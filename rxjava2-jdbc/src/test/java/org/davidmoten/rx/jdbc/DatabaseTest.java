@@ -130,6 +130,15 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testSelectUsingQuestionMarkAndInClauseIssue10() {
+        Database.test() //
+                .select("select score from person where name in (?)") //
+                .parameters("FRED", "JOSEPH") //
+                .getAs(Integer.class) //
+                .blockingForEach(System.out::println);
+    }
+
+    @Test
     public void testSelectUsingNamedParameterList() {
         try (Database db = db()) {
             db.select("select score from person where name=:name") //
