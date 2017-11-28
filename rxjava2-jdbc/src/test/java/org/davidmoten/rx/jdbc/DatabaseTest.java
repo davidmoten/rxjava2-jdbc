@@ -131,11 +131,16 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingQuestionMarkAndInClauseIssue10() {
+        
         Database.test() //
                 .select("select score from person where name in (?)") //
                 .parameters("FRED", "JOSEPH") //
                 .getAs(Integer.class) //
-                .blockingForEach(System.out::println);
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
     }
 
     @Test
