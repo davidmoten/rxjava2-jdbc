@@ -189,6 +189,7 @@
                         <configuration>
                             <excludes>
                                 <exclude>**/ConnectionNonBlockingMemberPreparedStatement.*</exclude>
+                                <exclude>**/ConnectionNonBlockingMemberCallableStatement.*</exclude>
                                 <exclude>**/ConnectionNonBlockingMember.*</exclude>
                                 <exclude>**/TransactedConnection.*</exclude>
                                 <exclude>**/TransactedPreparedStatement.*</exclude>
