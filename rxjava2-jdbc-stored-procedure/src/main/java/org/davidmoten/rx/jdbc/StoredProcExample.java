@@ -134,9 +134,4 @@ public class StoredProcExample {
         c[0] = stmt.executeQuery();
     }
 
-    public static void in2out2(int a, int b, String[] name, int[] total) {
-        name[0] = "FREDDY";
-        total[0] = a + b;
-    }
-
 }
