@@ -6,7 +6,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class StoredProcExample {
+public final class StoredProcExample {
+
+    private StoredProcExample() {
+        // prevent instantiation
+    }
 
     public static void zero() {
         // do nothing
