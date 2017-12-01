@@ -386,6 +386,31 @@ Output:
 3
 ```
 
+## Collection parameters
+Some databases support `PreparedStatement.setArray` for setting a parameter with a list of items like in:
+
+```sql
+select score from person where name in (?)
+```
+
+*rxjava2-jdbc* does not YET support `setArray` or alternative methods to nicely handle collection parameters. However, there is a **workaround** that works with all databases. Here's an example:
+
+```java
+List<String> list = Lists.newArrayList("FRED","JOSEPH");
+String questionMarks =  list
+  .stream() 
+  .map(x -> "?")
+  .collect(Collectors.joining(","));
+String sql = "select score from person where name in (" + questionMarks + ");
+db.test()
+  .select(sql)
+  .parameters(list)
+  .getAs(Integer.class)
+  .blockingForEach(System.out::println);
+```
+
+Note that databases normally have a limit on the number of parameters in a statement (or indeed the size of array that can be passed in `setArray`). For Oracle it's O(1000), H2 it is O(20000).
+
 Non-blocking connection pools
 -------------------------------
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
