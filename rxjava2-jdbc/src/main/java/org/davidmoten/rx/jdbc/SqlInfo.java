@@ -2,7 +2,9 @@ package org.davidmoten.rx.jdbc;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -56,6 +58,13 @@ final class SqlInfo {
 
     private static String collectNamesAndConvertToQuestionMarks(String namedSql, List<String> names,
             List<Parameter> parameters) {
+
+        Map<String, Parameter> map = new HashMap<>();
+        for (Parameter p : parameters) {
+            if (p.hasName()) {
+                map.put(p.name(), p);
+            }
+        }
         int length = namedSql.length();
         StringBuilder parsedQuery = new StringBuilder(length);
         boolean inSingleQuote = false;
@@ -90,7 +99,7 @@ final class SqlInfo {
                     }
                     String name = namedSql.substring(i + 1, j);
                     if (!parameters.isEmpty()) {
-                        Parameter p = parameters.get(count - 1);
+                        Parameter p = map.get(name);
                         s.append(IntStream.range(0, p.size()).mapToObj(x -> "?")
                                 .collect(Collectors.joining(",")));
                     } else {

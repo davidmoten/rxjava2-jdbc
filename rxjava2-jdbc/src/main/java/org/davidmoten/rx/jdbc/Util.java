@@ -74,9 +74,9 @@ public enum Util {
     @VisibleForTesting
     static void setParameters(PreparedStatement ps, List<Parameter> params, boolean namesAllowed)
             throws SQLException {
-        int i = 1;
-        while (i <= params.size()) {
-            Parameter p = params.get(i - 1);
+        int j = 1;
+        for (int i = 0; i < params.size(); i++) {
+            Parameter p = params.get(i);
             if (p.hasName() && !namesAllowed) {
                 throw new NamedParameterFoundButSqlDoesNotHaveNamesException(
                         "named parameter found but sql does not contain names ps=" + ps);
@@ -84,24 +84,23 @@ public enum Util {
             Object v = p.value();
             if (p.isCollection()) {
                 if (v instanceof Collection) {
-                    int j = 0;
                     for (Object o : ((Collection<?>) v)) {
-                        setParameter(ps, i + j, o);
+                        setParameter(ps, j, o);
                         j++;
                     }
                 } else {
                     System.out.println(p.value().getClass());
                     throw new RuntimeException("not implemented yet");
                 }
-                i += p.size();
             } else {
-                setParameter(ps, i, v);
-                i++;
+                setParameter(ps, j, v);
+                j++;
             }
         }
     }
 
     static void setParameter(PreparedStatement ps, int i, Object o) throws SQLException {
+        log.debug("setting parameter {} to {}", i, o);
         try {
             if (o == null)
                 ps.setObject(i, null);

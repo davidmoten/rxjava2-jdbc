@@ -182,7 +182,6 @@ public class DatabaseTest {
     }
     
     @Test
-    @Ignore
     public void testSelectUsingInClauseWithRepeatedNamedListParameter() {
         Database.test() //
                 .select("select score from person where name in (:names) and name in (:names) order by score") //
