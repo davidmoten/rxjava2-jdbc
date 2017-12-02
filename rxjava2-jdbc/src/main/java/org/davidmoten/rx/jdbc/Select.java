@@ -51,19 +51,22 @@ final class Select {
         // TODO if parameters list contains a list/array then create a dedicated ps
         // where collection ? is replaced with
         // multiple ? according to list/array size
-        List<Parameter> params = Util.toParameters(parameters);
-        boolean hasCollection = params.stream().anyMatch(x -> x.isCollection());
-        final PreparedStatement ps2;
-        if (hasCollection) {
-            ps2 = ps;//Util.prepare(ps.getConnection(),  fetchSize, sql, params);
-        } else {
-            ps2 = ps;
-        }
-        Callable<ResultSet> initialState = () -> Util //
-                .setParameters(ps2, params, names) //
-                .executeQuery();
+
+        Callable<ResultSet> initialState = () -> {
+            List<Parameter> params = Util.toParameters(parameters);
+            boolean hasCollection = params.stream().anyMatch(x -> x.isCollection());
+            final PreparedStatement ps2;
+            if (hasCollection) {
+                ps2 = Util.prepare(ps.getConnection(), fetchSize, sql, params);
+            } else {
+                ps2 = ps;
+            }
+            return Util //
+                    .setParameters(ps2, params, names) //
+                    .executeQuery();
+        };
         BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
-            log.debug("getting row from ps={}, rs={}", ps2, rs);
+            log.debug("getting row from ps={}, rs={}", rs.getStatement(), rs);
             if (rs.next()) {
                 T v = mapper.apply(rs);
                 log.debug("emitting {}", v);
@@ -73,6 +76,7 @@ final class Select {
                 emitter.onComplete();
             }
         };
+        // TODO ensure resultset closes temp expanded ps
         Consumer<ResultSet> disposeState = Util::closeSilently;
         return Flowable.generate(initialState, generator, disposeState);
     }

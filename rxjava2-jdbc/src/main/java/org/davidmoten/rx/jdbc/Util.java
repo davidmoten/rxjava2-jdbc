@@ -291,8 +291,22 @@ public enum Util {
         return prepare(con, fetchSize, info);
     }
 
+    static PreparedStatement prepare(Connection connection, int fetchSize, String sql,
+            List<Parameter> parameters) throws SQLException {
+        // should only get here when parameters contains a collection
+        SqlInfo info = SqlInfo.parse(sql, parameters);
+        log.debug("preparing statement: {}", sql);
+        return createPreparedStatement(connection, fetchSize, info);
+    }
+
     private static NamedPreparedStatement prepare(Connection con, int fetchSize, SqlInfo info)
-            throws SQLException{
+            throws SQLException {
+        PreparedStatement ps = createPreparedStatement(con, fetchSize, info);
+        return new NamedPreparedStatement(ps, info.names());
+    }
+
+    private static PreparedStatement createPreparedStatement(Connection con, int fetchSize,
+            SqlInfo info) throws SQLException {
         PreparedStatement ps = null;
         try {
             ps = con.prepareStatement(info.sql(), ResultSet.TYPE_FORWARD_ONLY,
@@ -300,13 +314,13 @@ public enum Util {
             if (fetchSize > 0) {
                 ps.setFetchSize(fetchSize);
             }
-            return new NamedPreparedStatement(ps, info.names());
         } catch (RuntimeException | SQLException e) {
             if (ps != null) {
                 ps.close();
             }
             throw e;
         }
+        return ps;
     }
 
     static NamedCallableStatement prepareCall(Connection con, String sql,
@@ -1045,5 +1059,4 @@ public enum Util {
         }
     }
 
-    
 }

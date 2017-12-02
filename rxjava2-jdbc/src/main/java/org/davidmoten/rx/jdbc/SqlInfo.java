@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -41,10 +42,21 @@ final class SqlInfo {
         return names;
     }
 
-    static SqlInfo parse(String namedSql) {
+    static SqlInfo parse(String namedSql, List<Parameter> parameters) {
         // was originally using regular expressions, but they didn't work well
         // for ignoring parameter-like strings inside quotes.
         List<String> names = new ArrayList<String>();
+        String sql = collectNamesAndConvertToQuestionMarks(namedSql, names);
+        String expanded = expandQuestionMarks(sql, parameters);
+        return new SqlInfo(expanded, names);
+    }
+
+    static SqlInfo parse(String namedSql) {
+        return parse(namedSql, Collections.emptyList());
+    }
+
+    private static String collectNamesAndConvertToQuestionMarks(String namedSql,
+            List<String> names) {
         int length = namedSql.length();
         StringBuilder parsedQuery = new StringBuilder(length);
         boolean inSingleQuote = false;
@@ -78,7 +90,7 @@ final class SqlInfo {
             }
             parsedQuery.append(c);
         }
-        return new SqlInfo(parsedQuery.toString(), names);
+        return parsedQuery.toString();
     }
 
     static String expandQuestionMarks(String sql, List<Parameter> parameters) {
