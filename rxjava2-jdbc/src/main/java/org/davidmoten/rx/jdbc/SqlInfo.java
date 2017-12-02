@@ -46,101 +46,77 @@ final class SqlInfo {
         // was originally using regular expressions, but they didn't work well
         // for ignoring parameter-like strings inside quotes.
         List<String> names = new ArrayList<String>();
-        String sql = collectNamesAndConvertToQuestionMarks(namedSql, names);
-        String expanded = expandQuestionMarks(sql, parameters);
-        return new SqlInfo(expanded, names);
+        String sql = collectNamesAndConvertToQuestionMarks(namedSql, names, parameters);
+        return new SqlInfo(sql, names);
     }
 
     static SqlInfo parse(String namedSql) {
         return parse(namedSql, Collections.emptyList());
     }
 
-    private static String collectNamesAndConvertToQuestionMarks(String namedSql,
-            List<String> names) {
+    private static String collectNamesAndConvertToQuestionMarks(String namedSql, List<String> names,
+            List<Parameter> parameters) {
         int length = namedSql.length();
-        StringBuilder parsedQuery = new StringBuilder(length);
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
-        for (int i = 0; i < length; i++) {
-            char c = namedSql.charAt(i);
-            if (inSingleQuote) {
-                if (c == '\'') {
-                    inSingleQuote = false;
-                }
-            } else if (inDoubleQuote) {
-                if (c == '"') {
-                    inDoubleQuote = false;
-                }
-            } else {
-                if (c == '\'') {
-                    inSingleQuote = true;
-                } else if (c == '"') {
-                    inDoubleQuote = true;
-                } else if (c == ':' && i + 1 < length && !isFollowedOrPrefixedByColon(namedSql, i)
-                        && Character.isJavaIdentifierStart(namedSql.charAt(i + 1))) {
-                    int j = i + 2;
-                    while (j < length && Character.isJavaIdentifierPart(namedSql.charAt(j))) {
-                        j++;
-                    }
-                    String name = namedSql.substring(i + 1, j);
-                    c = '?'; // replace the parameter with a question mark
-                    i += name.length(); // skip past the end if the parameter
-                    names.add(name);
-                }
-            }
-            parsedQuery.append(c);
-        }
-        return parsedQuery.toString();
-    }
-
-    static String expandQuestionMarks(String sql, List<Parameter> parameters) {
-        if (!hasCollection(parameters)) {
-            return sql;
-        }
-        int length = sql.length();
         StringBuilder parsedQuery = new StringBuilder(length);
         boolean inSingleQuote = false;
         boolean inDoubleQuote = false;
         int count = 0;
         for (int i = 0; i < length; i++) {
-            char c = sql.charAt(i);
-            String s = String.valueOf(c);
+            char c = namedSql.charAt(i);
+            StringBuilder s = new StringBuilder();
             if (inSingleQuote) {
                 if (c == '\'') {
                     inSingleQuote = false;
                 }
+                s.append(c);
             } else if (inDoubleQuote) {
                 if (c == '"') {
                     inDoubleQuote = false;
                 }
+                s.append(c);
             } else {
                 if (c == '\'') {
                     inSingleQuote = true;
+                    s.append(c);
                 } else if (c == '"') {
                     inDoubleQuote = true;
+                    s.append(c);
+                } else if (c == ':' && i + 1 < length && !isFollowedOrPrefixedByColon(namedSql, i)
+                        && Character.isJavaIdentifierStart(namedSql.charAt(i + 1))) {
+                    count++;
+                    int j = i + 2;
+                    while (j < length && Character.isJavaIdentifierPart(namedSql.charAt(j))) {
+                        j++;
+                    }
+                    String name = namedSql.substring(i + 1, j);
+                    if (!parameters.isEmpty()) {
+                        Parameter p = parameters.get(count - 1);
+                        s.append(IntStream.range(0, p.size()).mapToObj(x -> "?")
+                                .collect(Collectors.joining(",")));
+                        for (int k = 0; k < p.size(); k++) {
+                            names.add(name);
+                        }
+                    } else {
+                        s.append("?"); // replace the parameter with a question mark
+                        names.add(name);
+                    }
+                    i += name.length(); // skip past the end if the parameter
                 } else if (c == '?') {
                     count++;
-                    int size = parameters.get(count - 1).size();
-                    if (size > 1) {
-                        s = IntStream //
-                                .range(0, size) //
-                                .mapToObj(x -> "?") //
-                                .collect(Collectors.joining(","));
+                    if (!parameters.isEmpty()) {
+                        Parameter p = parameters.get(count - 1);
+                        s.append(IntStream.range(0, p.size()).mapToObj(x -> "?")
+                                .collect(Collectors.joining(",")));
+                    } else {
+                        s.append(c);
                     }
+                } else {
+                    s.append(c);
                 }
             }
-            parsedQuery.append(s);
+            parsedQuery.append(s.toString());
         }
         return parsedQuery.toString();
-    }
-
-    private static boolean hasCollection(List<Parameter> parameters) {
-        for (Parameter p : parameters) {
-            if (p.isCollection()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     // Visible for testing

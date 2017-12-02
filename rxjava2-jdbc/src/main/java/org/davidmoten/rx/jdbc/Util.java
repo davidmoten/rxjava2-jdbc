@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,12 +74,30 @@ public enum Util {
     @VisibleForTesting
     static void setParameters(PreparedStatement ps, List<Parameter> params, boolean namesAllowed)
             throws SQLException {
-        for (int i = 1; i <= params.size(); i++) {
-            if (params.get(i - 1).hasName() && !namesAllowed)
+        int i = 1;
+        while (i <= params.size()) {
+            Parameter p = params.get(i - 1);
+            if (p.hasName() && !namesAllowed) {
                 throw new NamedParameterFoundButSqlDoesNotHaveNamesException(
                         "named parameter found but sql does not contain names ps=" + ps);
-            Object o = params.get(i - 1).value();
-            setParameter(ps, i, o);
+            }
+            Object v = p.value();
+            if (p.isCollection()) {
+                if (v instanceof Collection) {
+                    int j = 0;
+                    for (Object o : ((Collection<?>) v)) {
+                        setParameter(ps, i + j, o);
+                        j++;
+                    }
+                } else {
+                    System.out.println(p.value().getClass());
+                    throw new RuntimeException("not implemented yet");
+                }
+                i += p.size();
+            } else {
+                setParameter(ps, i, v);
+                i++;
+            }
         }
     }
 

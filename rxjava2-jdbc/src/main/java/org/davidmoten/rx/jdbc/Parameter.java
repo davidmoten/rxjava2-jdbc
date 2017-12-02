@@ -1,6 +1,5 @@
 package org.davidmoten.rx.jdbc;
 
-import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.List;
 
@@ -41,16 +40,14 @@ public final class Parameter {
     }
 
     boolean isCollection() {
-        return value != null && (value instanceof List || value.getClass().isArray());
+        return value != null && (value instanceof Collection);
     }
 
     int size() {
         // TODO cache all these calcs when constructed
         if (value != null) {
-            if (value instanceof List) {
-                return ((List<?>) value).size();
-            } else if (value.getClass().isArray()) {
-                return Array.getLength(value);
+            if (value instanceof Collection) {
+                return ((Collection<?>) value).size();
             } else {
                 return 1;
             }

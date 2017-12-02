@@ -12,29 +12,29 @@ public class SqlInfoTest {
 
     @Test
     public void testExpansionNoParameters() {
-        String s = SqlInfo.expandQuestionMarks("? ?", Collections.emptyList());
-        assertEquals("? ?", s);
+        SqlInfo s = SqlInfo.parse("? ?", Collections.emptyList());
+        assertEquals("? ?", s.sql());
     }
 
     @Test
     public void testExpansionEmpty() {
-        String s = SqlInfo.expandQuestionMarks("", Collections.emptyList());
-        assertEquals("", s);
+        SqlInfo s = SqlInfo.parse("", Collections.emptyList());
+        assertEquals("", s.sql());
     }
 
     @Test
     public void testExpansionWithParametersNoCollections() {
         Parameter p = new Parameter(12);
-        String s = SqlInfo.expandQuestionMarks("? hello ?", Lists.newArrayList(p, p));
-        assertEquals("? hello ?", s);
+        SqlInfo s = SqlInfo.parse("? hello ?", Lists.newArrayList(p, p));
+        assertEquals("? hello ?", s.sql());
     }
 
     @Test
     public void testExpansionWithParametersCollectionPresent() {
         Parameter p1 = new Parameter(12);
         Parameter p2 = new Parameter(Lists.newArrayList(1, 2, 3));
-        String s = SqlInfo.expandQuestionMarks("? hello ?", Lists.newArrayList(p1, p2));
-        assertEquals("? hello ?,?,?", s);
+        SqlInfo s = SqlInfo.parse("? hello ?", Lists.newArrayList(p1, p2));
+        assertEquals("? hello ?,?,?", s.sql());
     }
 
 }
