@@ -93,13 +93,10 @@ final class SqlInfo {
                         Parameter p = parameters.get(count - 1);
                         s.append(IntStream.range(0, p.size()).mapToObj(x -> "?")
                                 .collect(Collectors.joining(",")));
-                        for (int k = 0; k < p.size(); k++) {
-                            names.add(name);
-                        }
                     } else {
                         s.append("?"); // replace the parameter with a question mark
-                        names.add(name);
                     }
+                    names.add(name);
                     i += name.length(); // skip past the end if the parameter
                 } else if (c == '?') {
                     count++;
