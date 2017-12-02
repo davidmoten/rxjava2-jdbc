@@ -38,23 +38,32 @@ final class Select {
         log.debug("Select.create called with con={}", con);
         Callable<NamedPreparedStatement> initialState = () -> Util.prepare(con, fetchSize, sql);
         Function<NamedPreparedStatement, Flowable<T>> observableFactory = ps -> parameterGroups
-                .flatMap(parameters -> create(ps.ps, parameters, mapper, ps.names), true, 1);
+                .flatMap(parameters -> create(ps.ps, parameters, mapper, ps.names, sql, fetchSize),
+                        true, 1);
         Consumer<NamedPreparedStatement> disposer = Util::closePreparedStatementAndConnection;
         return Flowable.using(initialState, observableFactory, disposer, eagerDispose);
     }
 
     private static <T> Flowable<? extends T> create(PreparedStatement ps, List<Object> parameters,
-            Function<? super ResultSet, T> mapper, List<String> names) {
+            Function<? super ResultSet, T> mapper, List<String> names, String sql, int fetchSize) {
         log.debug("parameters={}", parameters);
         log.debug("names={}", names);
         // TODO if parameters list contains a list/array then create a dedicated ps
         // where collection ? is replaced with
         // multiple ? according to list/array size
+        List<Parameter> params = Util.toParameters(parameters);
+        boolean hasCollection = params.stream().anyMatch(x -> x.isCollection());
+        final PreparedStatement ps2;
+        if (hasCollection) {
+            ps2 = ps;//Util.prepare(ps.getConnection(),  fetchSize, sql, params);
+        } else {
+            ps2 = ps;
+        }
         Callable<ResultSet> initialState = () -> Util //
-                .convertAndSetParameters(ps, parameters, names) //
+                .setParameters(ps2, params, names) //
                 .executeQuery();
         BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
-            log.debug("getting row from ps={}, rs={}", ps, rs);
+            log.debug("getting row from ps={}, rs={}", ps2, rs);
             if (rs.next()) {
                 T v = mapper.apply(rs);
                 log.debug("emitting {}", v);

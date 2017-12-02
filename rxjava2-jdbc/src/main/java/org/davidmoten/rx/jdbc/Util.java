@@ -218,8 +218,7 @@ public enum Util {
 
     static PreparedStatement convertAndSetParameters(PreparedStatement ps, List<Object> parameters,
             List<String> names) throws SQLException {
-        List<Parameter> params = toParameters(parameters);
-        return setParameters(ps, params, names);
+        return setParameters(ps, toParameters(parameters), names);
     }
 
     static PreparedStatement setParameters(PreparedStatement ps, List<Parameter> parameters,
@@ -232,7 +231,7 @@ public enum Util {
         return ps;
     }
 
-    private static List<Parameter> toParameters(List<Object> parameters) {
+    static List<Parameter> toParameters(List<Object> parameters) {
         return parameters.stream().map(o -> {
             if (o instanceof Parameter) {
                 return (Parameter) o;
@@ -287,16 +286,21 @@ public enum Util {
             throws SQLException {
         // TODO can we parse SqlInfo through because already calculated by
         // builder?
-        SqlInfo s = SqlInfo.parse(sql);
+        SqlInfo info = SqlInfo.parse(sql);
         log.debug("preparing statement: {}", sql);
+        return prepare(con, fetchSize, info);
+    }
+
+    private static NamedPreparedStatement prepare(Connection con, int fetchSize, SqlInfo info)
+            throws SQLException{
         PreparedStatement ps = null;
         try {
-            ps = con.prepareStatement(s.sql(), ResultSet.TYPE_FORWARD_ONLY,
+            ps = con.prepareStatement(info.sql(), ResultSet.TYPE_FORWARD_ONLY,
                     ResultSet.CONCUR_READ_ONLY);
             if (fetchSize > 0) {
                 ps.setFetchSize(fetchSize);
             }
-            return new NamedPreparedStatement(ps, s.names());
+            return new NamedPreparedStatement(ps, info.names());
         } catch (RuntimeException | SQLException e) {
             if (ps != null) {
                 ps.close();
@@ -1040,4 +1044,6 @@ public enum Util {
             throw new SQLRuntimeException(e);
         }
     }
+
+    
 }
