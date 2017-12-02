@@ -82,7 +82,7 @@ final class SqlInfo {
     }
 
     static String expandQuestionMarks(String sql, List<Parameter> parameters) {
-        if (parameters.isEmpty()) {
+        if (!hasCollection(parameters)) {
             return sql;
         }
         int length = sql.length();
@@ -120,6 +120,15 @@ final class SqlInfo {
             parsedQuery.append(s);
         }
         return parsedQuery.toString();
+    }
+
+    private static boolean hasCollection(List<Parameter> parameters) {
+        for (Parameter p : parameters) {
+            if (p.isCollection()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Visible for testing
