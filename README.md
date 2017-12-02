@@ -387,27 +387,26 @@ Output:
 ```
 
 ## Collection parameters
-Some databases support `PreparedStatement.setArray` for setting a parameter with a list of items like in:
-
-```sql
-select score from person where name in (?)
-```
-
-*rxjava2-jdbc* does not YET support `setArray` or alternative methods to nicely handle collection parameters. However, there is a **workaround** that works with all databases. Here's an example:
+Collection parameters are useful for supplying to IN clauses. For example:
 
 ```java
-List<String> list = Lists.newArrayList("FRED","JOSEPH");
-String questionMarks =  list
-  .stream() 
-  .map(x -> "?")
-  .collect(Collectors.joining(","));
-String sql = "select score from person where name in (" + questionMarks + ");
-db.test()
-  .select(sql)
-  .parameters(list)
-  .getAs(Integer.class)
+Database.test() //
+  .select("select score from person where name in (?) order by score") //
+  .parameter(Sets.newHashSet("FRED", "JOSEPH")) //
+  .getAs(Integer.class) //
   .blockingForEach(System.out::println);
 ```
+or with named parameters:
+```java
+Database.test() //
+  .select("select score from person where name in (:names) order by score") //
+  .parameter("names", Sets.newHashSet("FRED", "JOSEPH")) //
+  .getAs(Integer.class) //
+  .blockingForEach(System.out::println);
+```
+You need to pass an implementation of `java.util.Collection` to one of these parameters.
+
+Under the covers *rxjava2-jdbc* does not use `PreparedStatement.setArray` because of the patchy support for this method (not supported by DB2 or MySQL for instance) and the extra requirement of specifying a column type.
 
 Note that databases normally have a limit on the number of parameters in a statement (or indeed the size of array that can be passed in `setArray`). For Oracle it's O(1000), H2 it is O(20000).
 

@@ -83,14 +83,9 @@ public enum Util {
             }
             Object v = p.value();
             if (p.isCollection()) {
-                if (v instanceof Collection) {
-                    for (Object o : ((Collection<?>) v)) {
-                        setParameter(ps, j, o);
-                        j++;
-                    }
-                } else {
-                    System.out.println(p.value().getClass());
-                    throw new RuntimeException("not implemented yet");
+                for (Object o : ((Collection<?>) v)) {
+                    setParameter(ps, j, o);
+                    j++;
                 }
             } else {
                 setParameter(ps, j, v);
