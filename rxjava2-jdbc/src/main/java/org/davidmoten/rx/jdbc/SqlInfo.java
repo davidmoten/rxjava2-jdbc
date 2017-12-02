@@ -36,10 +36,6 @@ final class SqlInfo {
         }
     }
 
-    int numQuestionMarks() {
-        return numQuestionMarks;
-    }
-
     List<String> names() {
         return names;
     }
