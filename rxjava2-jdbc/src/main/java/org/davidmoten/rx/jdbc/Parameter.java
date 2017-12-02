@@ -38,9 +38,9 @@ public final class Parameter {
     Object value() {
         return value;
     }
-    
+
     boolean isCollection() {
-        return value !=null && (value instanceof Collection || value.getClass().isArray()); 
+        return value != null && (value instanceof Collection || value.getClass().isArray());
     }
 
     boolean hasName() {

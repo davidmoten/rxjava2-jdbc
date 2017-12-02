@@ -216,13 +216,18 @@ public enum Util {
         return map;
     }
 
-    static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters,
+    static PreparedStatement convertAndSetParameters(PreparedStatement ps, List<Object> parameters,
             List<String> names) throws SQLException {
         List<Parameter> params = toParameters(parameters);
+        return setParameters(ps, params, names);
+    }
+
+    static PreparedStatement setParameters(PreparedStatement ps, List<Parameter> parameters,
+            List<String> names) throws SQLException {
         if (names.isEmpty()) {
-            Util.setParameters(ps, params, false);
+            Util.setParameters(ps, parameters, false);
         } else {
-            Util.setNamedParameters(ps, params, names);
+            Util.setNamedParameters(ps, parameters, names);
         }
         return ps;
     }

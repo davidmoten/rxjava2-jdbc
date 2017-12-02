@@ -88,7 +88,7 @@ final class Update {
     private static Single<Integer> create(NamedPreparedStatement ps, List<Object> parameters) {
         return Single.fromCallable(() -> {
             Util.incrementCounter(ps.ps.getConnection());
-            Util.setParameters(ps.ps, parameters, ps.names);
+            Util.convertAndSetParameters(ps.ps, parameters, ps.names);
             return ps.ps.executeUpdate();
         });
     }
@@ -96,7 +96,7 @@ final class Update {
     private static Flowable<Integer> createExecuteBatch(NamedPreparedStatement ps,
             List<Object> parameters) {
         return Flowable.defer(() -> {
-            Util.setParameters(ps.ps, parameters, ps.names);
+            Util.convertAndSetParameters(ps.ps, parameters, ps.names);
             ps.ps.addBatch();
             log.debug("batch added with {}", parameters);
             Flowable<Integer> o = toFlowable(ps.ps.executeBatch());
@@ -112,7 +112,7 @@ final class Update {
 
     private static Completable createAddBatch(NamedPreparedStatement ps, List<Object> parameters) {
         return Completable.fromAction(() -> {
-            Util.setParameters(ps.ps, parameters, ps.names);
+            Util.convertAndSetParameters(ps.ps, parameters, ps.names);
             ps.ps.addBatch();
             log.debug("batch added with {}", parameters);
         });
@@ -143,7 +143,7 @@ final class Update {
     private static <T> Flowable<T> create(NamedPreparedStatement ps, List<Object> parameters,
             Function<? super ResultSet, T> mapper) {
         Callable<ResultSet> initialState = () -> {
-            Util.setParameters(ps.ps, parameters, ps.names);
+            Util.convertAndSetParameters(ps.ps, parameters, ps.names);
             ps.ps.execute();
             return ps.ps.getGeneratedKeys();
         };

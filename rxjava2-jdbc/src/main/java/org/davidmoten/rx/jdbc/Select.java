@@ -51,7 +51,7 @@ final class Select {
         // where collection ? is replaced with
         // multiple ? according to list/array size
         Callable<ResultSet> initialState = () -> Util //
-                .setParameters(ps, parameters, names) //
+                .convertAndSetParameters(ps, parameters, names) //
                 .executeQuery();
         BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
             log.debug("getting row from ps={}, rs={}", ps, rs);
