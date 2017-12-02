@@ -32,7 +32,7 @@ final class Select {
                 .flatMap(con -> create(con, sql, parameterGroups, fetchSize, mapper, eagerDispose));
     }
 
-     static <T> Flowable<T> create(Connection con, String sql,
+    static <T> Flowable<T> create(Connection con, String sql,
             Flowable<List<Object>> parameterGroups, int fetchSize,
             Function<? super ResultSet, T> mapper, boolean eagerDispose) {
         log.debug("Select.create called with con={}", con);
@@ -43,10 +43,13 @@ final class Select {
         return Flowable.using(initialState, observableFactory, disposer, eagerDispose);
     }
 
-    private static <T> Flowable<? extends T> create(PreparedStatement ps,
-            List<Object> parameters, Function<? super ResultSet, T> mapper, List<String> names) {
+    private static <T> Flowable<? extends T> create(PreparedStatement ps, List<Object> parameters,
+            Function<? super ResultSet, T> mapper, List<String> names) {
         log.debug("parameters={}", parameters);
         log.debug("names={}", names);
+        // TODO if parameters list contains a list/array then create a dedicated ps
+        // where collection ? is replaced with
+        // multiple ? according to list/array size
         Callable<ResultSet> initialState = () -> Util //
                 .setParameters(ps, parameters, names) //
                 .executeQuery();

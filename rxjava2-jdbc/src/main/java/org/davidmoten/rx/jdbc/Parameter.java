@@ -1,5 +1,6 @@
 package org.davidmoten.rx.jdbc;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.github.davidmoten.guavamini.Lists;
@@ -36,6 +37,10 @@ public final class Parameter {
      */
     Object value() {
         return value;
+    }
+    
+    boolean isCollection() {
+        return value !=null && (value instanceof Collection || value.getClass().isArray()); 
     }
 
     boolean hasName() {

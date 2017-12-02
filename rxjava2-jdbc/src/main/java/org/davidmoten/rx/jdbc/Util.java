@@ -218,19 +218,23 @@ public enum Util {
 
     static PreparedStatement setParameters(PreparedStatement ps, List<Object> parameters,
             List<String> names) throws SQLException {
-        List<Parameter> params = parameters.stream().map(o -> {
-            if (o instanceof Parameter) {
-                return (Parameter) o;
-            } else {
-                return new Parameter(o);
-            }
-        }).collect(Collectors.toList());
+        List<Parameter> params = toParameters(parameters);
         if (names.isEmpty()) {
             Util.setParameters(ps, params, false);
         } else {
             Util.setNamedParameters(ps, params, names);
         }
         return ps;
+    }
+
+    private static List<Parameter> toParameters(List<Object> parameters) {
+        return parameters.stream().map(o -> {
+            if (o instanceof Parameter) {
+                return (Parameter) o;
+            } else {
+                return new Parameter(o);
+            }
+        }).collect(Collectors.toList());
     }
 
     static void incrementCounter(Connection connection) {
