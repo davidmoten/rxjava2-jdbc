@@ -2,6 +2,8 @@ package org.davidmoten.rx.jdbc;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 final class SqlInfo {
     private final String sql;
@@ -77,6 +79,47 @@ final class SqlInfo {
             parsedQuery.append(c);
         }
         return new SqlInfo(parsedQuery.toString(), names);
+    }
+
+    static String expandQuestionMarks(String sql, List<Parameter> parameters) {
+        if (parameters.isEmpty()) {
+            return sql;
+        }
+        int length = sql.length();
+        StringBuilder parsedQuery = new StringBuilder(length);
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        int count = 0;
+        for (int i = 0; i < length; i++) {
+            char c = sql.charAt(i);
+            String s = String.valueOf(c);
+            if (inSingleQuote) {
+                if (c == '\'') {
+                    inSingleQuote = false;
+                }
+            } else if (inDoubleQuote) {
+                if (c == '"') {
+                    inDoubleQuote = false;
+                }
+            } else {
+                if (c == '\'') {
+                    inSingleQuote = true;
+                } else if (c == '"') {
+                    inDoubleQuote = true;
+                } else if (c == '?') {
+                    count++;
+                    int size = parameters.get(count - 1).size();
+                    if (size > 1) {
+                        s = IntStream //
+                                .range(0, size) //
+                                .mapToObj(x -> "?") //
+                                .collect(Collectors.joining(","));
+                    }
+                }
+            }
+            parsedQuery.append(s);
+        }
+        return parsedQuery.toString();
     }
 
     // Visible for testing
