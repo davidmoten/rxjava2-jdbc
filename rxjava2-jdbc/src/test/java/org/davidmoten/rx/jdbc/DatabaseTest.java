@@ -79,6 +79,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.davidmoten.guavamini.Lists;
+import com.github.davidmoten.guavamini.Sets;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.reactivex.Completable;
@@ -155,6 +156,34 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testSelectUsingQuestionMarkAndInClauseWithSetParameter() {
+
+        Database.test() //
+                .select("select score from person where name in (?) order by score") //
+                .parameter(Sets.newHashSet("FRED", "JOSEPH")) //
+                .getAs(Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSelectUsingQuestionMarkAndInClauseWithSetParameterUsingParametersMethod() {
+
+        Database.test() //
+                .select("select score from person where name in (?) order by score") //
+                .parameters(Sets.newHashSet("FRED", "JOSEPH")) //
+                .getAs(Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
+    }
+
+    @Test
     public void testSelectUsingInClauseWithListParameter() {
         Database.test() //
                 .select("select score from person where score > ? and name in (?) order by score") //
@@ -180,12 +209,26 @@ public class DatabaseTest {
                 .assertValues(21, 34) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testSelectUsingInClauseWithRepeatedNamedListParameter() {
         Database.test() //
                 .select("select score from person where name in (:names) and name in (:names) order by score") //
                 .parameter("names", Lists.newArrayList("FRED", "JOSEPH")) //
+                .getAs(Integer.class) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testSelectUsingInClauseWithRepeatedNamedListParameterAndRepeatedNonListParameter() {
+        Database.test() //
+                .select("select score from person where name in (:names) and score >:score and name in (:names) and score >:score order by score") //
+                .parameter("names", Lists.newArrayList("FRED", "JOSEPH")) //
+                .parameter("score", 0) //
                 .getAs(Integer.class) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
