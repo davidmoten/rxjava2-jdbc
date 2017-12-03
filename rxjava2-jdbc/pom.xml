@@ -196,6 +196,7 @@
                                 <exclude>**/TransactedResultSet.*</exclude>
                                 <exclude>**/Tuple*</exclude>
                                 <exclude>**/DelegatedConnection.*</exclude>
+                                <exclude>**/DelegatedResultSet.*</exclude>
                             </excludes>
                         </configuration>
                     </execution>
