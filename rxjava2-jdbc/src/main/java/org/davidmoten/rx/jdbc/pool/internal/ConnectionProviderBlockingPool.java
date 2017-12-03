@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
+import org.davidmoten.rx.jdbc.internal.DelegatedConnection;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.Pool;
 

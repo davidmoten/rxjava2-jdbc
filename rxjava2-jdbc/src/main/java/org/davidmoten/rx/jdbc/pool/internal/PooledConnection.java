@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.davidmoten.rx.jdbc.internal.DelegatedConnection;
 import org.davidmoten.rx.pool.Checkin;
 
 public final class PooledConnection implements DelegatedConnection {

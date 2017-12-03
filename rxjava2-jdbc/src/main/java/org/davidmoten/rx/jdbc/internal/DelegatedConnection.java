@@ -1,4 +1,4 @@
-package org.davidmoten.rx.jdbc.pool.internal;
+package org.davidmoten.rx.jdbc.internal;
 
 import java.sql.Array;
 import java.sql.Blob;

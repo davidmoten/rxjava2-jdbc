@@ -3,7 +3,6 @@ package org.davidmoten.rx.jdbc;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -84,7 +83,6 @@ final class Select {
                 emitter.onComplete();
             }
         };
-        // TODO ensure resultset closes temp expanded ps
         Consumer<ResultSet> disposeState = Util::closeSilently;
         return Flowable.generate(initialState, generator, disposeState);
     }
