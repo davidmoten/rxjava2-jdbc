@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -42,7 +43,7 @@ final class Update {
         final Function<NamedPreparedStatement, Flowable<Notification<Integer>>> flowableFactory;
         if (batchSize == 0) {
             flowableFactory = ps -> parameterGroups //
-                    .flatMap(parameters -> create(ps, parameters).toFlowable()) //
+                    .flatMap(parameters -> create(ps, parameters, sql).toFlowable()) //
                     .materialize() //
                     .doOnComplete(() -> Util.commit(ps.ps)) //
                     .doOnError(e -> Util.rollback(ps.ps));
@@ -85,11 +86,29 @@ final class Update {
         }
     }
 
-    private static Single<Integer> create(NamedPreparedStatement ps, List<Object> parameters) {
+    private static Single<Integer> create(NamedPreparedStatement ps, List<Object> parameters,
+            String sql) {
         return Single.fromCallable(() -> {
             Util.incrementCounter(ps.ps.getConnection());
-            Util.convertAndSetParameters(ps.ps, parameters, ps.names);
-            return ps.ps.executeUpdate();
+            List<Parameter> params = Util.toParameters(parameters);
+            boolean hasCollection = params.stream().anyMatch(x -> x.isCollection());
+            PreparedStatement ps2 = null;
+            try {
+                if (hasCollection) {
+                    // create a new prepared statement with the collection ? substituted with
+                    // ?s to match the size of the collection parameter
+                    ps2 = Util.prepare(ps.ps.getConnection(), 0, sql, params);
+                } else {
+                    ps2 = ps.ps;
+                }
+                Util.setParameters(ps2, params, ps.names);
+                return ps2.executeUpdate();
+            } catch (Throwable e) {
+                if (hasCollection && ps2 != null) {
+                    ps2.close();
+                }
+                throw e;
+            }
         });
     }
 
@@ -104,7 +123,6 @@ final class Update {
             return o;
         });
     }
-
 
     private static Flowable<Integer> toFlowable(int[] a) {
         return Flowable.range(0, a.length).map(i -> a[i]);

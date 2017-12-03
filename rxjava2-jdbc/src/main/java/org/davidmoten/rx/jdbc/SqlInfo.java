@@ -8,7 +8,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 final class SqlInfo {
+    
+    private static final Logger log = LoggerFactory.getLogger(SqlInfo.class);
     private final String sql;
     private final List<String> names;
     private final int numQuestionMarks;
@@ -45,6 +50,7 @@ final class SqlInfo {
         // for ignoring parameter-like strings inside quotes.
         List<String> names = new ArrayList<String>();
         String sql = collectNamesAndConvertToQuestionMarks(namedSql, names, parameters);
+        log.debug("sqlAfterSubs={}", sql);
         return new SqlInfo(sql, names);
     }
 

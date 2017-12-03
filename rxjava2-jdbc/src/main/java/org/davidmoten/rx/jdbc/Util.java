@@ -308,7 +308,7 @@ public enum Util {
             List<Parameter> parameters) throws SQLException {
         // should only get here when parameters contains a collection
         SqlInfo info = SqlInfo.parse(sql, parameters);
-        log.debug("preparing statement: {}", sql);
+        log.debug("preparing statement: {}", info.sql());
         return createPreparedStatement(connection, fetchSize, info);
     }
 

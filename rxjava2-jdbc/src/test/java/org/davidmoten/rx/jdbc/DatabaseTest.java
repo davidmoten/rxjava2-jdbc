@@ -143,7 +143,6 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingQuestionMarkAndInClauseIssue10() {
-
         Database.test() //
                 .select("select score from person where name in (?) order by score") //
                 .parameters("FRED", "JOSEPH") //
@@ -157,7 +156,6 @@ public class DatabaseTest {
 
     @Test
     public void testSelectUsingQuestionMarkAndInClauseWithSetParameter() {
-
         Database.test() //
                 .select("select score from person where name in (?) order by score") //
                 .parameter(Sets.newHashSet("FRED", "JOSEPH")) //
@@ -170,21 +168,19 @@ public class DatabaseTest {
     }
 
     @Test
-    @Ignore
     public void testUpdateWithInClause() {
         Database.test() //
                 .update("update person set score=50 where name in (?)") //
                 .parameter(Sets.newHashSet("FRED", "JOSEPH")) //
                 .counts() //
                 .test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.DAYS) //
                 .assertComplete() //
                 .assertValues(2);
     }
 
     @Test
     public void testSelectUsingQuestionMarkAndInClauseWithSetParameterUsingParametersMethod() {
-
         Database.test() //
                 .select("select score from person where name in (?) order by score") //
                 .parameters(Sets.newHashSet("FRED", "JOSEPH")) //
