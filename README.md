@@ -410,6 +410,8 @@ Under the covers *rxjava2-jdbc* does not use `PreparedStatement.setArray` becaus
 
 Note that databases normally have a limit on the number of parameters in a statement (or indeed the size of array that can be passed in `setArray`). For Oracle it's O(1000), H2 it is O(20000).
 
+Only select statements are supported as of 0.1-RC22, update and callable statement support will be in a later release.
+
 Non-blocking connection pools
 -------------------------------
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
