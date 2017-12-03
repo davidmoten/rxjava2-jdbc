@@ -399,18 +399,18 @@ Database.test()
 or with named parameters:
 ```java
 Database.test()
-  .select("select score from person where name in (:names) order by score")
-  .parameter("names", Sets.newHashSet("FRED", "JOSEPH"))
-  .getAs(Integer.class)
+  .update("update person set score=0 where name in (:names)")
+  .parameter("names", Lists.newArrayList("FRED", "JOSEPH"))
+  .counts()
   .blockingForEach(System.out::println);
 ```
-You need to pass an implementation of `java.util.Collection` to one of these parameters.
+You need to pass an implementation of `java.util.Collection` to one of these parameters (for example `java.util.List` or `java.util.Set`).
 
 Under the covers *rxjava2-jdbc* does not use `PreparedStatement.setArray` because of the patchy support for this method (not supported by DB2 or MySQL for instance) and the extra requirement of specifying a column type.
 
 Note that databases normally have a limit on the number of parameters in a statement (or indeed the size of array that can be passed in `setArray`). For Oracle it's O(1000), H2 it is O(20000).
 
-select statements are supported as of 0.1-RC23. If you need callable statement support raise an issue.
+`select` and `update` statements are supported as of 0.1-RC23. If you need callable statement support raise an issue.
 
 Non-blocking connection pools
 -------------------------------
