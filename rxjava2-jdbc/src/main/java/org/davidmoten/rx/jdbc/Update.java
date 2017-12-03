@@ -43,7 +43,8 @@ final class Update {
         final Function<NamedPreparedStatement, Flowable<Notification<Integer>>> flowableFactory;
         if (batchSize == 0) {
             flowableFactory = ps -> parameterGroups //
-                    .flatMap(parameters -> create(ps, parameters, sql).toFlowable()) //
+                    .flatMap(parameters -> create(ps, Util.toParameters(parameters), sql)
+                            .toFlowable()) //
                     .materialize() //
                     .doOnComplete(() -> Util.commit(ps.ps)) //
                     .doOnError(e -> Util.rollback(ps.ps));
@@ -52,17 +53,21 @@ final class Update {
                 int[] count = new int[1];
                 return parameterGroups //
                         .flatMap(parameters -> {
-                            Util.incrementCounter(ps.ps.getConnection());
-                            count[0] += 1;
-                            Flowable<Integer> result;
-                            if (count[0] == batchSize) {
-                                count[0] = 0;
-                                result = createExecuteBatch(ps, parameters);
+                            List<Parameter> params = Util.toParameters(parameters);
+                            if (Util.hasCollection(params)) {
+                                return create(ps, params, sql).toFlowable();
                             } else {
-                                result = createAddBatch(ps, parameters).toFlowable();
+                                Util.incrementCounter(ps.ps.getConnection());
+                                count[0] += 1;
+                                Flowable<Integer> result;
+                                if (count[0] == batchSize) {
+                                    count[0] = 0;
+                                    result = createExecuteBatch(ps, parameters);
+                                } else {
+                                    result = createAddBatch(ps, parameters).toFlowable();
+                                }
+                                return result;
                             }
-                            return result;
-
                         }) //
                         .materialize() //
                         .flatMap(n -> executeFinalBatch(ps, n, count[0] > 0)) //
@@ -86,12 +91,11 @@ final class Update {
         }
     }
 
-    private static Single<Integer> create(NamedPreparedStatement ps, List<Object> parameters,
+    private static Single<Integer> create(NamedPreparedStatement ps, List<Parameter> params,
             String sql) {
         return Single.fromCallable(() -> {
             Util.incrementCounter(ps.ps.getConnection());
-            List<Parameter> params = Util.toParameters(parameters);
-            boolean hasCollection = params.stream().anyMatch(x -> x.isCollection());
+            boolean hasCollection = Util.hasCollection(params);
             PreparedStatement ps2 = null;
             try {
                 if (hasCollection) {

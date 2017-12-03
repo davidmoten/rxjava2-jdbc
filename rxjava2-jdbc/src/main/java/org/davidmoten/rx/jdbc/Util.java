@@ -1072,4 +1072,8 @@ public enum Util {
         }
     }
 
+    public static boolean hasCollection(List<Parameter> params) {
+        return params.stream().anyMatch(x -> x.isCollection());
+    }
+
 }

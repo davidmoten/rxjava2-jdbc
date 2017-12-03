@@ -168,9 +168,23 @@ public class DatabaseTest {
     }
 
     @Test
-    public void testUpdateWithInClause() {
+    public void testUpdateWithInClauseBatchSize0() {
         Database.test() //
                 .update("update person set score=50 where name in (?)") //
+                .batchSize(0) //
+                .parameter(Sets.newHashSet("FRED", "JOSEPH")) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.DAYS) //
+                .assertComplete() //
+                .assertValues(2);
+    }
+
+    @Test
+    public void testUpdateWithInClauseBatchSize10() {
+        Database.test() //
+                .update("update person set score=50 where name in (?)") //
+                .batchSize(10) //
                 .parameter(Sets.newHashSet("FRED", "JOSEPH")) //
                 .counts() //
                 .test() //
