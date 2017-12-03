@@ -390,18 +390,18 @@ Output:
 Collection parameters are useful for supplying to IN clauses. For example:
 
 ```java
-Database.test() //
-  .select("select score from person where name in (?) order by score") //
-  .parameter(Sets.newHashSet("FRED", "JOSEPH")) //
-  .getAs(Integer.class) //
+Database.test()
+  .select("select score from person where name in (?) order by score")
+  .parameter(Sets.newHashSet("FRED", "JOSEPH"))
+  .getAs(Integer.class)
   .blockingForEach(System.out::println);
 ```
 or with named parameters:
 ```java
-Database.test() //
-  .select("select score from person where name in (:names) order by score") //
-  .parameter("names", Sets.newHashSet("FRED", "JOSEPH")) //
-  .getAs(Integer.class) //
+Database.test()
+  .select("select score from person where name in (:names) order by score")
+  .parameter("names", Sets.newHashSet("FRED", "JOSEPH"))
+  .getAs(Integer.class)
   .blockingForEach(System.out::println);
 ```
 You need to pass an implementation of `java.util.Collection` to one of these parameters.
