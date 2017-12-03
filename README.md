@@ -694,6 +694,27 @@ Output:
 
 ```
 
+Callable Statements
+----------------------
+Callable statement support is a major addition to the code base as of about 0.1-RC23.
+
+Callable support is feature rich but only in the non-transacted case (within transaction support coming later).
+
+For example:
+
+```java
+Flowable<Tuple2<Integer,Integer>> = 
+  db.call("call in1out2(?,?,?)") 
+    .in() 
+    .out(Type.INTEGER, Integer.class) 
+    .out(Type.INTEGER, Integer.class) 
+    .in(0, 10, 20);
+```
+
+Note above that each question mark in the call statement correponds in order with a call to `in()` or `out(...)`. Once all parameters have been defined then the `in(0, 10, 20)` call drives the running of the query with that input. The output `Flowable` is strongly typed according to the `out` parameters specified.
+
+TODO
+
 Using raw JDBC
 ----------------
 Many nifty things in JDBC (like `CallableStatements`) are not yet directly supported by *rxjava2-jdbc* (although is being worked on now) but you can get acccess to the underlying `Connection`s from the `Database` object by using `Database.apply` or `Database.member()`.
