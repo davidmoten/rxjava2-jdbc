@@ -170,6 +170,18 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testUpdateWithInClause() {
+        Database.test() //
+                .update("update person set score=50 where name in (?)") //
+                .parameter(Sets.newHashSet("FRED", "JOSEPH")) //
+                .counts() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertComplete() //
+                .assertValues(2);
+    }
+
+    @Test
     public void testSelectUsingQuestionMarkAndInClauseWithSetParameterUsingParametersMethod() {
 
         Database.test() //
@@ -2880,7 +2892,7 @@ public class DatabaseTest {
                 return rs.getInt(1);
             }
         }).test() //
-                .awaitDone(TIMEOUT_SECONDS, TimeUnit.DAYS).assertComplete() // ;
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS).assertComplete() // ;
                 .assertValue(2); //
     }
 

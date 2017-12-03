@@ -59,12 +59,15 @@ final class Select {
             final PreparedStatement ps2;
             if (hasCollection) {
                 ps2 = Util.prepare(ps.getConnection(), fetchSize, sql, params);
+                return new ResultSetAutoClosesStatement(Util //
+                        .setParameters(ps2, params, names) //
+                        .executeQuery(), ps2);
             } else {
                 ps2 = ps;
+                return Util //
+                        .setParameters(ps2, params, names) //
+                        .executeQuery();
             }
-            return Util //
-                    .setParameters(ps2, params, names) //
-                    .executeQuery();
         };
         BiConsumer<ResultSet, Emitter<T>> generator = (rs, emitter) -> {
             log.debug("getting row from ps={}, rs={}", rs.getStatement(), rs);
