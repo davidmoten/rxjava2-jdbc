@@ -170,6 +170,7 @@ public class DatabaseTest {
     }
 
     @Test
+    @Ignore
     public void testUpdateWithInClause() {
         Database.test() //
                 .update("update person set score=50 where name in (?)") //

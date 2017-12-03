@@ -49,20 +49,24 @@ final class Select {
             Function<? super ResultSet, T> mapper, List<String> names, String sql, int fetchSize) {
         log.debug("parameters={}", parameters);
         log.debug("names={}", names);
-        // TODO if parameters list contains a list/array then create a dedicated ps
-        // where collection ? is replaced with
-        // multiple ? according to list/array size
 
         Callable<ResultSet> initialState = () -> {
             List<Parameter> params = Util.toParameters(parameters);
             boolean hasCollection = params.stream().anyMatch(x -> x.isCollection());
             final PreparedStatement ps2;
             if (hasCollection) {
+                // create a new prepared statement with the collection ? substituted with
+                // ?s to match the size of the collection parameter
                 ps2 = Util.prepare(ps.getConnection(), fetchSize, sql, params);
+                // now wrap the rs to auto close ps2 because it is single use (the next
+                // collection parameter may have a different ordinality so we need to build
+                // a new PreparedStatement with a different number of question marks
+                // substituted
                 return new ResultSetAutoClosesStatement(Util //
                         .setParameters(ps2, params, names) //
                         .executeQuery(), ps2);
             } else {
+                // use the current prepared statement (normal re-use)
                 ps2 = ps;
                 return Util //
                         .setParameters(ps2, params, names) //
