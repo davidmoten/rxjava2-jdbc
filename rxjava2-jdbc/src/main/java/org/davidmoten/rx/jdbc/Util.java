@@ -41,10 +41,10 @@ import javax.annotation.RegEx;
 import javax.sql.DataSource;
 
 import org.apache.commons.io.IOUtils;
-import org.davidmoten.rx.jdbc.CallableBuilder.OutParameterPlaceholder;
-import org.davidmoten.rx.jdbc.CallableBuilder.ParameterPlaceholder;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
+import org.davidmoten.rx.jdbc.callable.internal.OutParameterPlaceholder;
+import org.davidmoten.rx.jdbc.callable.internal.ParameterPlaceholder;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.AutomappedInterfaceInaccessibleException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
