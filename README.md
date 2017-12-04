@@ -746,7 +746,7 @@ Flowable<String> namePairs =
        .zipWith(x.results2(), (y, z) -> y._1() + z._1()));    
 ```
 
-You can explore more examples of this in [`DatabaseTest.java`](src/main/java/org/davidmoten/rx/jdbc/DatabaseTest.java). Search for `.call`.
+You can explore more examples of this in [`DatabaseTest.java`](src/test/java/org/davidmoten/rx/jdbc/DatabaseTest.java). Search for `.call`.
 
 Using raw JDBC
 ----------------
