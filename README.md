@@ -696,9 +696,9 @@ Output:
 
 Callable Statements
 ----------------------
-Callable statement support is a major addition to the code base as of about 0.1-RC23.
+Callable statement support is a major addition to the code base as of 0.1-RC23.
 
-Callable support is feature rich but only in the non-transacted case (within transaction support coming later).
+Callable support is present only outside of transactions (transaction support coming later). If you're keen for it, raise an issue. The primary impediment is the duplication of a bunch of chained builders for the transacted case.
 
 For example:
 
