@@ -703,7 +703,7 @@ Callable support is feature rich but only in the non-transacted case (within tra
 For example:
 
 ```java
-Flowable<Tuple2<Integer,Integer>> = 
+Flowable<Tuple2<Integer,Integer>> tuples = 
   db.call("call in1out2(?,?,?)") 
     .in() 
     .out(Type.INTEGER, Integer.class) 
@@ -713,7 +713,40 @@ Flowable<Tuple2<Integer,Integer>> =
 
 Note above that each question mark in the call statement correponds in order with a call to `in()` or `out(...)`. Once all parameters have been defined then the `in(0, 10, 20)` call drives the running of the query with that input. The output `Flowable` is strongly typed according to the `out` parameters specified.
 
-TODO
+When you start specifying output `ResultSet`s from the call then you lose output parameter strong typing but gain `ResultSet` mapped strong typing as per normal `select` statements in *rxjava2-jdbc*.
+
+Here's an example for one `in` parameter and two output `ResultSet`s with `autoMap`. You can of course use `getAs` instead (or `get`): 
+
+```java
+Flowable<String> namePairs = 
+  db
+    .call("call in1out0rs2(?)")
+    .in()
+    .autoMap(Person2.class)
+    .autoMap(Person2.class)
+    .in(0, 10, 20)
+    .flatMap(x -> 
+      x.results1()
+       .zipWith(x.results2(), (y, z) -> y.name() + z.name()));    
+```
+The above example is pretty nifty in that we can zip the two result sets resulting from the call and of course the whole thing was easy to define (as opposed to normal JDBC).
+
+You just saw `autoMap` used to handle an output `ResultSet` but `getAs` works too:
+
+```java
+Flowable<String> namePairs = 
+  db
+    .call("call in1out0rs2(?)")
+    .in()
+    .getAs(String.class, Integer.class)
+    .getAs(String.class, Integer.class
+    .in(0, 10, 20)
+    .flatMap(x -> 
+      x.results1()
+       .zipWith(x.results2(), (y, z) -> y._1() + z._1()));    
+```
+
+You can explore more examples of this in [`DatabaseTest.java`](src/main/java/org/davidmoten/rx/jdbc/DatabaseTest.java). Search for `.call`.
 
 Using raw JDBC
 ----------------

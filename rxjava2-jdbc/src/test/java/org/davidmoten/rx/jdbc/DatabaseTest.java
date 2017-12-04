@@ -2682,7 +2682,15 @@ public class DatabaseTest {
                 .assertValueAt(1, x -> x._1() == 10 && x._2() == 11) //
                 .assertValueAt(2, x -> x._1() == 20 && x._2() == 21) //
                 .assertComplete();
+        
+        db.call("call in1out2(?,?,?)") 
+        .in() 
+        .out(Type.INTEGER, Integer.class) 
+        .out(Type.INTEGER, Integer.class) 
+        .in(0, 10, 20)
+        .blockingForEach(System.out::println);
     }
+    
 
     @Test
     public void testCallableApiReturningThreeOutParameters() throws InterruptedException {
@@ -2727,7 +2735,7 @@ public class DatabaseTest {
     }
 
     @Test
-    public void testCallableApiReturningTwoResultSets() throws InterruptedException {
+    public void testCallableApiReturningTwoResultSetsWithAutoMap() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
                 .call("call in1out0rs2(?)") //
@@ -2743,6 +2751,24 @@ public class DatabaseTest {
                         "SARAHFRED") //
                 .assertComplete();
     }
+    
+    @Test
+    public void testCallableApiReturningTwoResultSetsWithGet() throws InterruptedException {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call in1out0rs2(?)") //
+                .in() //
+                .getAs(String.class, Integer.class) //
+                .getAs(String.class, Integer.class)//
+                .in(0, 10, 20) //
+                .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y._1() + z._1())) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValues("FREDSARAH", "SARAHFRED", "FREDSARAH", "SARAHFRED", "FREDSARAH",
+                        "SARAHFRED") //
+                .assertComplete();
+    }
+
 
     @Test
     public void testCallableApiReturningTwoResultSetsSwitchOrder1() throws InterruptedException {
