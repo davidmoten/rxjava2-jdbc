@@ -84,7 +84,7 @@ public final class TransactedSelectAutomappedBuilder<T> {
     private static <T> Flowable<Tx<T>> createFlowable(SelectAutomappedBuilder<T> sb, Database db) {
         return Flowable.defer(() -> {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
-            return Select.create(sb.selectBuilder.connections //
+            return Select.create(sb.selectBuilder.connection //
                     .map(c -> Util.toTransactedConnection(connection, c)), //
                     sb.selectBuilder.parameterGroupsToFlowable(), //
                     sb.selectBuilder.sql, //

@@ -14,18 +14,18 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder>
         implements Getter, DependsOn<SelectBuilder> {
 
     final String sql;
-    final Single<Connection> connections;
+    final Single<Connection> connection;
     private final Database db;
 
     int fetchSize = 0; // default
     private Flowable<?> dependsOn;
 
-    public SelectBuilder(String sql, Single<Connection> connections, Database db) {
+    SelectBuilder(String sql, Single<Connection> connection, Database db) {
         super(sql);
         Preconditions.checkNotNull(sql);
-        Preconditions.checkNotNull(connections);
+        Preconditions.checkNotNull(connection);
         this.sql = sql;
-        this.connections = connections;
+        this.connection = connection;
         this.db = db;
     }
 
@@ -55,7 +55,7 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder>
     public <T> Flowable<T> get(@Nonnull ResultSetMapper<? extends T> mapper) {
         Preconditions.checkNotNull(mapper, "mapper cannot be null");
         Flowable<List<Object>> pg = super.parameterGroupsToFlowable();
-        Flowable<T> f = Select.<T>create(connections, pg, sql, fetchSize, mapper, true);
+        Flowable<T> f = Select.<T>create(connection, pg, sql, fetchSize, mapper, true);
         if (dependsOn != null) {
             return dependsOn.ignoreElements().andThen(f);
         } else {

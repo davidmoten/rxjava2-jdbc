@@ -96,7 +96,7 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
             ResultSetMapper<? extends T> mapper, Database db) {
         return (Flowable<Tx<T>>) (Flowable<?>) Flowable.defer(() -> {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
-            return Select.create(sb.connections //
+            return Select.create(sb.connection //
                     .map(c -> Util.toTransactedConnection(connection, c)), //
                     sb.parameterGroupsToFlowable(), //
                     sb.sql, //
