@@ -25,7 +25,6 @@ import org.davidmoten.rx.jdbc.tuple.TupleN;
 import com.github.davidmoten.guavamini.Lists;
 import com.github.davidmoten.guavamini.Preconditions;
 
-import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
@@ -61,18 +60,18 @@ public final class TransactedCallableBuilder implements TxGetter1 {
         return this;
     }
 
-    public Completable in(Flowable<?> f) {
+    public Single<TerminalTx> in(Flowable<?> f) {
         Preconditions.checkArgument(inStream == null,
                 "you can only specify in flowable once, current=" + inStream);
         this.inStream = f;
         return build();
     }
 
-    public Completable once() {
+    public Single<TerminalTx> once() {
         return in(1);
     }
 
-    public Completable in(Object... objects) {
+    public Single<TerminalTx> in(Object... objects) {
         return in(Flowable.fromArray(objects));
     }
 
@@ -96,8 +95,27 @@ public final class TransactedCallableBuilder implements TxGetter1 {
         return get(Util.autoMap(cls));
     }
 
-    private Completable build() {
-        return Call.createWithZeroOutParameters(connection, sql, parameterGroups(), params);
+    private Single<TerminalTx> build() {
+        return null;
+        // return (Flowable<Tx<T>>) (Flowable<?>) Flowable.defer(() -> {
+        // AtomicReference<Connection> con = new AtomicReference<Connection>();
+        // return Call.createWithZeroOutParameters(connection.map(c ->
+        // Util.toTransactedConnection(connection, c)), sql, parameterGroups(), params);
+        //// return Select.create(sb.connection //
+        //// .map(c -> Util.toTransactedConnection(connection, c)), //
+        //// sb.parameterGroupsToFlowable(), //
+        //// sb.sql, //
+        //// sb.fetchSize, //
+        //// rs -> mapper.apply(rs), //
+        //// false) //
+        //// .materialize() //
+        //// .flatMap(n -> Tx.toTx(n, con.get(), db)) //
+        //// .doOnNext(tx -> {
+        //// if (tx.isComplete()) {
+        //// ((TxImpl<T>) tx).connection().commit();
+        //// }
+        //// });
+        // });
     }
 
     public static final class CallableBuilder1<T1> implements TxGetter1 {
