@@ -3085,6 +3085,31 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testCallableApiReturningTenOutParametersTransacted() {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call out10(?,?,?,?,?,?,?,?,?,?)") //
+                .transacted() //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .out(Type.INTEGER, Integer.class) //
+                .in(0, 10) //
+                .flatMap(Tx.flattenToValuesOnly()) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValueCount(2) //
+                .assertComplete();
+    }
+
+    @Test
     public void testCallableApiReturningTenResultSets() {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
@@ -3100,6 +3125,39 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
                 .in(0, 10) //
+                .doOnNext(x -> {
+                    assertEquals(0, x.outs().size());
+                    assertEquals(10, x.results().size());
+                }) //
+                   // just zip the first and last result sets
+                .flatMap(x -> x.results(0) //
+                        .zipWith(x.results(9), //
+                                (y, z) -> ((Person2) y).name() + ((Person2) z).name()))
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValues("FREDSARAH", "SARAHFRED", "FREDSARAH", "SARAHFRED") //
+                .assertComplete();
+    }
+
+    @Test
+    public void testCallableApiReturningTenResultSetsTransacted() {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call rs10()") //
+                .transacted() //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .autoMap(Person2.class) //
+                .in(0, 10) //
+                .flatMap(Tx.flattenToValuesOnly()) //
                 .doOnNext(x -> {
                     assertEquals(0, x.outs().size());
                     assertEquals(10, x.results().size());
