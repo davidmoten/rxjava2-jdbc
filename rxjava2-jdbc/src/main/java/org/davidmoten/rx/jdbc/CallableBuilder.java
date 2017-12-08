@@ -97,7 +97,7 @@ public final class CallableBuilder implements Getter1 {
     }
 
     private Completable build() {
-        return Call.createWithZeroOutParameters(connection, sql, parameterGroups(), params);
+        return Call.createWithZeroOutParameters(connection, sql, parameterGroups(), params).ignoreElements();
     }
 
     public static final class CallableBuilder1<T1> implements Getter1 {

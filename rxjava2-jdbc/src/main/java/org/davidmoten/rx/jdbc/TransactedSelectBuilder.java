@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 public final class TransactedSelectBuilder implements DependsOn<TransactedSelectBuilder>, GetterTx {
 
@@ -95,13 +96,15 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
     private static <T> Flowable<Tx<T>> createFlowable(SelectBuilder sb,
             ResultSetMapper<? extends T> mapper, Database db) {
         return (Flowable<Tx<T>>) (Flowable<?>) Flowable.defer(() -> {
+            //Select.<T>create(connection, pg, sql, fetchSize, mapper, true);
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
-            return Select.create(sb.connection //
-                    .map(c -> Util.toTransactedConnection(connection, c)), //
+            Single<Connection> con = sb.connection //
+                    .map(c -> Util.toTransactedConnection(connection, c));
+            return Select.create(con, //
                     sb.parameterGroupsToFlowable(), //
                     sb.sql, //
                     sb.fetchSize, //
-                    rs -> mapper.apply(rs), //
+                    mapper, //
                     false) //
                     .materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //

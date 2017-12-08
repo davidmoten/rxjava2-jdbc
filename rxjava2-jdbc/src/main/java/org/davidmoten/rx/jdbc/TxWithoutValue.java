@@ -1,6 +1,6 @@
 package org.davidmoten.rx.jdbc;
 
-public interface TerminalTx {
+public interface TxWithoutValue {
 
     boolean isComplete();
 

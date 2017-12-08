@@ -7,7 +7,7 @@ import io.reactivex.Notification;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 
-public interface Tx<T> extends TerminalTx {
+public interface Tx<T> extends TxWithoutValue {
 
     boolean isValue();
 
