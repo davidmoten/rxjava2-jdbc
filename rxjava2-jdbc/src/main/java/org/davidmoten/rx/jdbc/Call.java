@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import com.github.davidmoten.guavamini.Lists;
 
-import io.reactivex.Completable;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import io.reactivex.Notification;

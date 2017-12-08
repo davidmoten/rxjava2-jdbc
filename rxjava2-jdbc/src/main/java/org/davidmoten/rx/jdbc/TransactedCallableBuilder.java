@@ -12,7 +12,6 @@ import org.davidmoten.rx.jdbc.callable.internal.In;
 import org.davidmoten.rx.jdbc.callable.internal.InOut;
 import org.davidmoten.rx.jdbc.callable.internal.InParameterPlaceholder;
 import org.davidmoten.rx.jdbc.callable.internal.Out;
-import org.davidmoten.rx.jdbc.callable.internal.ParameterPlaceholder;
 import org.davidmoten.rx.jdbc.callable.internal.TxGetter1;
 import org.davidmoten.rx.jdbc.callable.internal.TxGetter2;
 import org.davidmoten.rx.jdbc.callable.internal.TxGetter3;
@@ -27,47 +26,37 @@ import com.github.davidmoten.guavamini.Lists;
 import com.github.davidmoten.guavamini.Preconditions;
 
 import io.reactivex.Flowable;
-import io.reactivex.Notification;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
 
 public final class TransactedCallableBuilder implements TxGetter1 {
 
-    final String sql;
-    final List<ParameterPlaceholder> params = new ArrayList<>();
+    private CallableBuilder cb;
 
-    Flowable<?> inStream;
-
-    private final Single<Connection> connection;
-
-    private final Database db;
-
-    public TransactedCallableBuilder(String sql, Single<Connection> connection, Database db) {
-        this.sql = sql;
-        this.connection = connection;
-        this.db = db;
+    public TransactedCallableBuilder(CallableBuilder cb) {
+        this.cb = cb;
     }
 
     @SuppressWarnings("unchecked")
     public Flowable<List<Object>> parameterGroups() {
-        int numInParameters = params.stream() //
+        int numInParameters =cb. params.stream() //
                 .filter(x -> x instanceof InParameterPlaceholder) //
                 .collect(Collectors.counting()).intValue();
         if (numInParameters == 0) {
-            return inStream.map(x -> Collections.singletonList(x));
+            return cb.inStream.map(x -> Collections.singletonList(x));
         } else {
-            return (Flowable<List<Object>>) (Flowable<?>) inStream.buffer(numInParameters);
+            return (Flowable<List<Object>>) (Flowable<?>) cb.inStream.buffer(numInParameters);
         }
     }
 
     public TransactedCallableBuilder in() {
-        params.add(In.IN);
+        cb.params.add(In.IN);
         return this;
     }
 
     public Single<TxWithoutValue> in(Flowable<?> f) {
-        Preconditions.checkArgument(inStream == null, "you can only specify in flowable once, current=" + inStream);
-        this.inStream = f;
+        Preconditions.checkArgument(cb.inStream == null, "you can only specify in flowable once, current=" + cb.inStream);
+        cb.inStream = f;
         return build();
     }
 
@@ -80,18 +69,18 @@ public final class TransactedCallableBuilder implements TxGetter1 {
     }
 
     public <T> CallableBuilder1<T> inOut(Type type, Class<T> cls) {
-        params.add(new InOut(type, cls));
-        return new CallableBuilder1<T>(this, cls);
+        cb.params.add(new InOut(type, cls));
+        return new CallableBuilder1<T>(cb, cls);
     }
 
     public <T> CallableBuilder1<T> out(Type type, Class<T> cls) {
-        params.add(new Out(type, cls));
-        return new CallableBuilder1<T>(this, cls);
+        cb.params.add(new Out(type, cls));
+        return new CallableBuilder1<T>(cb, cls);
     }
 
     @Override
     public <T> CallableResultSets1Builder<T> get(Function<? super ResultSet, ? extends T> function) {
-        return new CallableResultSets1Builder<T>(this, function);
+        return new CallableResultSets1Builder<T>(cb, function);
     }
 
     public <T> CallableResultSets1Builder<T> autoMap(Class<T> cls) {
@@ -103,13 +92,13 @@ public final class TransactedCallableBuilder implements TxGetter1 {
         return Single.defer(() -> {
             AtomicReference<Connection> con = new AtomicReference<Connection>();
             // set the atomic reference when transactedConnection emits
-            Single<Connection> transactedConnection = this.connection //
+            Single<Connection> transactedConnection = cb.connection //
                     .map(c -> Util.toTransactedConnection(con, c));
             return Call //
-                    .createWithZeroOutParameters(transactedConnection, sql, parameterGroups(), params) //
+                    .createWithZeroOutParameters(transactedConnection, cb.sql, parameterGroups(), cb.params) //
                     .materialize() //
                     .filter(x -> !x.isOnNext()) //
-                    .<TxWithoutValue>flatMap(n -> Tx.toTx(n, con.get(), db)) //
+                    .<TxWithoutValue>flatMap(n -> Tx.toTx(n, con.get(), cb.db)) //
                     .doOnNext(tx -> {
                         if (tx.isComplete()) {
                             ((TxImpl<Object>) tx).connection().commit();
@@ -121,10 +110,10 @@ public final class TransactedCallableBuilder implements TxGetter1 {
 
     public static final class CallableBuilder1<T1> implements TxGetter1 {
 
-        private final TransactedCallableBuilder b;
+        private final CallableBuilder b;
         private final Class<T1> cls;
 
-        public CallableBuilder1(TransactedCallableBuilder b, Class<T1> cls) {
+        public CallableBuilder1(CallableBuilder b, Class<T1> cls) {
             this.b = b;
             this.cls = cls;
         }
@@ -170,11 +159,11 @@ public final class TransactedCallableBuilder implements TxGetter1 {
 
     public static final class CallableBuilder2<T1, T2> implements TxGetter1 {
 
-        private final TransactedCallableBuilder b;
+        private final CallableBuilder b;
         private final Class<T1> cls1;
         private final Class<T2> cls2;
 
-        public CallableBuilder2(TransactedCallableBuilder b, Class<T1> cls1, Class<T2> cls2) {
+        public CallableBuilder2(CallableBuilder b, Class<T1> cls1, Class<T2> cls2) {
             this.b = b;
             this.cls1 = cls1;
             this.cls2 = cls2;
@@ -221,12 +210,12 @@ public final class TransactedCallableBuilder implements TxGetter1 {
 
     public static final class CallableBuilder3<T1, T2, T3> implements TxGetter1 {
 
-        private final TransactedCallableBuilder b;
+        private final CallableBuilder b;
         private final Class<T1> cls1;
         private final Class<T2> cls2;
         private final Class<T3> cls3;
 
-        public CallableBuilder3(TransactedCallableBuilder b, Class<T1> cls1, Class<T2> cls2, Class<T3> cls3) {
+        public CallableBuilder3(CallableBuilder b, Class<T1> cls1, Class<T2> cls2, Class<T3> cls3) {
             this.b = b;
             this.cls1 = cls1;
             this.cls2 = cls2;
@@ -275,13 +264,13 @@ public final class TransactedCallableBuilder implements TxGetter1 {
 
     public static final class CallableBuilder4<T1, T2, T3, T4> implements TxGetter1 {
 
-        private final TransactedCallableBuilder b;
+        private final CallableBuilder b;
         private final Class<T1> cls1;
         private final Class<T2> cls2;
         private final Class<T3> cls3;
         private final Class<T4> cls4;
 
-        public CallableBuilder4(TransactedCallableBuilder b, Class<T1> cls1, Class<T2> cls2, Class<T3> cls3,
+        public CallableBuilder4(CallableBuilder b, Class<T1> cls1, Class<T2> cls2, Class<T3> cls3,
                 Class<T4> cls4) {
             this.b = b;
             this.cls1 = cls1;
@@ -333,10 +322,10 @@ public final class TransactedCallableBuilder implements TxGetter1 {
 
     public static final class CallableBuilderN implements TxGetter1 {
 
-        private final TransactedCallableBuilder b;
+        private final CallableBuilder b;
         private final List<Class<?>> outClasses;
 
-        public CallableBuilderN(TransactedCallableBuilder b, List<Class<?>> outClasses) {
+        public CallableBuilderN(CallableBuilder b, List<Class<?>> outClasses) {
             this.b = b;
             this.outClasses = outClasses;
         }
@@ -378,10 +367,10 @@ public final class TransactedCallableBuilder implements TxGetter1 {
 
     public static final class CallableResultSets1Builder<T1> implements TxGetter2<T1> {
 
-        private final TransactedCallableBuilder b;
+        private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
 
-        CallableResultSets1Builder(TransactedCallableBuilder b, Function<? super ResultSet, ? extends T1> function) {
+        CallableResultSets1Builder(CallableBuilder b, Function<? super ResultSet, ? extends T1> function) {
             this.b = b;
             this.f1 = function;
         }
@@ -427,11 +416,11 @@ public final class TransactedCallableBuilder implements TxGetter1 {
 
     public static final class CallableResultSets2Builder<T1, T2> implements TxGetter3<T1, T2> {
 
-        private final TransactedCallableBuilder b;
+        private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
         private final Function<? super ResultSet, ? extends T2> f2;
 
-        CallableResultSets2Builder(TransactedCallableBuilder b, Function<? super ResultSet, ? extends T1> f1,
+        CallableResultSets2Builder(CallableBuilder b, Function<? super ResultSet, ? extends T1> f1,
                 Function<? super ResultSet, ? extends T2> f2) {
             this.b = b;
             this.f1 = f1;
@@ -478,12 +467,12 @@ public final class TransactedCallableBuilder implements TxGetter1 {
 
     public static final class CallableResultSets3Builder<T1, T2, T3> implements TxGetter4<T1, T2, T3> {
 
-        private final TransactedCallableBuilder b;
+        private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
         private final Function<? super ResultSet, ? extends T2> f2;
         private final Function<? super ResultSet, ? extends T3> f3;
 
-        CallableResultSets3Builder(TransactedCallableBuilder b, Function<? super ResultSet, ? extends T1> f1,
+        CallableResultSets3Builder(CallableBuilder b, Function<? super ResultSet, ? extends T1> f1,
                 Function<? super ResultSet, ? extends T2> f2, Function<? super ResultSet, ? extends T3> f3) {
             this.b = b;
             this.f1 = f1;
@@ -531,13 +520,13 @@ public final class TransactedCallableBuilder implements TxGetter1 {
 
     public static final class CallableResultSets4Builder<T1, T2, T3, T4> implements TxGetterN {
 
-        private final TransactedCallableBuilder b;
+        private final CallableBuilder b;
         private final Function<? super ResultSet, ? extends T1> f1;
         private final Function<? super ResultSet, ? extends T2> f2;
         private final Function<? super ResultSet, ? extends T3> f3;
         private final Function<? super ResultSet, ? extends T4> f4;
 
-        CallableResultSets4Builder(TransactedCallableBuilder b, Function<? super ResultSet, ? extends T1> f1,
+        CallableResultSets4Builder(CallableBuilder b, Function<? super ResultSet, ? extends T1> f1,
                 Function<? super ResultSet, ? extends T2> f2, Function<? super ResultSet, ? extends T3> f3,
                 Function<? super ResultSet, ? extends T4> f4) {
             this.b = b;
@@ -588,10 +577,10 @@ public final class TransactedCallableBuilder implements TxGetter1 {
 
     public static final class CallableResultSetsNBuilder {
 
-        private final TransactedCallableBuilder b;
+        private final CallableBuilder b;
         private final List<Function<? super ResultSet, ?>> functions;
 
-        CallableResultSetsNBuilder(TransactedCallableBuilder b, List<Function<? super ResultSet, ?>> functions) {
+        CallableResultSetsNBuilder(CallableBuilder b, List<Function<? super ResultSet, ?>> functions) {
             this.b = b;
             this.functions = functions;
         }

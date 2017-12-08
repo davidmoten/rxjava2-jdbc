@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public final class StoredProcExample {
-
+    
     private StoredProcExample() {
         // prevent instantiation
     }

@@ -60,6 +60,11 @@ final class TxImpl<T> implements Tx<T> {
     public TransactedUpdateBuilder update(String sql) {
         return db.tx(this).update(sql);
     }
+    
+    @Override
+    public TransactedCallableBuilder call(String sql) {
+        return db.tx(this).call(sql);
+    }
 
     @Override
     public String toString() {

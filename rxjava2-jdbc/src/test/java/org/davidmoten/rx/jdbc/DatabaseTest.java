@@ -2605,8 +2605,23 @@ public class DatabaseTest {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
                 .call("call zero()") //
-                .once().test() //
+                .once() //
+                .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertComplete();
+    }
+    
+    @Test
+    public void testCallableApiNoParametersTransacted() {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call zero()") //
+                .transacted() //
+                .once() //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValueCount(1) //
+                .assertValue(x -> x.isComplete()) //
                 .assertComplete();
     }
 

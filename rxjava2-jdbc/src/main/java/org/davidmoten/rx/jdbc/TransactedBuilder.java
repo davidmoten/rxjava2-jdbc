@@ -28,4 +28,9 @@ public final class TransactedBuilder {
         return new UpdateBuilder(sql, connections, db).transacted();
     }
 
+    public TransactedCallableBuilder call(@Nonnull String sql) {
+        Preconditions.checkNotNull(sql, "sql cannot be null");
+        return new CallableBuilder(sql, connections, db).transacted();
+    }
+
 }

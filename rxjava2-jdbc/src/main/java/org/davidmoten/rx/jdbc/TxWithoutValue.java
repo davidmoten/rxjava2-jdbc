@@ -12,4 +12,6 @@ public interface TxWithoutValue {
     
     TransactedUpdateBuilder update(String sql);
     
+    TransactedCallableBuilder call(String sql);
+    
 }
