@@ -2637,6 +2637,22 @@ public class DatabaseTest {
                 .assertValue(5) //
                 .assertComplete();
     }
+    
+    @Test
+    public void testCallableApiOneInOutParameterTransacted() {
+        Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
+        db //
+                .call("call inout1(?)") //
+                .transacted() //
+                .inOut(Type.INTEGER, Integer.class) //
+                .in(4) //
+                .flatMap(Tx.flattenToValuesOnly()) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertValue(5) //
+                .assertComplete();
+    }
+
 
     @Test
     public void testCallableApiTwoInOutParameters() {
