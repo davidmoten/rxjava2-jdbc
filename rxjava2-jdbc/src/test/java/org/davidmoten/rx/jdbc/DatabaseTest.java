@@ -2618,7 +2618,7 @@ public class DatabaseTest {
         db //
                 .call("call inout1(?)") //
                 .inOut(Type.INTEGER, Integer.class) //
-                .in(4) //
+                .input(4) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(5) //
@@ -2632,7 +2632,7 @@ public class DatabaseTest {
                 .call("call inout1(?)") //
                 .transacted() //
                 .inOut(Type.INTEGER, Integer.class) //
-                .in(4) //
+                .input(4) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -2647,7 +2647,7 @@ public class DatabaseTest {
                 .call("call inout2(?, ?)") //
                 .inOut(Type.INTEGER, Integer.class) //
                 .inOut(Type.INTEGER, Integer.class) //
-                .in(4, 10) //
+                .input(4, 10) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(x -> x._1() == 5 && x._2() == 12) //
@@ -2662,7 +2662,7 @@ public class DatabaseTest {
                 .transacted() //
                 .inOut(Type.INTEGER, Integer.class) //
                 .inOut(Type.INTEGER, Integer.class) //
-                .in(4, 10) //
+                .input(4, 10) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -2678,7 +2678,7 @@ public class DatabaseTest {
                 .inOut(Type.INTEGER, Integer.class) //
                 .inOut(Type.INTEGER, Integer.class) //
                 .inOut(Type.INTEGER, Integer.class) //
-                .in(4, 10, 13) //
+                .input(4, 10, 13) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValue(x -> x._1() == 5 && x._2() == 12 && x._3() == 16) //
@@ -2694,7 +2694,7 @@ public class DatabaseTest {
                 .inOut(Type.INTEGER, Integer.class) //
                 .inOut(Type.INTEGER, Integer.class) //
                 .inOut(Type.INTEGER, Integer.class) //
-                .in(4, 10, 13) //
+                .input(4, 10, 13) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -2709,7 +2709,7 @@ public class DatabaseTest {
                 .call("call in1out1(?,?)") //
                 .in() //
                 .out(Type.INTEGER, Integer.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(0, 10, 20) //
@@ -2724,7 +2724,7 @@ public class DatabaseTest {
                 .transacted() //
                 .in() //
                 .out(Type.INTEGER, Integer.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -2740,7 +2740,7 @@ public class DatabaseTest {
                 .in() //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValueCount(3) //
@@ -2750,7 +2750,7 @@ public class DatabaseTest {
                 .assertComplete();
 
         db.call("call in1out2(?,?,?)").in().out(Type.INTEGER, Integer.class).out(Type.INTEGER, Integer.class)
-                .in(0, 10, 20).blockingForEach(System.out::println);
+                .input(0, 10, 20).blockingForEach(System.out::println);
     }
 
     @Test
@@ -2762,7 +2762,7 @@ public class DatabaseTest {
                 .in() //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -2776,7 +2776,7 @@ public class DatabaseTest {
                 .in() //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .blockingForEach(System.out::println);
     }
 
@@ -2789,7 +2789,7 @@ public class DatabaseTest {
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValueCount(3) //
@@ -2809,7 +2809,7 @@ public class DatabaseTest {
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -2826,7 +2826,7 @@ public class DatabaseTest {
         db //
                 .call("call in0out0rs1()") //
                 .autoMap(Person2.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .doOnNext(x -> {
                     assertTrue(x.outs().isEmpty());
                 }) //
@@ -2849,7 +2849,7 @@ public class DatabaseTest {
                 .call("call in0out0rs1()") //
                 .transacted() //
                 .autoMap(Person2.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .flatMap(Tx.flattenToValuesOnly()).doOnNext(x -> {
                     assertTrue(x.outs().isEmpty());
                 }) //
@@ -2873,7 +2873,7 @@ public class DatabaseTest {
                 .in() //
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .doOnNext(x -> assertTrue(x.outs().isEmpty())) //
                 .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y.name() + z.name())) //
                 .test() //
@@ -2891,7 +2891,7 @@ public class DatabaseTest {
                 .in() //
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .doOnNext(x -> assertTrue(x.outs().isEmpty())) //
                 .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y.name() + z.name())) //
@@ -2909,7 +2909,7 @@ public class DatabaseTest {
                 .in() //
                 .getAs(String.class, Integer.class) //
                 .getAs(String.class, Integer.class)//
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y._1() + z._1())) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -2926,7 +2926,7 @@ public class DatabaseTest {
                 .in() //
                 .getAs(String.class, Integer.class) //
                 .getAs(String.class, Integer.class)//
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y._1() + z._1())) //
                 .test() //
@@ -2943,7 +2943,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .in() //
                 .autoMap(Person2.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .doOnNext(x -> assertTrue(x.outs().isEmpty())) //
                 .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y.name() + z.name())) //
                 .test() //
@@ -2961,7 +2961,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .in() //
                 .autoMap(Person2.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .doOnNext(x -> assertTrue(x.outs().isEmpty())) //
                 .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y.name() + z.name())) //
@@ -2979,7 +2979,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
                 .in() //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .doOnNext(x -> assertTrue(x.outs().isEmpty())) //
                 .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y.name() + z.name())) //
                 .test() //
@@ -2997,7 +2997,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
                 .in() //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .doOnNext(x -> assertTrue(x.outs().isEmpty())) //
                 .flatMap(x -> x.results1().zipWith(x.results2(), (y, z) -> y.name() + z.name())) //
@@ -3017,7 +3017,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .doOnNext(x -> {
                     assertEquals(2, x.outs().size());
                     assertEquals(1, x.outs().get(0));
@@ -3044,7 +3044,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
-                .in(0, 10, 20) //
+                .input(0, 10, 20) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .doOnNext(x -> {
                     assertEquals(2, x.outs().size());
@@ -3076,7 +3076,7 @@ public class DatabaseTest {
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
-                .in(0, 10) //
+                .input(0, 10) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
@@ -3100,7 +3100,7 @@ public class DatabaseTest {
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
                 .out(Type.INTEGER, Integer.class) //
-                .in(0, 10) //
+                .input(0, 10) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
@@ -3124,7 +3124,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
-                .in(0, 10) //
+                .input(0, 10) //
                 .doOnNext(x -> {
                     assertEquals(0, x.outs().size());
                     assertEquals(10, x.results().size());
@@ -3156,7 +3156,7 @@ public class DatabaseTest {
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
                 .autoMap(Person2.class) //
-                .in(0, 10) //
+                .input(0, 10) //
                 .flatMap(Tx.flattenToValuesOnly()) //
                 .doOnNext(x -> {
                     assertEquals(0, x.outs().size());
@@ -3179,7 +3179,7 @@ public class DatabaseTest {
         db //
                 .call("call in0out0rs1()") //
                 .getAs(String.class, Integer.class) //
-                .in(1) //
+                .input(1) //
                 .flatMap(x -> x.results()) //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //

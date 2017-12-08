@@ -72,18 +72,18 @@ public final class CallableBuilder implements Getter1 {
         return this;
     }
 
-    public Completable in(Flowable<?> f) {
+    public Completable input(Flowable<?> f) {
         Preconditions.checkArgument(inStream == null, "you can only specify in flowable once, current=" + inStream);
         this.inStream = f;
         return build();
     }
 
     public Completable once() {
-        return in(1);
+        return input(1);
     }
 
-    public Completable in(Object... objects) {
-        return in(Flowable.fromArray(objects));
+    public Completable input(Object... objects) {
+        return input(Flowable.fromArray(objects));
     }
 
     public <T> CallableBuilder1<T> inOut(Type type, Class<T> cls) {
@@ -134,13 +134,13 @@ public final class CallableBuilder implements Getter1 {
             return new CallableBuilder2<T1, T2>(b, cls, cls2);
         }
 
-        public Flowable<T1> in(Flowable<?> f) {
-            b.in(f);
+        public Flowable<T1> input(Flowable<?> f) {
+            b.input(f);
             return build();
         }
 
-        public Flowable<T1> in(Object... objects) {
-            return in(Flowable.fromArray(objects));
+        public Flowable<T1> input(Object... objects) {
+            return input(Flowable.fromArray(objects));
         }
 
         @Override
@@ -175,8 +175,8 @@ public final class CallableBuilder implements Getter1 {
             return new CallableBuilder3<T1, T2, T3>(b, cls1, cls2, cls3);
         }
 
-        public Flowable<Tuple2<T1, T2>> in(Flowable<?> f) {
-            b.in(f);
+        public Flowable<Tuple2<T1, T2>> input(Flowable<?> f) {
+            b.input(f);
             return build();
         }
 
@@ -185,8 +185,8 @@ public final class CallableBuilder implements Getter1 {
             return this;
         }
 
-        public Flowable<Tuple2<T1, T2>> in(Object... objects) {
-            return in(Flowable.fromArray(objects));
+        public Flowable<Tuple2<T1, T2>> input(Object... objects) {
+            return input(Flowable.fromArray(objects));
         }
 
         public <T3> CallableBuilder3<T1, T2, T3> inOut(Type type, Class<T3> cls3) {
@@ -228,8 +228,8 @@ public final class CallableBuilder implements Getter1 {
             return new CallableBuilder4<T1, T2, T3, T4>(b, cls1, cls2, cls3, cls4);
         }
 
-        public Flowable<Tuple3<T1, T2, T3>> in(Flowable<?> f) {
-            b.in(f);
+        public Flowable<Tuple3<T1, T2, T3>> input(Flowable<?> f) {
+            b.input(f);
             return build();
         }
 
@@ -238,8 +238,8 @@ public final class CallableBuilder implements Getter1 {
             return this;
         }
 
-        public Flowable<Tuple3<T1, T2, T3>> in(Object... objects) {
-            return in(Flowable.fromArray(objects));
+        public Flowable<Tuple3<T1, T2, T3>> input(Object... objects) {
+            return input(Flowable.fromArray(objects));
         }
 
         public <T4> CallableBuilder4<T1, T2, T3, T4> inOut(Type type, Class<T4> cls4) {
@@ -279,8 +279,8 @@ public final class CallableBuilder implements Getter1 {
             this.cls4 = cls4;
         }
 
-        public Flowable<Tuple4<T1, T2, T3, T4>> in(Flowable<?> f) {
-            b.in(f);
+        public Flowable<Tuple4<T1, T2, T3, T4>> input(Flowable<?> f) {
+            b.input(f);
             return build();
         }
 
@@ -289,8 +289,8 @@ public final class CallableBuilder implements Getter1 {
             return this;
         }
 
-        public Flowable<Tuple4<T1, T2, T3, T4>> in(Object... objects) {
-            return in(Flowable.fromArray(objects));
+        public Flowable<Tuple4<T1, T2, T3, T4>> input(Object... objects) {
+            return input(Flowable.fromArray(objects));
         }
 
         public CallableBuilderN inOut(Type type, Class<T3> cls5) {
@@ -330,8 +330,8 @@ public final class CallableBuilder implements Getter1 {
             this.outClasses = outClasses;
         }
 
-        public Flowable<TupleN<Object>> in(Flowable<?> f) {
-            b.in(f);
+        public Flowable<TupleN<Object>> input(Flowable<?> f) {
+            b.input(f);
             return build();
         }
 
@@ -340,8 +340,8 @@ public final class CallableBuilder implements Getter1 {
             return this;
         }
 
-        public Flowable<TupleN<Object>> in(Object... objects) {
-            return in(Flowable.fromArray(objects));
+        public Flowable<TupleN<Object>> input(Object... objects) {
+            return input(Flowable.fromArray(objects));
         }
 
         public CallableBuilderN out(Type type, Class<?> cls) {
@@ -388,8 +388,8 @@ public final class CallableBuilder implements Getter1 {
             return new CallableResultSets2Builder<T1, T2>(b, f1, f2);
         }
 
-        public Flowable<CallableResultSet1<T1>> in(Flowable<?> f) {
-            b.in(f);
+        public Flowable<CallableResultSet1<T1>> input(Flowable<?> f) {
+            b.input(f);
             return build();
         }
 
@@ -398,8 +398,8 @@ public final class CallableBuilder implements Getter1 {
             return this;
         }
 
-        public Flowable<CallableResultSet1<T1>> in(Object... objects) {
-            return in(Flowable.fromArray(objects));
+        public Flowable<CallableResultSet1<T1>> input(Object... objects) {
+            return input(Flowable.fromArray(objects));
         }
 
         public CallableResultSets1Builder<T1> inOut(Type type, Class<?> cls) {
@@ -432,8 +432,8 @@ public final class CallableBuilder implements Getter1 {
             return this;
         }
 
-        public Flowable<CallableResultSet2<T1, T2>> in(Flowable<?> f) {
-            b.in(f);
+        public Flowable<CallableResultSet2<T1, T2>> input(Flowable<?> f) {
+            b.input(f);
             return build();
         }
 
@@ -442,8 +442,8 @@ public final class CallableBuilder implements Getter1 {
             return this;
         }
 
-        public Flowable<CallableResultSet2<T1, T2>> in(Object... objects) {
-            return in(Flowable.fromArray(objects));
+        public Flowable<CallableResultSet2<T1, T2>> input(Object... objects) {
+            return input(Flowable.fromArray(objects));
         }
 
         public CallableResultSets2Builder<T1, T2> inOut(Type type, Class<?> cls) {
@@ -490,13 +490,13 @@ public final class CallableBuilder implements Getter1 {
             return this;
         }
 
-        public Flowable<CallableResultSet3<T1, T2, T3>> in(Flowable<?> f) {
-            b.in(f);
+        public Flowable<CallableResultSet3<T1, T2, T3>> input(Flowable<?> f) {
+            b.input(f);
             return build();
         }
 
-        public Flowable<CallableResultSet3<T1, T2, T3>> in(Object... objects) {
-            return in(Flowable.fromArray(objects));
+        public Flowable<CallableResultSet3<T1, T2, T3>> input(Object... objects) {
+            return input(Flowable.fromArray(objects));
         }
 
         public CallableResultSets3Builder<T1, T2, T3> inOut(Type type, Class<?> cls) {
@@ -546,13 +546,13 @@ public final class CallableBuilder implements Getter1 {
             return this;
         }
 
-        public Flowable<CallableResultSet4<T1, T2, T3, T4>> in(Flowable<?> f) {
-            b.in(f);
+        public Flowable<CallableResultSet4<T1, T2, T3, T4>> input(Flowable<?> f) {
+            b.input(f);
             return build();
         }
 
-        public Flowable<CallableResultSet4<T1, T2, T3, T4>> in(Object... objects) {
-            return in(Flowable.fromArray(objects));
+        public Flowable<CallableResultSet4<T1, T2, T3, T4>> input(Object... objects) {
+            return input(Flowable.fromArray(objects));
         }
 
         public CallableResultSets4Builder<T1, T2, T3, T4> inOut(Type type, Class<?> cls) {
@@ -590,13 +590,13 @@ public final class CallableBuilder implements Getter1 {
             return this;
         }
 
-        public Flowable<CallableResultSetN> in(Flowable<?> f) {
-            b.in(f);
+        public Flowable<CallableResultSetN> input(Flowable<?> f) {
+            b.input(f);
             return build();
         }
 
-        public Flowable<CallableResultSetN> in(Object... objects) {
-            return in(Flowable.fromArray(objects));
+        public Flowable<CallableResultSetN> input(Object... objects) {
+            return input(Flowable.fromArray(objects));
         }
 
         public CallableResultSetsNBuilder inOut(Type type, Class<?> cls) {
