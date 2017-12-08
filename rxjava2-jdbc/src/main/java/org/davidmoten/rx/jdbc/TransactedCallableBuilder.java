@@ -352,7 +352,7 @@ public final class TransactedCallableBuilder implements TxGetter1 {
 
         private Flowable<Tx<TupleN<Object>>> build() {
             return inTransaction(b,
-                    con -> Call.createWithNParameters(b.connection, b.sql, b.parameterGroups(), b.params, outClasses));
+                    con -> Call.createWithNParameters(con, b.sql, b.parameterGroups(), b.params, outClasses));
         }
     }
 
@@ -504,7 +504,7 @@ public final class TransactedCallableBuilder implements TxGetter1 {
         }
 
         private Flowable<Tx<CallableResultSet3<T1, T2, T3>>> build() {
-            return inTransaction(b, con -> Call.createWithThreeResultSets(b.connection, b.sql, b.parameterGroups(),
+            return inTransaction(b, con -> Call.createWithThreeResultSets(con, b.sql, b.parameterGroups(),
                     b.params, f1, f2, f3, 0));
         }
     }

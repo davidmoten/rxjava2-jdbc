@@ -3034,7 +3034,6 @@ public class DatabaseTest {
     }
 
     @Test
-    @Ignore
     public void testCallableApiReturningTwoOutputThreeResultSetsTransacted() throws InterruptedException {
         Database db = DatabaseCreator.createDerbyWithStoredProcs(1);
         db //
