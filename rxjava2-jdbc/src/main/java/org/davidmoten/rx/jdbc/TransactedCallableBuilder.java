@@ -6,11 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet1;
-import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet2;
-import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet3;
-import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSet4;
-import org.davidmoten.rx.jdbc.CallableBuilder.CallableResultSetN;
+import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet1;
+import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet2;
+import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet3;
+import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet4;
+import org.davidmoten.rx.jdbc.callable.internal.CallableResultSetN;
 import org.davidmoten.rx.jdbc.callable.internal.In;
 import org.davidmoten.rx.jdbc.callable.internal.InOut;
 import org.davidmoten.rx.jdbc.callable.internal.Out;

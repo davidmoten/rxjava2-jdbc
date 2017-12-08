@@ -7,6 +7,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet1;
+import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet2;
+import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet3;
+import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet4;
+import org.davidmoten.rx.jdbc.callable.internal.CallableResultSetN;
 import org.davidmoten.rx.jdbc.callable.internal.Getter1;
 import org.davidmoten.rx.jdbc.callable.internal.Getter2;
 import org.davidmoten.rx.jdbc.callable.internal.Getter3;
@@ -611,143 +616,6 @@ public final class CallableBuilder implements Getter1 {
         private Flowable<CallableResultSetN> build() {
             return Call.createWithNResultSets(b.connection, b.sql, b.parameterGroups(), b.params, functions, 0) //
                     .dematerialize();
-        }
-    }
-
-    public static final class CallableResultSet1<T1> {
-
-        private final List<Object> outs;
-        private final Flowable<T1> results;
-
-        public CallableResultSet1(List<Object> outs, Flowable<T1> results) {
-            this.outs = outs;
-            this.results = results;
-        }
-
-        public Flowable<T1> results() {
-            return results;
-        }
-
-        public List<Object> outs() {
-            return outs;
-        }
-
-    }
-
-    public static final class CallableResultSet2<T1, T2> {
-
-        private final List<Object> outs;
-        private final Flowable<T1> results1;
-        private final Flowable<T2> results2;
-
-        public CallableResultSet2(List<Object> outs, Flowable<T1> results1, Flowable<T2> results2) {
-            this.outs = outs;
-            this.results1 = results1;
-            this.results2 = results2;
-        }
-
-        public Flowable<T1> results1() {
-            return results1;
-        }
-
-        public Flowable<T2> results2() {
-            return results2;
-        }
-
-        public List<Object> outs() {
-            return outs;
-        }
-    }
-
-    public static final class CallableResultSet3<T1, T2, T3> {
-
-        private final List<Object> outs;
-        private final Flowable<T1> results1;
-        private final Flowable<T2> results2;
-        private final Flowable<T3> results3;
-
-        public CallableResultSet3(List<Object> outs, Flowable<T1> query1, Flowable<T2> query2, Flowable<T3> query3) {
-            this.outs = outs;
-            this.results1 = query1;
-            this.results2 = query2;
-            this.results3 = query3;
-        }
-
-        public Flowable<T1> results1() {
-            return results1;
-        }
-
-        public Flowable<T2> results2() {
-            return results2;
-        }
-
-        public Flowable<T3> results3() {
-            return results3;
-        }
-
-        public List<Object> outs() {
-            return outs;
-        }
-    }
-
-    public static final class CallableResultSet4<T1, T2, T3, T4> {
-
-        private final List<Object> outs;
-        private final Flowable<T1> results1;
-        private final Flowable<T2> results2;
-        private final Flowable<T3> results3;
-        private final Flowable<T4> results4;
-
-        public CallableResultSet4(List<Object> outs, Flowable<T1> query1, Flowable<T2> query2, Flowable<T3> query3,
-                Flowable<T4> query4) {
-            this.outs = outs;
-            this.results1 = query1;
-            this.results2 = query2;
-            this.results3 = query3;
-            this.results4 = query4;
-        }
-
-        public Flowable<T1> results1() {
-            return results1;
-        }
-
-        public Flowable<T2> results2() {
-            return results2;
-        }
-
-        public Flowable<T3> results3() {
-            return results3;
-        }
-
-        public Flowable<T4> results4() {
-            return results4;
-        }
-
-        public List<Object> outs() {
-            return outs;
-        }
-    }
-
-    public static final class CallableResultSetN {
-
-        private final List<Object> outs;
-        private final List<Flowable<?>> flowables;
-
-        public CallableResultSetN(List<Object> outs, List<Flowable<?>> flowables) {
-            this.outs = outs;
-            this.flowables = flowables;
-        }
-
-        public List<Flowable<?>> results() {
-            return flowables;
-        }
-
-        public Flowable<?> results(int index) {
-            return flowables.get(index);
-        }
-
-        public List<Object> outs() {
-            return outs;
         }
     }
 
