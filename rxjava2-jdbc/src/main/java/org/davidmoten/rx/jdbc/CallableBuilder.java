@@ -7,11 +7,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet1;
-import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet2;
-import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet3;
-import org.davidmoten.rx.jdbc.callable.internal.CallableResultSet4;
-import org.davidmoten.rx.jdbc.callable.internal.CallableResultSetN;
+import org.davidmoten.rx.jdbc.callable.CallableResultSet1;
+import org.davidmoten.rx.jdbc.callable.CallableResultSet2;
+import org.davidmoten.rx.jdbc.callable.CallableResultSet3;
+import org.davidmoten.rx.jdbc.callable.CallableResultSet4;
+import org.davidmoten.rx.jdbc.callable.CallableResultSetN;
 import org.davidmoten.rx.jdbc.callable.internal.Getter1;
 import org.davidmoten.rx.jdbc.callable.internal.Getter2;
 import org.davidmoten.rx.jdbc.callable.internal.Getter3;

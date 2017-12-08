@@ -1,4 +1,4 @@
-package org.davidmoten.rx.jdbc.callable.internal;
+package org.davidmoten.rx.jdbc.callable;
 
 import java.util.List;
 
