@@ -708,7 +708,7 @@ Flowable<Tuple2<Integer,Integer>> tuples =
     .in() 
     .out(Type.INTEGER, Integer.class) 
     .out(Type.INTEGER, Integer.class) 
-    .in(0, 10, 20);
+    .input(0, 10, 20);
 ```
 
 Note above that each question mark in the call statement correponds in order with a call to `in()` or `out(...)`. Once all parameters have been defined then the `in(0, 10, 20)` call drives the running of the query with that input. The output `Flowable` is strongly typed according to the `out` parameters specified.
@@ -724,7 +724,7 @@ Flowable<String> namePairs =
     .in()
     .autoMap(Person2.class)
     .autoMap(Person2.class)
-    .in(0, 10, 20)
+    .input(0, 10, 20)
     .flatMap(x -> 
       x.results1()
        .zipWith(x.results2(), (y, z) -> y.name() + z.name()));    
@@ -740,7 +740,7 @@ Flowable<String> namePairs =
     .in()
     .getAs(String.class, Integer.class)
     .getAs(String.class, Integer.class
-    .in(0, 10, 20)
+    .input(0, 10, 20)
     .flatMap(x -> 
       x.results1()
        .zipWith(x.results2(), (y, z) -> y._1() + z._1()));    
@@ -750,7 +750,7 @@ You can explore more examples of this in [`DatabaseTest.java`](rxjava2-jdbc/src/
 
 Using raw JDBC
 ----------------
-Many nifty things in JDBC (like `CallableStatements`) are not yet directly supported by *rxjava2-jdbc* (although is being worked on now) but you can get acccess to the underlying `Connection`s from the `Database` object by using `Database.apply` or `Database.member()`.
+A few nifty things in JDBC may not yet directly supported by *rxjava2-jdbc* but you can get acccess to the underlying `Connection`s from the `Database` object by using `Database.apply` or `Database.member()`.
 
 Here's an example where you want to return something from a `Connection` (say you called a stored procedure and returned an integer):
 
