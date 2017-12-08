@@ -48,15 +48,15 @@ final class Call {
     // No Parameters
     /////////////////////////
 
-    static Flowable<Object> createWithZeroOutParameters(Single<Connection> connection, String sql,
+    static Flowable<Integer> createWithZeroOutParameters(Single<Connection> connection, String sql,
             Flowable<List<Object>> parameterGroups, List<ParameterPlaceholder> parameterPlaceholders) {
         return connection.toFlowable()
-                .flatMap(con -> Call.<Object>createWithParameters(con, sql, parameterGroups, parameterPlaceholders,
+                .flatMap(con -> Call.<Integer>createWithParameters(con, sql, parameterGroups, parameterPlaceholders,
                         (stmt, parameters) -> createWithZeroOutParameters(stmt, parameters, parameterPlaceholders)))
                 .dematerialize();
     }
 
-    private static Single<Object> createWithZeroOutParameters(NamedCallableStatement stmt, List<Object> parameters,
+    private static Single<Integer> createWithZeroOutParameters(NamedCallableStatement stmt, List<Object> parameters,
             List<ParameterPlaceholder> parameterPlaceholders) {
         return Single.fromCallable(() -> {
             CallableStatement st = stmt.stmt;
@@ -177,7 +177,7 @@ final class Call {
     // N Out Parameters
     /////////////////////////
 
-    static Flowable<?> createWithNParameters( //
+    static Flowable<Notification<TupleN<Object>>> createWithNParameters( //
             Single<Connection> connection, //
             String sql, //
             Flowable<List<Object>> parameterGroups, //
