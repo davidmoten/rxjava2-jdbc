@@ -20,6 +20,8 @@ Status: _release candidates on Maven Central_
 
 Maven site reports are http://davidmoten.github.io/rxjava2-jdbc/index.html[here] including http://davidmoten.github.io/rxjava2-jdbc/apidocs/index.html[javadoc].
 
+:toc:
+
 == How to build
 
 Use maven:
