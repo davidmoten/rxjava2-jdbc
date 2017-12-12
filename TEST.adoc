@@ -518,6 +518,7 @@ emitted on RxCachedThreadScheduler-1
 ```
 
 What has happened is that 
+
 * the second query registers itself as something that will run as soon as a connection is released (by the first query). 
 * no blocking occurs and we immediately see the first line of output
 * the second query runs after the first
