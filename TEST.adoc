@@ -416,8 +416,8 @@ Note that databases normally have a limit on the number of parameters in a state
 
 `select` and `update` statements are supported as of 0.1-RC23. If you need callable statement support raise an issue.
 
-Non-blocking connection pools
--------------------------------
+= Non-blocking connection pools
+
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
 
 In normal non-reactive database programming a couple of different threads (started by servlet calls for instance) will *race* for the next available connection from a pool of database connections. If no unused connection remains in the pool then the standard non-reactive approach is to **block the thread** until a connection becomes available. 
