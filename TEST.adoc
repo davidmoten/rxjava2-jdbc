@@ -5,6 +5,8 @@ ifdef::env-github[]
 :caution-caption: :fire:
 :warning-caption: :warning:
 endif::[]
+:toc:
+:toc-placement!:
 
 = rxjava2-jdbc
 
@@ -20,7 +22,7 @@ Status: _release candidates on Maven Central_
 
 Maven site reports are http://davidmoten.github.io/rxjava2-jdbc/index.html[here] including http://davidmoten.github.io/rxjava2-jdbc/apidocs/index.html[javadoc].
 
-:toc:
+toc::[]
 
 == How to build
 
