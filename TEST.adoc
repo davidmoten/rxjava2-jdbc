@@ -11,9 +11,9 @@ endif::[]
 [![codecov](https://codecov.io/gh/davidmoten/rxjava2-jdbc/branch/master/graph/badge.svg)](https://codecov.io/gh/davidmoten/rxjava2-jdbc)
 <!--[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc)<br/>-->
 
-JDBC is so much simpler with *rxjava2-jdbc*.
+JDBC is so much simpler with _rxjava2-jdbc_.
 
-Status: *release candidates on Maven Central*
+Status: _release candidates on Maven Central_
 
 Maven site reports are [here](http://davidmoten.github.io/rxjava2-jdbc/index.html) including [javadoc](http://davidmoten.github.io/rxjava2-jdbc/apidocs/index.html).
 
@@ -281,7 +281,7 @@ The automatic mappings below of objects are used in the ```autoMap()``` method a
 
 Parameters are passed to individual queries but can also be used as a streaming source to prompt the query to be run many times.
 
-Parameters can be named or anonymous. Named parameters are not supported natively by the JDBC specification but *rxjava2-jdbc* does support them.
+Parameters can be named or anonymous. Named parameters are not supported natively by the JDBC specification but _rxjava2-jdbc_ does support them.
 
 This is sql with a named parameter:
 
@@ -410,7 +410,7 @@ Database.test()
 ```
 You need to pass an implementation of `java.util.Collection` to one of these parameters (for example `java.util.List` or `java.util.Set`).
 
-Under the covers *rxjava2-jdbc* does not use `PreparedStatement.setArray` because of the patchy support for this method (not supported by DB2 or MySQL for instance) and the extra requirement of specifying a column type.
+Under the covers _rxjava2-jdbc_ does not use `PreparedStatement.setArray` because of the patchy support for this method (not supported by DB2 or MySQL for instance) and the extra requirement of specifying a column type.
 
 Note that databases normally have a limit on the number of parameters in a statement (or indeed the size of array that can be passed in `setArray`). For Oracle it's O(1000), H2 it is O(20000).
 
@@ -418,13 +418,13 @@ Note that databases normally have a limit on the number of parameters in a state
 
 == Non-blocking connection pools
 
-A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
+A new exciting feature of _rxjava2-jdbc_ is the availability of non-blocking connection pools. 
 
-In normal non-reactive database programming a couple of different threads (started by servlet calls for instance) will *race* for the next available connection from a pool of database connections. If no unused connection remains in the pool then the standard non-reactive approach is to **block the thread** until a connection becomes available. 
+In normal non-reactive database programming a couple of different threads (started by servlet calls for instance) will _race_ for the next available connection from a pool of database connections. If no unused connection remains in the pool then the standard non-reactive approach is to *block the thread* until a connection becomes available. 
 
 Blocking a thread is a resource issue as each blocked thread holds onto ~0.5MB of stack and may incur context switch and memory-access delays (adds latency to thread processing) when being switched to. For example 100 blocked threads hold onto ~50MB of memory (outside of java heap).
 
-*rxjava-jdbc2* uses non-blocking JDBC connection pools by default (but is configurable to use whatever you want). What happens in practice is that for each query a subscription is made to a `MemberSingle` instance controlled by the `NonBlockingConnectionPool` object that emits connections when available to its subscribers (first in best dressed). So the definition of the processing of that query is stored on a queue to be started when a connection is available. Adding the Flowable definition of your query to the queue can be quite efficient in terms of memory use compared to the memory costs of thread per query. For example a heap dump of 1000 queued simple select statements from the person table in the test database used 429K of heap. That is 429 bytes per query.
+_rxjava-jdbc2_ uses non-blocking JDBC connection pools by default (but is configurable to use whatever you want). What happens in practice is that for each query a subscription is made to a `MemberSingle` instance controlled by the `NonBlockingConnectionPool` object that emits connections when available to its subscribers (first in best dressed). So the definition of the processing of that query is stored on a queue to be started when a connection is available. Adding the Flowable definition of your query to the queue can be quite efficient in terms of memory use compared to the memory costs of thread per query. For example a heap dump of 1000 queued simple select statements from the person table in the test database used 429K of heap. That is 429 bytes per query.
 
 The simplest way of creating a `Database` instance with a non-blocking connection pool is:
 
@@ -524,7 +524,7 @@ What has happened is that
 Blobs and Clobs are straightforward to handle.
 
 === Insert a Clob
-Here's how to insert a String value into a Clob (*document* column below is of type ```CLOB```):
+Here's how to insert a String value into a Clob (_document_ column below is of type ```CLOB```):
 ```java
 String document = ...
 Flowable<Integer> count = db
@@ -583,7 +583,7 @@ db.select("select document from person_clob where name='FRED'")
 ```
 
 === Insert a Blob
-Similarly for Blobs (*document* column below is of type ```BLOB```):
+Similarly for Blobs (_document_ column below is of type ```BLOB```):
 ```java
 byte[] bytes = ...
 Flowable<Integer> count = db
@@ -592,7 +592,7 @@ Flowable<Integer> count = db
   .count();
 ```
 === Insert a Null Blob
-This requires *either* a special call (```parameterBlob(String)``` to identify the parameter as a CLOB:
+This requires _either_ a special call (```parameterBlob(String)``` to identify the parameter as a CLOB:
 ```java
 Flowable<Integer> count = db
   .update("insert into person_blob(name,document) values(?,?)")
@@ -629,7 +629,7 @@ create table note(
     text varchar(255)
 )
 ```
-This code inserts two rows into the *note* table and returns the two generated keys:
+This code inserts two rows into the _note_ table and returns the two generated keys:
 
 ```java
 Flowable<Integer> keys = 
@@ -644,9 +644,9 @@ The `returnGeneratedKeys` method also supports returning multiple keys per row s
 == Transactions
 Transactions are a critical feature of relational databases. 
 
-When we're talking RxJava we need to consider the behaviour of individual JDBC objects when called by different threads, possibly concurrently. The approach taken by *rxjava2-jdbc* outside of a transaction safely uses Connection pools (in a non-blocking way). Inside a transaction we must make all calls to the database using the same Connection object so the behaviour of that Connection when called from different threads is important. Some JDBC drivers provide thread-safety on JDBC objects by synchronizing every call.
+When we're talking RxJava we need to consider the behaviour of individual JDBC objects when called by different threads, possibly concurrently. The approach taken by _rxjava2-jdbc_ outside of a transaction safely uses Connection pools (in a non-blocking way). Inside a transaction we must make all calls to the database using the same Connection object so the behaviour of that Connection when called from different threads is important. Some JDBC drivers provide thread-safety on JDBC objects by synchronizing every call.
 
-The safest approach with transactions is to perform all db interaction synchronously. Asynchronous processing within transactions was problematic in *rxjava-jdbc* because `ThreadLocal` was used to hold the Connection. Asynchronous processing with transactions *is* possible with *rxjava2-jdbc* but should be handled with care given that your JDBC driver may block or indeed suffer from race conditions that most users don't encounter.
+The safest approach with transactions is to perform all db interaction synchronously. Asynchronous processing within transactions was problematic in _rxjava-jdbc_ because `ThreadLocal` was used to hold the Connection. Asynchronous processing with transactions _is_ possible with _rxjava2-jdbc_ but should be handled with care given that your JDBC driver may block or indeed suffer from race conditions that most users don't encounter.
 
 Let's look at some examples. The first example uses a transaction across two select statement calls:
 
@@ -714,7 +714,7 @@ Flowable<Tuple2<Integer,Integer>> tuples =
 
 Note above that each question mark in the call statement correponds in order with a call to `in()` or `out(...)`. Once all parameters have been defined then the `in(0, 10, 20)` call drives the running of the query with that input. The output `Flowable` is strongly typed according to the `out` parameters specified.
 
-When you start specifying output `ResultSet`s from the call then you lose output parameter strong typing but gain `ResultSet` mapped strong typing as per normal `select` statements in *rxjava2-jdbc*.
+When you start specifying output `ResultSet`s from the call then you lose output parameter strong typing but gain `ResultSet` mapped strong typing as per normal `select` statements in _rxjava2-jdbc_.
 
 Here's an example for one `in` parameter and two output `ResultSet`s with `autoMap`. You can of course use `getAs` instead (or `get`): 
 
