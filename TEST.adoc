@@ -462,6 +462,7 @@ Database db = Database
 ```
 
 Note that the health check varies from database to database. The following databases are directly supported with `DatabaseType` instances:
+
 * DB2
 * Derby 
 * HSQLDB
