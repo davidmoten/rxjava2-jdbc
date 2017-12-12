@@ -74,7 +74,7 @@ To use the built-in test database you will need the Apache Derby dependency:
 
 The test database has a few tables (see link:src/main/resources/database-test.sql[script]) including `Person` and `Address` with three rows in `Person` and two rows in `Address`:
 
-image:link:src/docs/tables.png?raw=true
+image:src/docs/tables.png?raw=true
 
 Each time you call `Database.test(maxPoolSize)` you will have a fresh new database to play with that is loaded with data as described above.
 
