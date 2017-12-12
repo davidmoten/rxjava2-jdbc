@@ -641,7 +641,7 @@ Flowable<Integer> keys =
 
 The `returnGeneratedKeys` method also supports returning multiple keys per row so the builder offers methods just like `select` to do explicit mapping or auto mapping.
 
-=Transactions
+= Transactions
 Transactions are a critical feature of relational databases. 
 
 When we're talking RxJava we need to consider the behaviour of individual JDBC objects when called by different threads, possibly concurrently. The approach taken by *rxjava2-jdbc* outside of a transaction safely uses Connection pools (in a non-blocking way). Inside a transaction we must make all calls to the database using the same Connection object so the behaviour of that Connection when called from different threads is important. Some JDBC drivers provide thread-safety on JDBC objects by synchronizing every call.
