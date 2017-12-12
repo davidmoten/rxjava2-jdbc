@@ -18,7 +18,7 @@ JDBC is so much simpler with _rxjava2-jdbc_.
 
 Status: _release candidates on Maven Central_
 
-Maven site reports are here[http://davidmoten.github.io/rxjava2-jdbc/index.html] including javadoc[http://davidmoten.github.io/rxjava2-jdbc/apidocs/index.html].
+Maven site reports are http://davidmoten.github.io/rxjava2-jdbc/index.html[here] including http://davidmoten.github.io/rxjava2-jdbc/apidocs/index.html[javadoc].
 
 == How to build
 
@@ -72,9 +72,9 @@ To use the built-in test database you will need the Apache Derby dependency:
 </dependency>
 ```
 
-The test database has a few tables (see script[link:src/main/resources/database-test.sql]) including `Person` and `Address` with three rows in `Person` and two rows in `Address`:
+The test database has a few tables (see link:src/main/resources/database-test.sql[script]) including `Person` and `Address` with three rows in `Person` and two rows in `Address`:
 
-<img src="src/docs/tables.png?raw=true"/>
+image:link:src/docs/tables.png?raw=true
 
 Each time you call `Database.test(maxPoolSize)` you will have a fresh new database to play with that is loaded with data as described above.
 
