@@ -44,8 +44,8 @@ If you want to use the built-in test database then add the Apache Derby dependen
 </dependency>
 ```
 
-Database
--------------
+= Database
+
 To start things off you need a `Database` instance. Given the jdbc url of your database you can create a `Database` object like this:
 
 ```java
