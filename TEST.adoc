@@ -17,14 +17,14 @@ Status: *release candidates on Maven Central*
 
 Maven site reports are [here](http://davidmoten.github.io/rxjava2-jdbc/index.html) including [javadoc](http://davidmoten.github.io/rxjava2-jdbc/apidocs/index.html).
 
-= How to build
+== How to build
 
 Use maven:
 ```bash
 mvn clean install
 ```
 
-= Getting started
+== Getting started
 Use this maven dependency:
 
 ```xml
@@ -44,7 +44,7 @@ If you want to use the built-in test database then add the Apache Derby dependen
 </dependency>
 ```
 
-= Database
+== Database
 
 To start things off you need a `Database` instance. Given the jdbc url of your database you can create a `Database` object like this:
 
@@ -52,7 +52,7 @@ To start things off you need a `Database` instance. Given the jdbc url of your d
 Database db = Database.from(url, maxPoolSize);
 ```
 
-=== Support for playing with rxjava2-jdbc!
+== Support for playing with rxjava2-jdbc!
 
 If you want to have a play with a built-in test database then do this:
 
@@ -75,7 +75,7 @@ The test database has a few tables (see [script](src/main/resources/database-tes
 
 Each time you call `Database.test(maxPoolSize)` you will have a fresh new database to play with that is loaded with data as described above.
 
-= A query example
+== A query example
 
 Let's use a `Database` instance to perform a select query on the `Person` table and write the names to the console:
 
@@ -100,11 +100,11 @@ Schedulers.from(Executors.newFixedThreadPool(maxPoolSize));
 ```
 While you are processing reactively you should avoid blocking calls but domain boundaries sometimes force this to happen (e.g. accumulate the results and return them as xml over the network from a web service call). Bear in mind also that if you are worried about the complexities of debugging RxJava programs then you might wish to make brief limited forays into reactive code. That's completely fine too. What you lose in efficiency you may gain in simplicity.
 
-= Asynchrony
+== Asynchrony
 The query flowables returned by the `Database` all run asynchronously. This is required because of the use of non-blocking connection pools. When a connection is returned to the pool and then checked-out by another query that checkout must occur on a different thread so that stack overflow does not occur. See the [Non-blocking connection pools](README.md=non-blocking-connection-pools) section for more details.
 
 
-= Nulls
+== Nulls
 RxJava2 does not support streams of nulls. If you want to represent nulls in your stream then use `java.util.Optional`.
 
 In the special case where a single nullable column is being returned and mapped to a class via `getAs` you should instead use `getAsOptional`:
@@ -121,7 +121,7 @@ Optional.empty
 ```
 Nulls will happily map to Tuples (see the next section) when you have two or more columns.
 
-= Tuple support
+== Tuple support
 
 When you specify more types in the `getAs` method they are matched to the columns in the returned result set from the query and combined into a `Tuple` instance. Here's an example that returns `Tuple2`:
 
@@ -139,7 +139,7 @@ Tuple2 [value1=MARMADUKE, value2=25]
 ```
 Tuples are defined from `Tuple2` to `Tuple7` and for above that to `TupleN`.
 
-= Automap
+== Automap
 
 To map the result set values to an interface, first declare an interface:
 
@@ -266,7 +266,7 @@ Database
   .blockingForEach(System.out::println);
 ```
 
-= Auto mappings
+=== Auto mappings
 The automatic mappings below of objects are used in the ```autoMap()``` method and for typed ```getAs()``` calls.
 * ```java.sql.Date```,```java.sql.Time```,```java.sql.Timestamp``` <==> ```java.util.Date```
 * ```java.sql.Date```,```java.sql.Time```,```java.sql.Timestamp```  ==> ```java.lang.Long```
@@ -277,7 +277,7 @@ The automatic mappings below of objects are used in the ```autoMap()``` method a
 * ```java.math.BigInteger``` ==> ```Long```, ```Integer```, ```Decimal```, ```Float```, ```Short```, ```java.math.BigDecimal```
 * ```java.math.BigDecimal``` ==> ```Long```, ```Integer```, ```Decimal```, ```Float```, ```Short```, ```java.math.BigInteger```
 
-= Parameters
+== Parameters
 
 Parameters are passed to individual queries but can also be used as a streaming source to prompt the query to be run many times.
 
@@ -332,7 +332,7 @@ Output is:
 21
 ```
 
-== Mixing explicit and Flowable parameters
+=== Mixing explicit and Flowable parameters
 
 ```java
 Database.test()
@@ -349,7 +349,7 @@ Output is:
 21
 34
 ```
-== Multiple parameters per query
+=== Multiple parameters per query
 
 If there is more than one parameter per query:
 
@@ -372,7 +372,7 @@ Database.test()
   .blockingForEach(System.out::println);
 ```
 
-== Running a query many times that has no parameters
+=== Running a query many times that has no parameters
 If the query has no parameters you can use the parameters to drive the number of query calls (the parameter values themselves are ignored):
 
 ```java
@@ -390,7 +390,7 @@ Output:
 3
 ```
 
-== Collection parameters
+=== Collection parameters
 Collection parameters are useful for supplying to IN clauses. For example:
 
 ```java
@@ -416,7 +416,7 @@ Note that databases normally have a limit on the number of parameters in a state
 
 `select` and `update` statements are supported as of 0.1-RC23. If you need callable statement support raise an issue.
 
-= Non-blocking connection pools
+== Non-blocking connection pools
 
 A new exciting feature of *rxjava2-jdbc* is the availability of non-blocking connection pools. 
 
@@ -520,7 +520,7 @@ What has happened is that
 * in fact we see that the second query runs on the same Thread as the first query as a direct consequence of non-blocking design  
 
 
-= Large objects support
+== Large objects support
 Blobs and Clobs are straightforward to handle.
 
 === Insert a Clob
@@ -619,7 +619,7 @@ Flowable<InputStream> document =
     .getAs(InputStream.class);
 ```
 
-= Returning generated keys
+== Returning generated keys
 If you insert into a table that say in h2 is of type `auto_increment` then you don't need to specify a value but you may want to know what value was inserted in the generated key field.
 
 Given a table like this
@@ -641,7 +641,7 @@ Flowable<Integer> keys =
 
 The `returnGeneratedKeys` method also supports returning multiple keys per row so the builder offers methods just like `select` to do explicit mapping or auto mapping.
 
-= Transactions
+== Transactions
 Transactions are a critical feature of relational databases. 
 
 When we're talking RxJava we need to consider the behaviour of individual JDBC objects when called by different threads, possibly concurrently. The approach taken by *rxjava2-jdbc* outside of a transaction safely uses Connection pools (in a non-blocking way). Inside a transaction we must make all calls to the database using the same Connection object so the behaviour of that Connection when called from different threads is important. Some JDBC drivers provide thread-safety on JDBC objects by synchronizing every call.
@@ -695,7 +695,7 @@ Output:
 
 ```
 
-= Callable Statements
+== Callable Statements
 
 Callable statement support is a major addition to the code base as of 0.1-RC23.
 
@@ -749,7 +749,7 @@ Flowable<String> namePairs =
 
 You can explore more examples of this in [`DatabaseTest.java`](rxjava2-jdbc/src/test/java/org/davidmoten/rx/jdbc/DatabaseTest.java). Search for `.call`.
 
-= Using raw JDBC
+== Using raw JDBC
 
 A few nifty things in JDBC may not yet directly supported by *rxjava2-jdbc* but you can get acccess to the underlying `Connection`s from the `Database` object by using `Database.apply` or `Database.member()`.
 
@@ -806,7 +806,7 @@ Completable completable = db.member()
      }).toCompletable();
 ```
 
-= Logging
+== Logging
 
 Logging is handled by slf4j which bridges to the logging framework of your choice. Add
 the dependency for your logging framework as a maven dependency and you are sorted. See the test scoped log4j example in [rxjava2-jdbc/pom.xml](https://github.com/davidmoten/rxjava2-jdbc/blob/master/pom.xml).
