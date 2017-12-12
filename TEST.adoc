@@ -17,15 +17,14 @@ Status: *release candidates on Maven Central*
 
 Maven site reports are [here](http://davidmoten.github.io/rxjava2-jdbc/index.html) including [javadoc](http://davidmoten.github.io/rxjava2-jdbc/apidocs/index.html).
 
-How to build
--------------
+= How to build
+
 Use maven:
 ```bash
 mvn clean install
 ```
 
-Getting started
-------------------
+= Getting started
 Use this maven dependency:
 
 ```xml
@@ -76,8 +75,8 @@ The test database has a few tables (see [script](src/main/resources/database-tes
 
 Each time you call `Database.test(maxPoolSize)` you will have a fresh new database to play with that is loaded with data as described above.
 
-A query example
----------------
+= A query example
+
 Let's use a `Database` instance to perform a select query on the `Person` table and write the names to the console:
 
 ```java
@@ -101,13 +100,11 @@ Schedulers.from(Executors.newFixedThreadPool(maxPoolSize));
 ```
 While you are processing reactively you should avoid blocking calls but domain boundaries sometimes force this to happen (e.g. accumulate the results and return them as xml over the network from a web service call). Bear in mind also that if you are worried about the complexities of debugging RxJava programs then you might wish to make brief limited forays into reactive code. That's completely fine too. What you lose in efficiency you may gain in simplicity.
 
-Asynchrony
-------------
+= Asynchrony
 The query flowables returned by the `Database` all run asynchronously. This is required because of the use of non-blocking connection pools. When a connection is returned to the pool and then checked-out by another query that checkout must occur on a different thread so that stack overflow does not occur. See the [Non-blocking connection pools](README.md=non-blocking-connection-pools) section for more details.
 
 
-Nulls
----------
+= Nulls
 RxJava2 does not support streams of nulls. If you want to represent nulls in your stream then use `java.util.Optional`.
 
 In the special case where a single nullable column is being returned and mapped to a class via `getAs` you should instead use `getAsOptional`:
@@ -124,8 +121,8 @@ Optional.empty
 ```
 Nulls will happily map to Tuples (see the next section) when you have two or more columns.
 
-Tuple support
------------------
+= Tuple support
+
 When you specify more types in the `getAs` method they are matched to the columns in the returned result set from the query and combined into a `Tuple` instance. Here's an example that returns `Tuple2`:
 
 ```java
@@ -142,8 +139,8 @@ Tuple2 [value1=MARMADUKE, value2=25]
 ```
 Tuples are defined from `Tuple2` to `Tuple7` and for above that to `TupleN`.
 
-Automap
---------------
+= Automap
+
 To map the result set values to an interface, first declare an interface:
 
 ```java
@@ -225,8 +222,8 @@ Note that if you try to compare an automapped object with a custom implementatio
 * Java 8 - Calling a default method on an automapped interface is supported provided the interface is public and you use the default SecurityManager.
 * Java 9 - not supported yet (TODO)
 
-Automap with annotated query
------------------------------
+= Automap with annotated query
+
 The automapped interface can be annotated with the select query:
 
 ```java
@@ -269,8 +266,7 @@ Database
   .blockingForEach(System.out::println);
 ```
 
-Auto mappings
-------------------
+= Auto mappings
 The automatic mappings below of objects are used in the ```autoMap()``` method and for typed ```getAs()``` calls.
 * ```java.sql.Date```,```java.sql.Time```,```java.sql.Timestamp``` <==> ```java.util.Date```
 * ```java.sql.Date```,```java.sql.Time```,```java.sql.Timestamp```  ==> ```java.lang.Long```
@@ -281,8 +277,8 @@ The automatic mappings below of objects are used in the ```autoMap()``` method a
 * ```java.math.BigInteger``` ==> ```Long```, ```Integer```, ```Decimal```, ```Float```, ```Short```, ```java.math.BigDecimal```
 * ```java.math.BigDecimal``` ==> ```Long```, ```Integer```, ```Decimal```, ```Float```, ```Short```, ```java.math.BigInteger```
 
-Parameters
-----------------
+= Parameters
+
 Parameters are passed to individual queries but can also be used as a streaming source to prompt the query to be run many times.
 
 Parameters can be named or anonymous. Named parameters are not supported natively by the JDBC specification but *rxjava2-jdbc* does support them.
@@ -524,8 +520,7 @@ What has happened is that
 * in fact we see that the second query runs on the same Thread as the first query as a direct consequence of non-blocking design  
 
 
-Large objects support
-------------------------------
+= Large objects support
 Blobs and Clobs are straightforward to handle.
 
 === Insert a Clob
