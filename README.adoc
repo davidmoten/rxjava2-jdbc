@@ -723,7 +723,7 @@ Flowable<Tuple2<Integer,Integer>> tuples =
 
 Note above that each question mark in the call statement correponds in order with a call to `in()` or `out(...)`. Once all parameters have been defined then the `input(0, 10, 20)` call drives the running of the query with that input. The output `Flowable` is strongly typed according to the `out` parameters specified.
 
-When you start specifying output +ResultSet+s from the call then you lose output parameter strong typing but gain `ResultSet` mapped strong typing as per normal `select` statements in _rxjava2-jdbc_.
+When you start specifying output `ResultSet` s from the call then you lose output parameter strong typing but gain `ResultSet` mapped strong typing as per normal `select` statements in _rxjava2-jdbc_.
 
 Here's an example for one `in` parameter and two output `ResultSet`s with `autoMap`. You can of course use `getAs` instead (or `get`): 
 
