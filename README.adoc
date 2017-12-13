@@ -725,7 +725,7 @@ Note above that each question mark in the call statement correponds in order wit
 
 When you start specifying output `ResultSet` s from the call then you lose output parameter strong typing but gain `ResultSet` mapped strong typing as per normal `select` statements in _rxjava2-jdbc_.
 
-Here's an example for one `in` parameter and two output `ResultSet`s with `autoMap`. You can of course use `getAs` instead (or `get`): 
+Here's an example for one `in` parameter and two output `ResultSet` s with `autoMap`. You can of course use `getAs` instead (or `get`): 
 
 ```java
 Flowable<String> namePairs = 
@@ -760,7 +760,7 @@ You can explore more examples of this in [`DatabaseTest.java`](rxjava2-jdbc/src/
 
 == Using raw JDBC
 
-A few nifty things in JDBC may not yet directly supported by *rxjava2-jdbc* but you can get acccess to the underlying `Connection`s from the `Database` object by using `Database.apply` or `Database.member()`.
+A few nifty things in JDBC may not yet directly supported by *rxjava2-jdbc* but you can get acccess to the underlying `Connection` s from the `Database` object by using `Database.apply` or `Database.member()`.
 
 Here's an example where you want to return something from a `Connection` (say you called a stored procedure and returned an integer):
 
