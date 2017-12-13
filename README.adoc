@@ -11,9 +11,7 @@ endif::[]
 = rxjava2-jdbc
 
 image:https://travis-ci.org/davidmoten/rxjava2-jdbc.svg["Travis CI",link="https://travis-ci.org/davidmoten/rxjava2-jdbc"]
-
 image:https://codecov.io/gh/davidmoten/rxjava2-jdbc/branch/master/graph/badge.svg["CodeCov",link="https://codecov.io/gh/davidmoten/rxjava2-jdbc"]
-
 image:https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc/badge.svg?style=flat[link="https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxjava2-jdbc"]
 
 JDBC is so much simpler with _rxjava2-jdbc_.
