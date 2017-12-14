@@ -34,6 +34,8 @@
         <coverage.reports.dir>${project.build.directory}/target/coverage-reports</coverage.reports.dir>
         <slf4j.version>1.7.21</slf4j.version>
         <jmh.version>1.19</jmh.version>
+        <junit.version>4.12</junit.version>
+        <derby.version>10.14.1.0</derby.version>
     </properties>
 
     <licenses>
@@ -78,5 +80,6 @@
   <modules>
     <module>rxjava2-jdbc-stored-procedure</module>
     <module>rxjava2-jdbc</module>
+    <module>rxjava2-jdbc-kotlin-example</module>
   </modules>
 </project>

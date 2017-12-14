@@ -8,7 +8,7 @@
         <artifactId>rxjava2-jdbc-parent</artifactId>
         <version>0.1-RC24-SNAPSHOT</version>
     </parent>
-    <artifactId>rxjava2-jdbc-kotlin</artifactId>
+    <artifactId>rxjava2-jdbc-kotlin-example</artifactId>
 
     <name>${project.artifactId}</name>
     <description>RxJava2 streams for jdbc</description>
@@ -30,7 +30,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -42,7 +42,7 @@
 <dependency>
             <groupId>org.apache.derby</groupId>
             <artifactId>derby</artifactId>
-            <version>10.14.1.0</version>
+            <version>${derby.version}</version>
             <scope>test</scope>
         </dependency>
         
