@@ -26,7 +26,7 @@ class RxJava2JdbcTest {
           .test()
           .select(Person::class.java)
           .get()
-          .map({x -> x.name()})
+          .map({x -> x.nm()})
           .test()
           .awaitDone(20, TimeUnit.SECONDS)
           .assertValues("FRED", "JOSEPH", "MARMADUKE")
@@ -37,6 +37,6 @@ class RxJava2JdbcTest {
 @Query("select name from person order by name")
 interface Person {
     @Column("name")
-    fun name() : String
+    fun nm() : String
 }
 
