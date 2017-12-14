@@ -7,7 +7,11 @@ import org.davidmoten.rx.jdbc.Database
 
 class HelloTest {
     @Test fun testAssert() : Unit {
-        Database.test().select("select name from person").getAs(javaClass<String>()).forEach({x -> println(x)})
+        Database
+          .test()
+          .select("select name from person")
+          .getAs(String::class.java)
+          .forEach({x -> println(x)})
         assertEquals("Hello, world!", getHelloString())
     }
 }
