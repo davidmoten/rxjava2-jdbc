@@ -3258,7 +3258,7 @@ public class DatabaseTest {
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertComplete() //
-                .assertValueCount(1);
+                .assertValueCount(2);  //value and complete
 
         db.select("select count(*) from person where score=1000") //
                 .getAs(Integer.class) //
