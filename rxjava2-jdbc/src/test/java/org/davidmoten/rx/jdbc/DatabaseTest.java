@@ -49,6 +49,7 @@ import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.annotations.Query;
 import org.davidmoten.rx.jdbc.exceptions.AnnotationsNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.AutomappedInterfaceInaccessibleException;
+import org.davidmoten.rx.jdbc.exceptions.CannotForkTransactedConnection;
 import org.davidmoten.rx.jdbc.exceptions.ColumnIndexOutOfRangeException;
 import org.davidmoten.rx.jdbc.exceptions.ColumnNotFoundException;
 import org.davidmoten.rx.jdbc.exceptions.MoreColumnsRequestedThanExistException;
@@ -2295,14 +2296,14 @@ public class DatabaseTest {
     @Test
     public void testTx() throws InterruptedException {
         Database db = db(3);
-        Single<Tx<?>> transaction = db //
+        Flowable<Tx<?>> transaction = db //
                 .update("update person set score=-3 where name='FRED'") //
                 .transaction();
 
         transaction //
-                .doOnDispose(() -> log.debug("disposing")) //
-                .doOnSuccess(DatabaseTest::println) //
-                .flatMapPublisher(tx -> {
+                .doOnCancel(() -> log.debug("disposing")) //
+                .doOnNext(DatabaseTest::println) //
+                .flatMap(tx -> {
                     log.debug("flatmapping");
                     return tx //
                             .update("update person set score = -4 where score = -3") //
@@ -2310,7 +2311,8 @@ public class DatabaseTest {
                             .doOnSubscribe(s -> log.debug("subscribed")) //
                             .doOnNext(num -> log.debug("num=" + num));
                 }) //
-                .test().awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertNoErrors() //
                 .assertValue(1) //
                 .assertComplete();
@@ -2341,6 +2343,21 @@ public class DatabaseTest {
                 .assertNoErrors() //
                 .assertValue(1) //
                 .assertComplete();
+    }
+
+    @Test
+    public void testUseTxOnComplete() {
+        db(1) //
+                .select(Person10.class) //
+                .transacted() //
+                .get() //
+                .lastOrError() //
+                .map(tx -> tx.select("select count(*) from person") //
+                        .count().blockingGet()) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertError(CannotForkTransactedConnection.class) //
+                .assertValueCount(0);
     }
 
     @Test
@@ -3251,14 +3268,14 @@ public class DatabaseTest {
 
     @Test
     public void testUpdateTxPerformed() {
-        Database db = db();
+        Database db = db(1);
         db.update("update person set score = 1000") //
                 .transacted() //
                 .counts() //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertComplete() //
-                .assertValueCount(2);  //value and complete
+                .assertValueCount(2); // value and complete
 
         db.select("select count(*) from person where score=1000") //
                 .getAs(Integer.class) //

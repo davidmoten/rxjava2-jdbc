@@ -19,6 +19,7 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.davidmoten.rx.jdbc.exceptions.CannotForkTransactedConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,10 +55,12 @@ final class TransactedConnection implements Connection {
     }
 
     public TransactedConnection fork() {
+        log.debug("forking connection");
         if (counter.getAndIncrement() > 0) {
             return new TransactedConnection(con, counter);
         } else {
-            throw new RuntimeException("cannot fork TransactedConnection because already closed");
+            throw new CannotForkTransactedConnection(
+                    "cannot fork TransactedConnection because already closed");
         }
     }
 
@@ -347,7 +350,7 @@ final class TransactedConnection implements Connection {
     public void incrementCounter() {
         counter.incrementAndGet();
     }
-    
+
     public void decrementCounter() {
         counter.decrementAndGet();
     }

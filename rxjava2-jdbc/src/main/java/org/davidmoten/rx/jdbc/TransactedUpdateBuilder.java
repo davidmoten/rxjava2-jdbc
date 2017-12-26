@@ -68,12 +68,11 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
 
     /**
      * Returns a builder used to specify how to process the generated keys
-     * {@link ResultSet}. Not all jdbc drivers support this functionality and
-     * some have limitations in their support (h2 for instance only returns the
-     * last generated key when multiple inserts happen in the one statement).
+     * {@link ResultSet}. Not all jdbc drivers support this functionality and some
+     * have limitations in their support (h2 for instance only returns the last
+     * generated key when multiple inserts happen in the one statement).
      * 
-     * @return a builder used to specify how to process the generated keys
-     *         ResultSet
+     * @return a builder used to specify how to process the generated keys ResultSet
      */
     public TransactedReturnGeneratedKeysBuilder returnGeneratedKeys() {
         return new TransactedReturnGeneratedKeysBuilder(this, db);
@@ -121,31 +120,35 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
     }
 
     @SuppressWarnings("unchecked")
-    public Single<Tx<?>> tx() {
-        return (Single<Tx<?>>) (Single<?>) createFlowable(updateBuilder, db) //
-                .lastOrError();
+    public Flowable<Tx<?>> tx() {
+        return (Flowable<Tx<?>>) (Flowable<?>) createFlowable(updateBuilder, db) //
+                .filter(x -> x.isValue());
     }
 
     private static Flowable<Tx<Integer>> createFlowable(UpdateBuilder ub, Database db) {
         return Flowable.defer(() -> {
             log.debug("creating deferred flowable");
             AtomicReference<Connection> connection = new AtomicReference<Connection>();
-            AtomicReference<Tx<Integer>> t = new AtomicReference<>();
+            Single<Connection> con = ub.connections //
+                    .map(c -> Util.toTransactedConnection(connection, c));
+            TxImpl<?>[] t = new TxImpl[1];
             return ub.startWithDependency( //
-                    Update.create(
-                            ub.connections //
-                                    .map(c -> Util.toTransactedConnection(connection, c)), //
+                    Update.create(con, //
                             ub.parameterGroupsToFlowable(), //
                             ub.sql, //
                             ub.batchSize, //
                             false) //
                             .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                             .doOnNext(tx -> {
-                                if (tx.isComplete()) {
-                                    t.set(tx);
-                                }
+                                t[0] = ((TxImpl<Integer>) tx);
                             }) //
-            );
+                            .doOnComplete(() -> {
+                                TxImpl<?> tx = t[0];
+                                if (tx.isComplete()) {
+                                    tx.connection().commit();
+                                }
+                                Util.closeSilently(tx.connection());
+                            }));
         });
     }
 

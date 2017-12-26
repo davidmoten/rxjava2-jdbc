@@ -71,7 +71,7 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> implem
         return new TransactedUpdateBuilder(this, db);
     }
 
-    public Single<Tx<?>> transaction() {
+    public Flowable<Tx<?>> transaction() {
         return transacted().tx();
     }
 
