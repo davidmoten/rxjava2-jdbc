@@ -11,7 +11,7 @@
 
     <name>${project.artifactId}</name>
     <description>RxJava2 streams for jdbc</description>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
     <properties>
         <kotlin.version>1.2.0</kotlin.version>
     </properties>
@@ -71,14 +71,6 @@
                         <phase>test-compile</phase>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>${nexus.staging.plugin.version}</version>
-                <configuration>
-                    <skipRemoteStaging>true</skipRemoteStaging>
-                </configuration>
             </plugin>
         </plugins>
     </build>
