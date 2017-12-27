@@ -83,16 +83,4 @@
         <module>rxjava2-jdbc</module>
         <module>rxjava2-jdbc-kotlin-example</module>
     </modules>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>${nexus.staging.plugin.version}</version>
-                <configuration>
-                    <skipLocalStaging>true</skipLocalStaging>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>
