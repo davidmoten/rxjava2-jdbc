@@ -32,8 +32,10 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -56,6 +58,7 @@ import org.davidmoten.rx.jdbc.exceptions.MoreColumnsRequestedThanExistException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterFoundButSqlDoesNotHaveNamesException;
 import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.exceptions.QueryAnnotationMissingException;
+import org.davidmoten.rx.jdbc.internal.DelegatedConnection;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.davidmoten.rx.jdbc.pool.DatabaseType;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
@@ -129,6 +132,63 @@ public class DatabaseTest {
                     .assertValues(21, 34) //
                     .assertComplete();
         }
+    }
+
+    @Test
+    public void testDemonstrateDbClosureOnTerminate() {
+        Database db = db();
+        db.select("select score from person where name=?") //
+                .parameters("FRED", "JOSEPH") //
+                .getAs(Integer.class) //
+                .doOnTerminate(() -> db.close()) //
+                .test() //
+                .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                .assertNoErrors() //
+                .assertValues(21, 34) //
+                .assertComplete();
+    }
+
+    @Test
+    public void testFromDataSource() {
+        ConnectionProvider cp = DatabaseCreator.connectionProvider();
+        AtomicInteger count = new AtomicInteger();
+        Set<Connection> connections = new HashSet<>();
+        AtomicInteger closed = new AtomicInteger();
+        Database db = Database.fromBlocking(new ConnectionProvider() {
+
+            @Override
+            public Connection get() {
+                count.incrementAndGet();
+                Connection c = cp.get();
+                connections.add(c);
+                return new DelegatedConnection() {
+                    
+                    @Override
+                    public Connection con() {
+                        return c;
+                    }
+                    
+                    @Override
+                    public void close() {
+                        closed.incrementAndGet();
+                    }
+                };
+            }
+
+            @Override
+            public void close() {
+                // do nothing
+            }
+        });
+        db.select("select count(*) from person") //
+                .getAs(Integer.class) //
+                .blockingSubscribe();
+        db.select("select count(*) from person") //
+                .getAs(Integer.class) //
+                .blockingSubscribe();
+        assertEquals(2, count.get());
+        assertEquals(2, connections.size());
+        assertEquals(2, closed.get());
     }
 
     @Test

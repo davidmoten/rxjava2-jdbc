@@ -33,8 +33,7 @@ public final class ConnectionProviderBlockingPool implements Pool<Connection> {
         connectionProvider.close();
     }
 
-    static final class MemberWithValueConnection
-            implements Member<Connection>, DelegatedConnection {
+    static final class MemberWithValueConnection implements Member<Connection>, DelegatedConnection {
 
         private final ConnectionProvider connectionProvider;
 
@@ -42,16 +41,16 @@ public final class ConnectionProviderBlockingPool implements Pool<Connection> {
             this.connectionProvider = cp;
         }
 
-        volatile Connection connection;
+        volatile PooledConnection connection;
         final AtomicBoolean hasConnection = new AtomicBoolean();
 
         @Override
         public Connection con() {
             if (hasConnection.compareAndSet(false, true)) {
                 // blocking
-                connection = connectionProvider.get();
-                // TODO remove precondition
-                Preconditions.checkNotNull(connection, "connectionProvider should not return null");
+                Connection c = connectionProvider.get();
+                Preconditions.checkNotNull(c, "connectionProvider should not return null");
+                connection = new PooledConnection(c, this);
             }
             return connection;
         }
@@ -59,7 +58,8 @@ public final class ConnectionProviderBlockingPool implements Pool<Connection> {
         @Override
         public void checkin() {
             try {
-                connection.close();
+                System.out.println("----- checkin -----");
+                connection.con().close();
             } catch (SQLException e) {
                 throw new SQLRuntimeException(e);
             }
@@ -73,7 +73,7 @@ public final class ConnectionProviderBlockingPool implements Pool<Connection> {
         @Override
         public void disposeValue() {
             try {
-                connection.close();
+                connection.con().close();
             } catch (SQLException e) {
                 RxJavaPlugins.onError(e);
             }
