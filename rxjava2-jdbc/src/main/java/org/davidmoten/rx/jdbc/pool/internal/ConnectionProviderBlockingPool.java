@@ -58,7 +58,6 @@ public final class ConnectionProviderBlockingPool implements Pool<Connection> {
         @Override
         public void checkin() {
             try {
-                System.out.println("----- checkin -----");
                 connection.con().close();
             } catch (SQLException e) {
                 throw new SQLRuntimeException(e);
