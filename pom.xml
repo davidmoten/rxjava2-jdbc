@@ -9,7 +9,7 @@
         <version>0.1</version>
     </parent>
     <artifactId>rxjava2-jdbc-parent</artifactId>
-    <version>0.1-RC29</version>
+    <version>0.1-RC30-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <packaging>pom</packaging>
     <url>http://github.com/davidmoten/rxjava2-jdbc</url>
@@ -76,7 +76,7 @@
         <connection>${scm.url}</connection>
         <developerConnection>${scm.url}</developerConnection>
         <url>${scm.url}</url>
-        <tag>0.1-RC29</tag>
+        <tag>HEAD</tag>
     </scm>
     <modules>
         <module>rxjava2-jdbc-stored-procedure</module>
