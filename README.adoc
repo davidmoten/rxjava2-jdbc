@@ -147,14 +147,11 @@ Database.test()
 If you use a stream of parameters then you have to be more careful (nulls are not allowed in RxJava streams):\
 ```java
 Database.test()
-  .update("update person set date_of_birth = :dob") 
+  .update("update person set date_of_birth = ?") 
   .parameterStream(Flowable.just(Parameter.NULL))
   .counts()
   .blockingForEach(System.out::println);
 ``` 
-
-```
-
 == Tuple support
 
 When you specify more types in the `getAs` method they are matched to the columns in the returned result set from the query and combined into a `Tuple` instance. Here's an example that returns `Tuple2`:
