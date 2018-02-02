@@ -35,6 +35,7 @@ import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -671,11 +672,40 @@ public class DatabaseTest {
     }
 
     @Test
-    public void testUpdateWithNull() {
+    public void testUpdateWithNullNamedParameter() {
         try (Database db = db()) {
             db //
                     .update("update person set date_of_birth = :dob") //
                     .parameter(Parameter.create("dob", null)) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(3) //
+                    .assertComplete();
+        }
+    }
+    
+
+    @Test
+    public void testUpdateWithNullParameter() {
+        try (Database db = db()) {
+            db //
+                    .update("update person set date_of_birth = ?") //
+                    .parameter(null) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(3) //
+                    .assertComplete();
+        }
+    }
+    
+    @Test
+    public void testUpdateWithNullStreamParameter() {
+        try (Database db = db()) {
+            db //
+                    .update("update person set date_of_birth = ?") //
+                    .parameterStream(Flowable.just(Parameter.NULL)) //
                     .counts() //
                     .test() //
                     .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //

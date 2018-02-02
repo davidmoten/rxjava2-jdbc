@@ -245,7 +245,7 @@ public final class Database implements AutoCloseable {
      * required by many databases for setting CLOB and BLOB fields to null.
      */
     public static final Object NULL_BLOB = new Object();
-
+    
     public static Object toSentinelIfNull(@Nullable byte[] bytes) {
         if (bytes == null)
             return NULL_BLOB;
@@ -260,7 +260,7 @@ public final class Database implements AutoCloseable {
     public static Object blob(@Nullable byte[] bytes) {
         return toSentinelIfNull(bytes);
     }
-
+    
     /**
      * Returns a Single of a member of the connection pool. When finished with the
      * emitted member you must call {@code member.checkin()} to return the

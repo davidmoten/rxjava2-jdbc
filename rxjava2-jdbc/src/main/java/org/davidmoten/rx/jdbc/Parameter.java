@@ -9,6 +9,8 @@ import com.github.davidmoten.guavamini.Lists;
  * Encapsulates a query parameter.
  */
 public final class Parameter {
+    
+    static final Parameter NULL = new Parameter(null);
 
     private final String name;
     /**
