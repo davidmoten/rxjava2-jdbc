@@ -684,7 +684,6 @@ public class DatabaseTest {
                     .assertComplete();
         }
     }
-    
 
     @Test
     public void testUpdateWithNullParameter() {
@@ -699,9 +698,23 @@ public class DatabaseTest {
                     .assertComplete();
         }
     }
-    
+
     @Test
     public void testUpdateWithNullStreamParameter() {
+        try (Database db = db()) {
+            db //
+                    .update("update person set date_of_birth = ?") //
+                    .parameterStream(Flowable.just(Parameter.NULL)) //
+                    .counts() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValue(3) //
+                    .assertComplete();
+        }
+    }
+
+    @Test
+    public void testUpdateWithTestDatabaseForReadme() {
         try (Database db = db()) {
             db //
                     .update("update person set date_of_birth = ?") //
