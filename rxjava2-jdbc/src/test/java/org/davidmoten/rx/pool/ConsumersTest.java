@@ -1,6 +1,5 @@
-package org.davidmoten.rx.pool.internal;
+package org.davidmoten.rx.pool;
 
-import org.davidmoten.rx.jdbc.pool.internal.Consumers;
 import org.junit.Test;
 
 import com.github.davidmoten.junit.Asserts;
