@@ -113,19 +113,6 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/ConnectionNonBlockingMemberPreparedStatement.*</exclude>
-                                <exclude>**/ConnectionNonBlockingMemberCallableStatement.*</exclude>
-                                <exclude>**/ConnectionNonBlockingMember.*</exclude>
-                                <exclude>**/TransactedConnection.*</exclude>
-                                <exclude>**/TransactedPreparedStatement.*</exclude>
-                                <exclude>**/TransactedResultSet.*</exclude>
-                                <exclude>**/Tuple*</exclude>
-                                <exclude>**/DelegatedConnection.*</exclude>
-                                <exclude>**/DelegatedResultSet.*</exclude>
-                            </excludes>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -141,68 +128,11 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.0.2</version>
-                <executions>
-                    <execution>
-                        <id>copy</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <artifactItems>
-                        <artifactItem>
-                            <groupId>${project.parent.groupId}</groupId>
-                            <artifactId>rxjava2-jdbc-stored-procedure</artifactId>
-                            <version>${project.parent.version}</version>
-                            <type>jar</type>
-                            <overWrite>true</overWrite>
-                            <outputDirectory>${project.build.directory}/</outputDirectory>
-                            <destFileName>rxjava2-jdbc-stored-procedure.jar</destFileName>
-                        </artifactItem>
-                    </artifactItems>
-                </configuration>
-            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
                 <!--This plugin's configuration is used to store Eclipse 
                     m2e settings only. It has no influence on the Maven build itself. -->
-                <plugin>
-                    <groupId>org.eclipse.m2e</groupId>
-                    <artifactId>lifecycle-mapping</artifactId>
-                    <version>1.0.0</version>
-                    <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>
-                                            org.apache.maven.plugins
-                                        </groupId>
-                                        <artifactId>
-                                            maven-dependency-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [3.0.2,)
-                                        </versionRange>
-                                        <goals>
-                                            <goal>copy</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore />
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                    </configuration>
-                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -272,50 +202,5 @@
                 <password>${svn.password}</password> </configuration> </plugin> -->
         </plugins>
     </reporting>
-
-    <profiles>
-        <profile>
-            <id>benchmark</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>1.6.0</version>
-                        <executions>
-                            <execution>
-                                <id>run-benchmarks</id>
-                                <phase>integration-test</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <classpathScope>test</classpathScope>
-                                    <executable>java</executable>
-                                    <arguments>
-                                        <argument>-classpath</argument>
-                                        <classpath />
-                                        <argument>org.openjdk.jmh.Main</argument>
-                                        <!-- -h for help -->
-                                        <argument>-f</argument>
-                                        <argument>-r</argument>
-                                        <argument>5s</argument>
-                                        <argument>-i</argument>
-                                        <argument>10</argument>
-                                        <argument>-wi</argument>
-                                        <argument>3</argument>
-                                        <argument>-jvmArgs</argument>
-                                        <argument>-Xmx512m
-                                            -XX:+UnlockCommercialFeatures
-                                            -XX:+FlightRecorder</argument>
-                                    </arguments>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
 </project>
