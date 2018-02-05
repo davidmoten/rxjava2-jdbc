@@ -7,10 +7,10 @@
         <artifactId>rxjava2-jdbc-parent</artifactId>
         <version>0.1-RC32-SNAPSHOT</version>
     </parent>
-    <artifactId>rxjava2-jdbc</artifactId>
+    <artifactId>rxjava2-pool</artifactId>
 
     <name>${project.artifactId}</name>
-    <description>RxJava2 streams for jdbc</description>
+    <description>RxJava2 reactive pool</description>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -22,22 +22,10 @@
         </dependency>
 
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.6</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
-
-       <dependency>
-            <groupId>com.github.davidmoten</groupId>
-            <artifactId>rxjava2-pool</artifactId>
-            <version>${project.parent.version}</version>
-       </dependency>
 
         <dependency>
             <groupId>com.github.davidmoten</groupId>
@@ -46,31 +34,11 @@
         </dependency>
 
         <!-- Test Dependencies -->
-        <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>rxjava2-jdbc-stored-procedure</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>test</scope>
-        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>1.4.196</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-            <version>2.4.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -95,59 +63,12 @@
         </dependency>
 
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>2.11.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>simple-jndi</groupId>
-            <artifactId>simple-jndi</artifactId>
-            <version>0.11.4.1</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.derby</groupId>
-            <artifactId>derby</artifactId>
-            <version>${derby.version}</version>
-            <scope>test</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.apache.derby</groupId>
-            <artifactId>derbytools</artifactId>
-            <version>10.14.1.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-core</artifactId>
-            <version>${jmh.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-generator-annprocess</artifactId>
-            <version>${jmh.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>com.github.davidmoten</groupId>
             <artifactId>junit-extras</artifactId>
             <version>0.3</version>
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-            <version>3.0.1</version>
-        </dependency>
     </dependencies>
 
     <build>
