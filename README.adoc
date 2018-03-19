@@ -36,7 +36,7 @@ Use this maven dependency:
 <dependency>
   <groupId>com.github.davidmoten</groupId>
   <artifactId>rxjava2-jdbc</artifactId>
-  <version>0.1-RC23</version>
+  <version>0.1-RC29</version>
 </dependency>
 ```
 If you want to use the built-in test database then add the Apache Derby dependency (otherwise you'll need the jdbc dependency for the database you want to connect to):
@@ -126,6 +126,32 @@ Optional.empty
 ```
 Nulls will happily map to Tuples (see the next section) when you have two or more columns.
 
+=== Null parameters
+You can specify an explicit null parameter like this:
+
+```java
+Database.test()
+  .update("update person set date_of_birth = ?") 
+  .parameter(null)
+  .counts()
+  .blockingForEach(System.out::println);
+``` 
+or using named parameters:
+```java
+Database.test()
+  .update("update person set date_of_birth = :dob") 
+  .parameter(Parameter.create("dob", null))
+  .counts()
+  .blockingForEach(System.out::println);
+``` 
+If you use a stream of parameters then you have to be more careful (nulls are not allowed in RxJava streams):\
+```java
+Database.test()
+  .update("update person set date_of_birth = ?") 
+  .parameterStream(Flowable.just(Parameter.NULL))
+  .counts()
+  .blockingForEach(System.out::println);
+``` 
 == Tuple support
 
 When you specify more types in the `getAs` method they are matched to the columns in the returned result set from the query and combined into a `Tuple` instance. Here's an example that returns `Tuple2`:

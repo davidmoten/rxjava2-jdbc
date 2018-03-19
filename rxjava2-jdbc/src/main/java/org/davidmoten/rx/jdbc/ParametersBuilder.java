@@ -13,8 +13,7 @@ import io.reactivex.Flowable;
 
 abstract class ParametersBuilder<T> {
 
-    private static final Flowable<List<Object>> SINGLE_EMPTY_LIST = Flowable
-            .just(Collections.emptyList());
+    private static final Flowable<List<Object>> SINGLE_EMPTY_LIST = Flowable.just(Collections.emptyList());
 
     private final List<Flowable<List<Object>>> parameterGroups = new ArrayList<>();
     // for building up a number of parameters
@@ -31,8 +30,7 @@ abstract class ParametersBuilder<T> {
         if (sqlInfo.numParameters() == 0) {
             parameterListStream(values.map(x -> Collections.emptyList()));
         } else {
-            parameterListStream(
-                    (Flowable<List<?>>) (Flowable<?>) values.buffer(sqlInfo.numParameters()));
+            parameterListStream((Flowable<List<?>>) (Flowable<?>) values.buffer(sqlInfo.numParameters()));
         }
         return (T) this;
     }
@@ -63,7 +61,7 @@ abstract class ParametersBuilder<T> {
     public final T parameters(@Nonnull Object... values) {
         return parameterList(values);
     }
-    
+
     @SuppressWarnings("unchecked")
     private final T parameterList(Object[] values) {
         Preconditions.checkNotNull(values);
@@ -71,14 +69,16 @@ abstract class ParametersBuilder<T> {
             // no effect
             return (T) this;
         }
-        Preconditions.checkArgument(
-                sqlInfo.numParameters() == 0 || values.length % sqlInfo.numParameters() == 0,
-                "number of values should be a multiple of number of parameters in sql: "
-                        + sqlInfo.sql());
-        Preconditions.checkArgument(Arrays.stream(values).allMatch(o -> sqlInfo.names().isEmpty()
-                || (o instanceof Parameter && ((Parameter) o).hasName())));
+        Preconditions.checkArgument(sqlInfo.numParameters() == 0 || values.length % sqlInfo.numParameters() == 0,
+                "number of values should be a multiple of number of parameters in sql: " + sqlInfo.sql());
+        Preconditions.checkArgument(Arrays.stream(values)
+                .allMatch(o -> sqlInfo.names().isEmpty() || (o instanceof Parameter && ((Parameter) o).hasName())));
         for (Object val : values) {
-            parameterBuffer.add(val);
+            if (val == null) {
+                parameterBuffer.add(Parameter.NULL);
+            } else {
+                parameterBuffer.add(val);
+            }
         }
         return (T) this;
     }

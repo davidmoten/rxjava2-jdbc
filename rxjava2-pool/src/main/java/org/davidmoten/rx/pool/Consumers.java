@@ -1,8 +1,8 @@
-package org.davidmoten.rx.jdbc.pool.internal;
+package org.davidmoten.rx.pool;
 
 import io.reactivex.functions.Consumer;
 
-public final class Consumers {
+final class Consumers {
 
     private Consumers() {
         // prevent instantiation
@@ -20,7 +20,7 @@ public final class Consumers {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> Consumer<T> doNothing() {
+    static <T> Consumer<T> doNothing() {
         return (Consumer<T>) DoNothingHolder.value;
     }
 

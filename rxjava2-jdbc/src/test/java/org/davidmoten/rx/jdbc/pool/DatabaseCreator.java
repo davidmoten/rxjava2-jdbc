@@ -265,6 +265,10 @@ public final class DatabaseCreator {
         return connectionProvider(nextUrl(), false);
     }
 
+    public static ConnectionProvider connectionProviderDerby() {
+        return connectionProvider(nextUrlDerby(), false);
+    }
+
     private static ConnectionProvider connectionProvider(String url, boolean big) {
         return new ConnectionProvider() {
 
@@ -278,6 +282,7 @@ public final class DatabaseCreator {
                         try {
                             Connection c = DriverManager.getConnection(url);
                             createDatabase(c, big);
+                            c.setAutoCommit(false);
                             return c;
                         } finally {
                             latch.countDown();

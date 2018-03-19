@@ -9,7 +9,7 @@
         <version>0.1</version>
     </parent>
     <artifactId>rxjava2-jdbc-parent</artifactId>
-    <version>0.1-RC27-SNAPSHOT</version>
+    <version>0.1-RC33-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <packaging>pom</packaging>
     <url>http://github.com/davidmoten/rxjava2-jdbc</url>
@@ -20,6 +20,7 @@
         <scm.url>scm:git:https://github.com/davidmoten/rxjava2-jdbc.git</scm.url>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <rxjava.version>2.1.9</rxjava.version>
         <checkstyle.version>2.17</checkstyle.version>
         <findbugs.version>3.0.5</findbugs.version>
         <javadoc.version>3.0.0</javadoc.version>
@@ -36,7 +37,8 @@
         <jmh.version>1.19</jmh.version>
         <junit.version>4.12</junit.version>
         <derby.version>10.14.1.0</derby.version>
-        <nexus.staging.plugin.version>1.6.6</nexus.staging.plugin.version>
+        <jar.plugin.version>3.0.2</jar.plugin.version>
+        <!--<nexus.staging.plugin.version>1.6.6</nexus.staging.plugin.version>-->
     </properties>
 
     <licenses>
@@ -82,5 +84,12 @@
         <module>rxjava2-jdbc-stored-procedure</module>
         <module>rxjava2-jdbc</module>
         <module>rxjava2-jdbc-kotlin-example</module>
+        <module>rxjava2-pool</module>
     </modules>
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 </project>
