@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
-import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +24,7 @@ import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.plugins.RxJavaPlugins;
 
-final class MemberSingle<T> extends Single<Member<T>> implements Closeable, Runnable {
+final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
 
     final AtomicReference<Observers<T>> observers;
 
@@ -139,15 +138,6 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable, Runn
         log.debug("cancel called");
         this.cancelled = true;
         disposeAll();
-    }
-
-    @Override
-    public void run() {
-        try {
-            drain();
-        } catch (Throwable t) {
-            RxJavaPlugins.onError(t);
-        }
     }
 
     private void drain() {
