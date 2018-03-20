@@ -92,21 +92,22 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     protected void subscribeActual(SingleObserver<? super Member<T>> observer) {
         // the action of checking out a member from the pool is implemented as a
         // subscription to the singleton MemberSingle
-        MemberSingleObserver<T> md = new MemberSingleObserver<T>(observer, this);
-        observer.onSubscribe(md);
+        MemberSingleObserver<T> m = new MemberSingleObserver<T>(observer, this);
+        observer.onSubscribe(m);
         if (pool.isClosed()) {
             observer.onError(new PoolClosedException());
             return;
         }
-        add(md);
-        if (md.isDisposed()) {
-            remove(md);
-        }
-        // atomically change
-        while (true) {
-            Observers<T> a = observers.get();
-            if (observers.compareAndSet(a, a.withRequested(a.requested + 1))) {
-                break;
+        add(m);
+        if (m.isDisposed()) {
+            remove(m);
+        } else {
+            // atomically change requested
+            while (true) {
+                Observers<T> a = observers.get();
+                if (observers.compareAndSet(a, a.withRequested(a.requested + 1))) {
+                    break;
+                }
             }
         }
         log.debug("subscribed");
@@ -480,7 +481,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                 }
             }
             if (observers.compareAndSet(a, next)) {
-                return;
+                break;
             }
         }
     }
@@ -555,6 +556,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
             MemberSingle<T> parent = getAndSet(null);
             if (parent != null) {
                 parent.remove(this);
+                parent.drain();
             }
         }
 
