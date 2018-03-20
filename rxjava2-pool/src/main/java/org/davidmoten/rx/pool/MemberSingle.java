@@ -25,7 +25,7 @@ import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 import io.reactivex.plugins.RxJavaPlugins;
 
-final class MemberSingle<T> extends Single<Member<T>> implements Subscription, Closeable, Runnable {
+final class MemberSingle<T> extends Single<Member<T>> implements Closeable, Runnable {
 
     final AtomicReference<Observers<T>> observers;
 
@@ -135,12 +135,6 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         drain();
     }
 
-    @Override
-    public void request(long n) {
-        drain();
-    }
-
-    @Override
     public void cancel() {
         log.debug("cancel called");
         this.cancelled = true;
