@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.davidmoten.rx.internal.FlowableSingleDeferUntilRequest;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.omg.CORBA.TIMEOUT;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
@@ -226,12 +228,13 @@ public class NonBlockingPoolTest {
                 .scheduler(s) //
                 .build();
         {
-            TestSubscriber<Member<Integer>> ts = new FlowableSingleDeferUntilRequest<>(pool.member()) //
-                    .repeat() //
-                    .doOnNext(System.out::println) //
-                    .doOnNext(m -> m.checkin()) //
-                    .doOnRequest(t -> System.out.println("test request=" + t)) //
-                    .test(1);
+            TestSubscriber<Member<Integer>> ts = new FlowableSingleDeferUntilRequest<>(
+                    pool.member()) //
+                            .repeat() //
+                            .doOnNext(System.out::println) //
+                            .doOnNext(m -> m.checkin()) //
+                            .doOnRequest(t -> System.out.println("test request=" + t)) //
+                            .test(1);
             s.triggerActions();
             // health check doesn't get run on create
             ts.assertValueCount(1);
@@ -267,7 +270,8 @@ public class NonBlockingPoolTest {
     }
 
     @Test
-    public void testMemberAvailableAfterCreationScheduledIsUsedImmediately() throws InterruptedException {
+    public void testMemberAvailableAfterCreationScheduledIsUsedImmediately()
+            throws InterruptedException {
         TestScheduler ts = new TestScheduler();
         Scheduler s = createScheduleToDelayCreation(ts);
         AtomicInteger count = new AtomicInteger();
@@ -389,38 +393,31 @@ public class NonBlockingPoolTest {
     }
 
     @Test
-    @Ignore
-    public void testReentrancyInDrainLoop() {
-        TestScheduler s = new TestScheduler();
+    // @Ignore
+    public void testReentrancyInDrainLoop() throws InterruptedException {
         AtomicInteger count = new AtomicInteger();
-        AtomicInteger disposed = new AtomicInteger();
         Pool<Integer> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
                 .healthCheck(n -> true) //
                 .maxSize(3) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
-                .disposer(n -> disposed.incrementAndGet()) //
-                .scheduler(s) //
                 .build();
         AtomicInteger errors = new AtomicInteger();
-        AtomicBoolean success = new AtomicBoolean();
+        CountDownLatch latch = new CountDownLatch(1);
         pool.member() //
                 .subscribe(new SingleObserver<Member<Integer>>() {
 
                     @Override
                     public void onSubscribe(Disposable d) {
-                        System.out.println("sub");
+                        // ignore
                     }
 
                     @Override
                     public void onSuccess(Member<Integer> m) {
-                        success.set(true);
                         // is emitted by drain loop because scheduler is synchronous
                         pool //
                                 .member() //
-                                .test() //
-                                .awaitDone(1, TimeUnit.SECONDS) //
-                                .assertComplete();
+                                .subscribe(member -> latch.countDown());
                     }
 
                     @Override
@@ -428,8 +425,8 @@ public class NonBlockingPoolTest {
                         errors.incrementAndGet();
                     }
                 });
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
         assertEquals(0, errors.get());
-        assertTrue(success.get());
     }
 
     private static Scheduler createScheduleToDelayCreation(TestScheduler ts) {
