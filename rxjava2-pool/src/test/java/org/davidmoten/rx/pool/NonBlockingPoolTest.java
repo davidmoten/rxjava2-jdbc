@@ -19,6 +19,7 @@ import org.junit.Test;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
+import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.functions.Consumer;
@@ -329,7 +330,7 @@ public class NonBlockingPoolTest {
             RxJavaPlugins.setErrorHandler(handler);
         }
     }
-    
+
     @Test
     public void testSubscribeWhenPoolClosedEmitsError() throws Exception {
         TestScheduler s = new TestScheduler();
@@ -347,10 +348,44 @@ public class NonBlockingPoolTest {
         new FlowableSingleDeferUntilRequest<>( //
                 pool.member()) //
                         .test(1) //
-                        .assertError(PoolClosedException.class)
-                        .assertNoValues();
+                        .assertError(PoolClosedException.class).assertNoValues();
     }
-    
+
+    @Test
+    public void testSubscribeWithDisposedSubscription() throws Exception {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger count = new AtomicInteger();
+        AtomicInteger disposed = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthCheck(n -> true) //
+                .maxSize(3) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .disposer(n -> disposed.incrementAndGet()) //
+                .scheduler(s) //
+                .build();
+        AtomicInteger result = new AtomicInteger(0);
+        pool.member().subscribe(new SingleObserver<Member<Integer>>() {
+
+            @Override
+            public void onSubscribe(Disposable d) {
+                d.dispose();
+            }
+
+            @Override
+            public void onSuccess(Member<Integer> t) {
+                result.set(1);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                e.printStackTrace();
+                result.set(2);
+            }
+        });
+        assertEquals(0, result.get());
+    }
+
     private static Scheduler createScheduleToDelayCreation(TestScheduler ts) {
         return new Scheduler() {
 
