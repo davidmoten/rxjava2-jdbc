@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -328,7 +329,28 @@ public class NonBlockingPoolTest {
             RxJavaPlugins.setErrorHandler(handler);
         }
     }
-
+    
+    @Test
+    public void testSubscribeWhenPoolClosedEmitsError() throws Exception {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger count = new AtomicInteger();
+        AtomicInteger disposed = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthCheck(n -> true) //
+                .maxSize(3) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .disposer(n -> disposed.incrementAndGet()) //
+                .scheduler(s) //
+                .build();
+        pool.close();
+        new FlowableSingleDeferUntilRequest<>( //
+                pool.member()) //
+                        .test(1) //
+                        .assertError(PoolClosedException.class)
+                        .assertNoValues();
+    }
+    
     private static Scheduler createScheduleToDelayCreation(TestScheduler ts) {
         return new Scheduler() {
 
