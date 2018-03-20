@@ -32,7 +32,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     private static final Logger log = LoggerFactory.getLogger(MemberSingle.class);
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0);
+    static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0, 0);
 
     private final SimplePlainQueue<DecoratingMember<T>> initializedAvailable;
     private final SimplePlainQueue<DecoratingMember<T>> notInitialized;
@@ -54,7 +54,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     // initialized (a scheduled action with a subsequent drain call)
     // or an existing value is available from the pool (queue) (and is then
     // emitted).
-    private final AtomicLong requested = new AtomicLong();
+    // private final AtomicLong requested = new AtomicLong();
 
     private final AtomicLong initializeScheduled = new AtomicLong();
 
@@ -102,7 +102,13 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         if (md.isDisposed()) {
             remove(md);
         }
-        requested.incrementAndGet();
+        // atomically change
+        while (true) {
+            Observers<T> a = observers.get();
+            if (observers.compareAndSet(a, a.withRequested(a.requested + 1))) {
+                break;
+            }
+        }
         log.debug("subscribed");
         drain();
     }
@@ -159,25 +165,18 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                 scheduleReleases();
                 scheduleChecks();
 
-                long r = requested.get(); // requested
-                log.debug("requested={}", r);
-
+                Observers<T> obs = observers.get();
+                log.debug("requested={}", obs.requested);
+                // max we can emit is the number of active (available) resources in pool
+                long r = Math.min(obs.activeCount, obs.requested);
                 long e = 0; // emitted
-                while (e != r) {
+                // record number of attempted emits in case all observers have been cancelled
+                // while are in the loop and we want to break
+                long attempts = 0;
+                while (e != r && attempts != obs.activeCount) {
                     if (cancelled) {
                         disposeAll();
                         return;
-                    }
-                    Observers<T> obs = observers.get();
-                    // the check below is required so a tryEmit that returns false doesn't bring
-                    // abouts a spin on this loop
-                    int c = obs.activeCount;
-                    // if there have been some cancellations then adjust the requested amount by
-                    // increasing emitted e
-                    e += Math.max(0, r - e - c);
-                    if (c == 0) {
-                        // if no observers then we break the loop
-                        break;
                     }
                     // check for an already initialized available member
                     final DecoratingMember<T> m = initializedAvailable.poll();
@@ -208,6 +207,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                             } else {
                                 log.debug("no active observers");
                             }
+                            attempts++;
                         }
                     }
                     // schedule release immediately of any member
@@ -215,13 +215,6 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     scheduleReleases();
                     // schedule check of any member queued for checking
                     scheduleChecks();
-
-                }
-                // normally we don't reduce requested if it is Long.MAX_VALUE
-                // but given that the only way to increase requested is by subscribing
-                // (which increases it by one only) then requested will never be Long.MAX_VALUE
-                if (e != 0L) {
-                    requested.addAndGet(-e);
                 }
                 missed = wip.addAndGet(-missed);
                 if (missed == 0) {
@@ -303,7 +296,8 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     nextIndex = (nextIndex + 1) % active.length;
                 }
                 active[nextIndex] = false;
-                if (observers.compareAndSet(x, new Observers<T>(x.observers, active, x.activeCount - 1, nextIndex))) {
+                if (observers.compareAndSet(x,
+                        new Observers<T>(x.observers, active, x.activeCount - 1, nextIndex, x.requested - 1))) {
                     oNext = x.observers[nextIndex];
                     break;
                 }
@@ -335,7 +329,6 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                     // this action might block so is scheduled
                     T value = pool.factory.call();
                     m.setValueAndClearReleasingFlag(value);
-                    requested.incrementAndGet();
                     checkin(m, true);
                 } catch (Throwable t) {
                     RxJavaPlugins.onError(t);
@@ -432,7 +425,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
             boolean[] active = new boolean[n + 1];
             System.arraycopy(a.active, 0, active, 0, n);
             active[n] = true;
-            if (observers.compareAndSet(a, new Observers<T>(b, active, a.activeCount + 1, a.index))) {
+            if (observers.compareAndSet(a, new Observers<T>(b, active, a.activeCount + 1, a.index, a.requested))) {
                 return;
             }
         }
@@ -442,7 +435,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
     private void removeAllObservers() {
         while (true) {
             Observers<T> a = observers.get();
-            if (observers.compareAndSet(a, EMPTY)) {
+            if (observers.compareAndSet(a, EMPTY.withRequested(a.requested))) {
                 return;
             }
         }
@@ -471,7 +464,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
             }
             Observers<T> next;
             if (n == 1) {
-                next = EMPTY;
+                next = EMPTY.withRequested(a.requested);
             } else {
                 MemberSingleObserver<T>[] b = new MemberSingleObserver[n - 1];
                 System.arraycopy(a.observers, 0, b, 0, j);
@@ -481,9 +474,9 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
                 System.arraycopy(a.active, j + 1, active, j, n - j - 1);
                 int nextActiveCount = a.active[j] ? a.activeCount - 1 : a.activeCount;
                 if (a.index >= j && a.index > 0) {
-                    next = new Observers<T>(b, active, nextActiveCount, a.index - 1);
+                    next = new Observers<T>(b, active, nextActiveCount, a.index - 1, a.requested);
                 } else {
-                    next = new Observers<T>(b, active, nextActiveCount, a.index);
+                    next = new Observers<T>(b, active, nextActiveCount, a.index, a.requested);
                 }
             }
             if (observers.compareAndSet(a, next)) {
@@ -498,14 +491,20 @@ final class MemberSingle<T> extends Single<Member<T>> implements Subscription, C
         final boolean[] active;
         final int activeCount;
         final int index;
+        final int requested;
 
-        Observers(MemberSingleObserver<T>[] observers, boolean[] active, int activeCount, int index) {
+        Observers(MemberSingleObserver<T>[] observers, boolean[] active, int activeCount, int index, int requested) {
             Preconditions.checkArgument(observers.length > 0 || index == 0, "index must be -1 for zero length array");
             Preconditions.checkArgument(observers.length == active.length);
             this.observers = observers;
             this.index = index;
             this.active = active;
             this.activeCount = activeCount;
+            this.requested = requested;
+        }
+
+        Observers<T> withRequested(int r) {
+            return new Observers<T>(observers, active, activeCount, index, r);
         }
     }
 
