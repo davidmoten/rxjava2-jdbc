@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.davidmoten.rx.internal.FlowableSingleDeferUntilRequest;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import io.reactivex.Flowable;
@@ -348,7 +349,8 @@ public class NonBlockingPoolTest {
         new FlowableSingleDeferUntilRequest<>( //
                 pool.member()) //
                         .test(1) //
-                        .assertError(PoolClosedException.class).assertNoValues();
+                        .assertError(PoolClosedException.class) //
+                        .assertNoValues();
     }
 
     @Test
@@ -385,7 +387,51 @@ public class NonBlockingPoolTest {
         });
         assertEquals(0, result.get());
     }
-    
+
+    @Test
+    @Ignore
+    public void testReentrancyInDrainLoop() {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger count = new AtomicInteger();
+        AtomicInteger disposed = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthCheck(n -> true) //
+                .maxSize(3) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .disposer(n -> disposed.incrementAndGet()) //
+                .scheduler(s) //
+                .build();
+        AtomicInteger errors = new AtomicInteger();
+        AtomicBoolean success = new AtomicBoolean();
+        pool.member() //
+                .subscribe(new SingleObserver<Member<Integer>>() {
+
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        System.out.println("sub");
+                    }
+
+                    @Override
+                    public void onSuccess(Member<Integer> m) {
+                        success.set(true);
+                        // is emitted by drain loop because scheduler is synchronous
+                        pool //
+                                .member() //
+                                .test() //
+                                .awaitDone(1, TimeUnit.SECONDS) //
+                                .assertComplete();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        errors.incrementAndGet();
+                    }
+                });
+        assertEquals(0, errors.get());
+        assertTrue(success.get());
+    }
+
     private static Scheduler createScheduleToDelayCreation(TestScheduler ts) {
         return new Scheduler() {
 
