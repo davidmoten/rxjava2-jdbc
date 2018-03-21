@@ -5,13 +5,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,10 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.davidmoten.rx.internal.FlowableSingleDeferUntilRequest;
-import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.omg.CORBA.TIMEOUT;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
