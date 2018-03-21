@@ -433,18 +433,32 @@ public class NonBlockingPoolTest {
 
     @Test
     public void testConcurrentUseWithPoolSizeOf1DoesNotHang() {
+        checkDoesNotHang(1);
+    }
+    
+    @Test
+    public void testConcurrentUseWithPoolSizeOf2DoesNotHang() {
+        checkDoesNotHang(2);
+    }
+    
+    @Test
+    public void testConcurrentUseWithPoolSizeOf10DoesNotHang() {
+        checkDoesNotHang(10);
+    }
+    
+    private static void checkDoesNotHang(int poolSize) {
         Scheduler io = Schedulers.from(Executors.newFixedThreadPool(2));
         AtomicInteger count = new AtomicInteger();
         Pool<Integer> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
                 .healthCheck(n -> true) //
-                .maxSize(1) //
+                .maxSize(poolSize) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .scheduler(io) //
                 .build();
-        Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(2));
+        Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(poolSize));
         AtomicInteger checkouts = new AtomicInteger();
-        Throwable result = Flowable.rangeLong(0, 100000L) //
+        Throwable result = Flowable.rangeLong(0, 10000L) //
                 .flatMapCompletable((Long n) -> pool.member() //
                         .subscribeOn(scheduler) //
                         .doOnSuccess((Member<Integer> m) -> {
