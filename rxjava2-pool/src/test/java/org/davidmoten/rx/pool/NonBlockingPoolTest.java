@@ -393,7 +393,6 @@ public class NonBlockingPoolTest {
     }
 
     @Test
-    // @Ignore
     public void testReentrancyInDrainLoop() throws InterruptedException {
         AtomicInteger count = new AtomicInteger();
         Pool<Integer> pool = NonBlockingPool //
