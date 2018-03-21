@@ -2,6 +2,7 @@ package org.davidmoten.rx.pool;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -10,12 +11,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.davidmoten.rx.internal.FlowableSingleDeferUntilRequest;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.omg.CORBA.TIMEOUT;
@@ -28,6 +32,7 @@ import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.functions.Consumer;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.plugins.RxJavaPlugins;
+import io.reactivex.schedulers.Schedulers;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
 
@@ -228,13 +233,12 @@ public class NonBlockingPoolTest {
                 .scheduler(s) //
                 .build();
         {
-            TestSubscriber<Member<Integer>> ts = new FlowableSingleDeferUntilRequest<>(
-                    pool.member()) //
-                            .repeat() //
-                            .doOnNext(System.out::println) //
-                            .doOnNext(m -> m.checkin()) //
-                            .doOnRequest(t -> System.out.println("test request=" + t)) //
-                            .test(1);
+            TestSubscriber<Member<Integer>> ts = new FlowableSingleDeferUntilRequest<>(pool.member()) //
+                    .repeat() //
+                    .doOnNext(System.out::println) //
+                    .doOnNext(m -> m.checkin()) //
+                    .doOnRequest(t -> System.out.println("test request=" + t)) //
+                    .test(1);
             s.triggerActions();
             // health check doesn't get run on create
             ts.assertValueCount(1);
@@ -270,8 +274,7 @@ public class NonBlockingPoolTest {
     }
 
     @Test
-    public void testMemberAvailableAfterCreationScheduledIsUsedImmediately()
-            throws InterruptedException {
+    public void testMemberAvailableAfterCreationScheduledIsUsedImmediately() throws InterruptedException {
         TestScheduler ts = new TestScheduler();
         Scheduler s = createScheduleToDelayCreation(ts);
         AtomicInteger count = new AtomicInteger();
@@ -426,6 +429,30 @@ public class NonBlockingPoolTest {
                 });
         assertTrue(latch.await(5, TimeUnit.SECONDS));
         assertEquals(0, errors.get());
+    }
+
+    @Test
+    public void testConcurrentUseWithPoolSizeOf1DoesNotHang() {
+        Scheduler io = Schedulers.from(Executors.newFixedThreadPool(2));
+        AtomicInteger count = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthCheck(n -> true) //
+                .maxSize(1) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .scheduler(io) //
+                .build();
+        Scheduler scheduler = Schedulers.from(Executors.newFixedThreadPool(2));
+        AtomicInteger checkouts = new AtomicInteger();
+        Throwable result = Flowable.rangeLong(0, 100000L) //
+                .flatMapCompletable((Long n) -> pool.member() //
+                        .subscribeOn(scheduler) //
+                        .doOnSuccess((Member<Integer> m) -> {
+                            checkouts.incrementAndGet();
+                            m.checkin();
+                        }).toCompletable()) //
+                .blockingGet(60, TimeUnit.SECONDS);
+        assertNull(result);
     }
 
     private static Scheduler createScheduleToDelayCreation(TestScheduler ts) {
