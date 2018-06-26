@@ -35,7 +35,6 @@ import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -93,7 +92,9 @@ import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.Single;
+import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.functions.Predicate;
+import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
@@ -3405,6 +3406,40 @@ public class DatabaseTest {
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                 .assertValues(1, 2) //
                 .assertComplete();
+    }
+    
+    private static final class Plugins {
+        
+        private static final List<Throwable> list = new CopyOnWriteArrayList<Throwable>();
+        
+        static void reset() {
+            list.clear();
+            RxJavaPlugins.setErrorHandler(e -> list.add(e));
+        }
+        
+        static Throwable getSingleError() {
+            assertEquals(1, list.size());
+            RxJavaPlugins.reset();
+            return list.get(0);
+        }
+    }
+    
+    @Test
+    public void testIssue27ConnectionErrorReportedToRxJavaPlugins() {
+        try (Database db = Database.nonBlocking().url("jdbc:driverdoesnotexist://doesnotexist:1527/notThere").build()) {
+            Plugins.reset();
+            db.select("select count(*) from person") //
+                    .getAs(Long.class) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS / 5, TimeUnit.SECONDS) //
+                    .assertNoValues() //
+                    .assertNotTerminated() //
+                    .cancel();
+            Throwable e = Plugins.getSingleError();
+            System.out.println(e);
+            assertTrue(e instanceof UndeliverableException);
+            assertTrue(e.getMessage().toLowerCase().contains("no suitable driver"));
+        }
     }
 
     public interface PersonWithDefaultMethod {
