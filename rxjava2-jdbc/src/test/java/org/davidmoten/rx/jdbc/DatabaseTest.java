@@ -3436,7 +3436,6 @@ public class DatabaseTest {
                     .assertNotTerminated() //
                     .cancel();
             Throwable e = Plugins.getSingleError();
-            System.out.println(e);
             assertTrue(e instanceof UndeliverableException);
             assertTrue(e.getMessage().toLowerCase().contains("no suitable driver"));
         }
