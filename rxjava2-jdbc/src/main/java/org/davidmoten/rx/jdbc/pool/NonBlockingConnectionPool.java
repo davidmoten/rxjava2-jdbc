@@ -45,7 +45,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         private int maxPoolSize = 5;
         private long idleTimeBeforeHealthCheckMs = 60000;
         private long maxIdleTimeMs = 30 * 60000;
-        private long createRetryIntervalMs = 30000;
+        private long connectionRetryIntervalMs = 30000;
         private Consumer<? super Connection> disposer = Util::closeSilently;
         private Scheduler scheduler = null;
         private final Function<NonBlockingConnectionPool, T> transform;
@@ -133,8 +133,8 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          *            time unit
          * @return this
          */
-        public Builder<T> createRetryInterval(long duration, TimeUnit unit) {
-            this.createRetryIntervalMs = unit.toMillis(duration);
+        public Builder<T> connectionRetryInterval(long duration, TimeUnit unit) {
+            this.connectionRetryIntervalMs = unit.toMillis(duration);
             return this;
         }
 
@@ -230,7 +230,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
                     .checkinDecorator((con, checkin) -> new PooledConnection(con, checkin)) //
                     .idleTimeBeforeHealthCheck(idleTimeBeforeHealthCheckMs, TimeUnit.MILLISECONDS) //
                     .maxIdleTime(maxIdleTimeMs, TimeUnit.MILLISECONDS) //
-                    .createRetryInterval(createRetryIntervalMs, TimeUnit.MILLISECONDS) //
+                    .createRetryInterval(connectionRetryIntervalMs, TimeUnit.MILLISECONDS) //
                     .scheduler(scheduler) //
                     .disposer(disposer)//
                     .healthCheck(healthCheck) //

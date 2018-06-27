@@ -465,7 +465,7 @@ public class DatabaseTest {
                 .connectionProvider(DatabaseCreator.connectionProvider()) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
-                .createRetryInterval(1, TimeUnit.SECONDS) //
+                .connectionRetryInterval(1, TimeUnit.SECONDS) //
                 .healthCheck(c -> c.prepareStatement("select 1").execute()) //
                 .maxPoolSize(3) //
                 .build();
@@ -489,7 +489,7 @@ public class DatabaseTest {
                 .connectionProvider(DatabaseCreator.connectionProvider()) //
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
-                .createRetryInterval(1, TimeUnit.SECONDS) //
+                .connectionRetryInterval(1, TimeUnit.SECONDS) //
                 .healthCheck(DatabaseType.H2) //
                 .maxPoolSize(3) //
                 .build()) {
@@ -517,7 +517,7 @@ public class DatabaseTest {
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .healthCheck(DatabaseType.H2) //
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
-                .createRetryInterval(1, TimeUnit.SECONDS) //
+                .connectionRetryInterval(1, TimeUnit.SECONDS) //
                 .healthCheck("select 1") //
                 .maxPoolSize(3) //
                 .build();
