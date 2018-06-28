@@ -94,7 +94,8 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         
         /**
          * Sets the JDBC properties that will be passed to
-         * {@link java.sql.DriverManager#getConnection}.
+         * {@link java.sql.DriverManager#getConnection}. The properties will only be
+         * used if the {@code url} has been set in the builder.
          * 
          * @param properties
          *            the jdbc properties
@@ -104,10 +105,11 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             this.properties = properties;
             return this;
         }
-        
+
         /**
          * Adds the given property specified by key and value to the JDBC properties
-         * that will be passed to {@link java.sql.DriverManager#getConnection}.
+         * that will be passed to {@link java.sql.DriverManager#getConnection}. The
+         * properties will only be used if the {@code url} has been set in the builder.
          * 
          * @param key
          *            property key
