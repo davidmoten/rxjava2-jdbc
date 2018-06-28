@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc.pool;
 
 import java.sql.Connection;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,7 +55,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         private Properties properties = new Properties();
         private final Function<NonBlockingConnectionPool, T> transform;
         private String url;
-        private ConnectionListener c;
+        private Consumer<? super Optional<Throwable>> c;
 
         public Builder(Function<NonBlockingConnectionPool, T> transform) {
             this.transform = transform;
@@ -222,13 +223,14 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
 
         /**
          * Sets a listener for connection success and failure. Success and failure
-         * events are reported serially to the listener.
+         * events are reported serially to the listener. If the consumer throws it will
+         * be reported to {@code RxJavaPlugins.onError}.
          * 
          * @param c
          *            listener for connection events
          * @return this
          */
-        public Builder<T> listener(ConnectionListener c) {
+        public Builder<T> connnectionListener(Consumer<? super Optional<Throwable>> c) {
             Preconditions.checkArgument(c != null, "listener can only be set once");
             this.c = c;
             return this;
@@ -279,7 +281,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             if (url != null) {
                 cp = Util.connectionProvider(url, properties);
             }
-            ConnectionListener listener;
+            Consumer<Optional<Throwable>> listener;
             if (c == null) {
                 listener = null;
             } else {
@@ -291,7 +293,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
                             Connection con = cp.get();
                             if (listener != null) {
                                 try {
-                                    listener.onSuccess();
+                                    listener.accept(Optional.empty());
                                 } catch (Throwable e) {
                                     RxJavaPlugins.onError(e);
                                 }
@@ -300,7 +302,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
                         } catch (Throwable e) {
                             if (listener != null) {
                                 try {
-                                    listener.onError(e);
+                                    listener.accept(Optional.of(e));
                                 } catch (Throwable e2) {
                                     RxJavaPlugins.onError(e2);
                                 }

@@ -60,7 +60,6 @@ import org.davidmoten.rx.jdbc.exceptions.NamedParameterMissingException;
 import org.davidmoten.rx.jdbc.exceptions.QueryAnnotationMissingException;
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
 import org.davidmoten.rx.jdbc.internal.DelegatedConnection;
-import org.davidmoten.rx.jdbc.pool.ConnectionListener;
 import org.davidmoten.rx.jdbc.pool.DatabaseCreator;
 import org.davidmoten.rx.jdbc.pool.DatabaseType;
 import org.davidmoten.rx.jdbc.pool.NonBlockingConnectionPool;
@@ -523,16 +522,11 @@ public class DatabaseTest {
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
                 .connectionRetryInterval(1, TimeUnit.SECONDS) //
                 .healthCheck("select 1") //
-                .listener(new ConnectionListener() {
-
-                    @Override
-                    public void onSuccess() {
-                        success.incrementAndGet();
-                    }
-
-                    @Override
-                    public void onError(Throwable error) {
+                .connnectionListener(error -> {
+                    if (error.isPresent()) {
                         success.set(Integer.MIN_VALUE);
+                    } else {
+                        success.incrementAndGet();
                     }
                 }) //
                 .maxPoolSize(3) //

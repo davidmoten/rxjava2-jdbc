@@ -1,30 +1,26 @@
 package org.davidmoten.rx.jdbc.pool.internal;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.davidmoten.rx.jdbc.pool.ConnectionListener;
-
+import io.reactivex.functions.Consumer;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
+import io.reactivex.plugins.RxJavaPlugins;
 
 @SuppressWarnings("serial")
-public final class SerializedConnectionListener extends AtomicInteger implements ConnectionListener {
+public final class SerializedConnectionListener extends AtomicInteger
+        implements Consumer<Optional<Throwable>> {
 
-    private final ConnectionListener c;
-    private final SimplePlainQueue<Object> queue = new MpscLinkedQueue<Object>();
+    private final Consumer<? super Optional<Throwable>> c;
+    private final SimplePlainQueue<Optional<Throwable>> queue = new MpscLinkedQueue<>();
 
-    public SerializedConnectionListener(ConnectionListener c) {
+    public SerializedConnectionListener(Consumer<? super Optional<Throwable>> c) {
         this.c = c;
     }
 
     @Override
-    public void onSuccess() {
-        queue.offer(Boolean.TRUE);
-        drain();
-    }
-
-    @Override
-    public void onError(Throwable error) {
+    public void accept(Optional<Throwable> error) throws Exception {
         queue.offer(error);
         drain();
     }
@@ -33,12 +29,12 @@ public final class SerializedConnectionListener extends AtomicInteger implements
         if (getAndIncrement() == 0) {
             int missed = 1;
             while (true) {
-                Object o;
+                Optional<Throwable> o;
                 while ((o = queue.poll()) != null) {
-                    if (o == Boolean.TRUE) {
-                        c.onSuccess();
-                    } else {
-                        c.onError((Throwable) o);
+                    try {
+                        c.accept(o);
+                    } catch (Exception e) {
+                        RxJavaPlugins.onError(e);
                     }
                 }
                 missed = addAndGet(-missed);
@@ -48,5 +44,4 @@ public final class SerializedConnectionListener extends AtomicInteger implements
             }
         }
     }
-
 }
