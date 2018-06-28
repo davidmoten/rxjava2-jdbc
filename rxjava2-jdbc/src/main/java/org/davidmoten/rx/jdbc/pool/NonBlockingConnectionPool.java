@@ -220,6 +220,14 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             return healthCheck(new HealthCheckPredicate(sql));
         }
 
+        /**
+         * Sets a listener for connection success and failure. Success and failure
+         * events are reported serially to the listener.
+         * 
+         * @param c
+         *            listener for connection events
+         * @return this
+         */
         public Builder<T> listener(ConnectionListener c) {
             Preconditions.checkArgument(c == null, "listener can only be set once");
             this.c = c;
