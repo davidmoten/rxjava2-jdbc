@@ -14,6 +14,7 @@ import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Util;
 import org.davidmoten.rx.jdbc.pool.internal.HealthCheckPredicate;
 import org.davidmoten.rx.jdbc.pool.internal.PooledConnection;
+import org.davidmoten.rx.jdbc.pool.internal.SerializedConnectionListener;
 import org.davidmoten.rx.pool.Member;
 import org.davidmoten.rx.pool.NonBlockingPool;
 import org.davidmoten.rx.pool.Pool;
@@ -25,6 +26,7 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.internal.schedulers.ExecutorScheduler;
+import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 
 public final class NonBlockingConnectionPool implements Pool<Connection> {
@@ -52,6 +54,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         private Properties properties = new Properties();
         private final Function<NonBlockingConnectionPool, T> transform;
         private String url;
+        private ConnectionListener c;
 
         public Builder(Function<NonBlockingConnectionPool, T> transform) {
             this.transform = transform;
@@ -88,10 +91,10 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @return this
          */
         public Builder<T> url(String url) {
-            this.url= url;
+            this.url = url;
             return this;
         }
-        
+
         /**
          * Sets the JDBC properties that will be passed to
          * {@link java.sql.DriverManager#getConnection}. The properties will only be
@@ -217,6 +220,12 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             return healthCheck(new HealthCheckPredicate(sql));
         }
 
+        public Builder<T> listener(ConnectionListener c) {
+            Preconditions.checkArgument(c == null, "listener can only be set once");
+            this.c = c;
+            return this;
+        }
+
         /**
          * Sets the maximum connection pool size. Default is 5.
          * 
@@ -262,8 +271,35 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             if (url != null) {
                 cp = Util.connectionProvider(url, properties);
             }
+            ConnectionListener listener;
+            if (c == null) {
+                listener = null;
+            } else {
+                listener = new SerializedConnectionListener(c);
+            }
             NonBlockingConnectionPool p = new NonBlockingConnectionPool(NonBlockingPool //
-                    .factory(() -> cp.get()) //
+                    .factory(() -> {
+                        try {
+                            Connection con = cp.get();
+                            if (listener != null) {
+                                try {
+                                    listener.onSuccess();
+                                } catch (Throwable e) {
+                                    RxJavaPlugins.onError(e);
+                                }
+                            }
+                            return con;
+                        } catch (Throwable e) {
+                            if (listener != null) {
+                                try {
+                                    listener.onError(e);
+                                } catch (Throwable e2) {
+                                    RxJavaPlugins.onError(e2);
+                                }
+                            }
+                            throw e;
+                        }
+                    }) //
                     .checkinDecorator((con, checkin) -> new PooledConnection(con, checkin)) //
                     .idleTimeBeforeHealthCheck(idleTimeBeforeHealthCheckMs, TimeUnit.MILLISECONDS) //
                     .maxIdleTime(maxIdleTimeMs, TimeUnit.MILLISECONDS) //

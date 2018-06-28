@@ -8,7 +8,7 @@ import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
 
 @SuppressWarnings("serial")
-public class SerializedConnectionListener extends AtomicInteger implements ConnectionListener {
+public final class SerializedConnectionListener extends AtomicInteger implements ConnectionListener {
 
     private final ConnectionListener c;
     private final SimplePlainQueue<Object> queue = new MpscLinkedQueue<Object>();
