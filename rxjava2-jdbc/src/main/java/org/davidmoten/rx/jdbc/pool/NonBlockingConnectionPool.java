@@ -229,7 +229,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @return this
          */
         public Builder<T> listener(ConnectionListener c) {
-            Preconditions.checkArgument(c == null, "listener can only be set once");
+            Preconditions.checkArgument(c != null, "listener can only be set once");
             this.c = c;
             return this;
         }
