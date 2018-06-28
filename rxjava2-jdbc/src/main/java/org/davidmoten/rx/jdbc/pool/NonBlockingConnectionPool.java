@@ -1,6 +1,7 @@
 package org.davidmoten.rx.jdbc.pool;
 
 import java.sql.Connection;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -48,7 +49,9 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         private long connectionRetryIntervalMs = 30000;
         private Consumer<? super Connection> disposer = Util::closeSilently;
         private Scheduler scheduler = null;
+        private Properties properties = new Properties();
         private final Function<NonBlockingConnectionPool, T> transform;
+        private String url;
 
         public Builder(Function<NonBlockingConnectionPool, T> transform) {
             this.transform = transform;
@@ -85,7 +88,36 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @return this
          */
         public Builder<T> url(String url) {
-            return connectionProvider(Util.connectionProvider(url));
+            this.url= url;
+            return this;
+        }
+        
+        /**
+         * Sets the JDBC properties that will be passed to
+         * {@link java.sql.DriverManager#getConnection}.
+         * 
+         * @param properties
+         *            the jdbc properties
+         * @return this
+         */
+        public Builder<T> properties(Properties properties) {
+            this.properties = properties;
+            return this;
+        }
+        
+        /**
+         * Adds the given property specified by key and value to the JDBC properties
+         * that will be passed to {@link java.sql.DriverManager#getConnection}.
+         * 
+         * @param key
+         *            property key
+         * @param value
+         *            property value
+         * @return this
+         */
+        public Builder<T> property(Object key, Object value) {
+            this.properties.put(key, value);
+            return this;
         }
 
         /**
@@ -224,6 +256,9 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             if (scheduler == null) {
                 ExecutorService executor = Executors.newFixedThreadPool(maxPoolSize);
                 scheduler = new ExecutorScheduler(executor);
+            }
+            if (url != null) {
+                cp = Util.connectionProvider(url, properties);
             }
             NonBlockingConnectionPool p = new NonBlockingConnectionPool(NonBlockingPool //
                     .factory(() -> cp.get()) //

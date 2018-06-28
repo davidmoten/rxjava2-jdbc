@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -1003,13 +1004,13 @@ public enum Util {
         return camelCased.replaceAll(regex, replacement);
     }
 
-    public static ConnectionProvider connectionProvider(String url) {
+    public static ConnectionProvider connectionProvider(String url, Properties properties) {
         return new ConnectionProvider() {
 
             @Override
             public Connection get() {
                 try {
-                    return DriverManager.getConnection(url);
+                    return DriverManager.getConnection(url, properties);
                 } catch (SQLException e) {
                     throw new SQLRuntimeException(e);
                 }
