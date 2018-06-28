@@ -224,7 +224,8 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         /**
          * Sets a listener for connection success and failure. Success and failure
          * events are reported serially to the listener. If the consumer throws it will
-         * be reported to {@code RxJavaPlugins.onError}.
+         * be reported to {@code RxJavaPlugins.onError}. This consumer should not block
+         * otherwise it will block the connection pool itself.
          * 
          * @param c
          *            listener for connection events
