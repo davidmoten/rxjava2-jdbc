@@ -231,7 +231,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          *            listener for connection events
          * @return this
          */
-        public Builder<T> connnectionListener(Consumer<? super Optional<Throwable>> c) {
+        public Builder<T> connectionListener(Consumer<? super Optional<Throwable>> c) {
             Preconditions.checkArgument(c != null, "listener can only be set once");
             this.c = c;
             return this;
