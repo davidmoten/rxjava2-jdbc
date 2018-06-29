@@ -522,7 +522,7 @@ public class DatabaseTest {
                 .idleTimeBeforeHealthCheck(1, TimeUnit.MINUTES) //
                 .connectionRetryInterval(1, TimeUnit.SECONDS) //
                 .healthCheck("select 1") //
-                .connnectionListener(error -> {
+                .connectionListener(error -> {
                     if (error.isPresent()) {
                         success.set(Integer.MIN_VALUE);
                     } else {
