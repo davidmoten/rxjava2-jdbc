@@ -296,6 +296,8 @@ Database
   .get(Person::name)
   .blockingForEach(System.out::println);
 ```
+=== Automap with Kotlin
+See [example](rxjava2-jdbc-kotlin-example/src/test/kotlin/RxJava2JdbcKotlinTest.kt).
 
 === Auto mappings
 The automatic mappings below of objects are used in the ```autoMap()``` method and for typed ```getAs()``` calls.
