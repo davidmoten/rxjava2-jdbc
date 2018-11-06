@@ -18,7 +18,7 @@ JDBC is so much simpler with _rxjava2-jdbc_.
 
 Status: _release candidates on Maven Central_
 
-Maven site reports are http://davidmoten.github.io/rxjava2-jdbc/index.html[here] including http://davidmoten.github.io/rxjava2-jdbc/apidocs/index.html[javadoc].
+Maven site reports are https://davidmoten.github.io/rxjava2-jdbc/index.html[here] including https://davidmoten.github.io/rxjava2-jdbc/apidocs/index.html[javadoc].
 
 toc::[]
 
@@ -297,7 +297,7 @@ Database
   .blockingForEach(System.out::println);
 ```
 === Automap with Kotlin
-See rxjava2-jdbc-kotlin-example/src/test/kotlin/RxJava2JdbcKotlinTest.kt[example].
+See https://github.com/davidmoten/rxjava2-jdbc/blob/master/rxjava2-jdbc-kotlin-example/src/test/kotlin/RxJava2JdbcKotlinTest.kt[example].
 
 === Auto mappings
 The automatic mappings below of objects are used in the ```autoMap()``` method and for typed ```getAs()``` calls.
