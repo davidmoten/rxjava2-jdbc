@@ -297,7 +297,15 @@ Database
   .blockingForEach(System.out::println);
 ```
 === Automap with Kotlin
-See https://github.com/davidmoten/rxjava2-jdbc/blob/master/rxjava2-jdbc-kotlin-example/src/test/kotlin/RxJava2JdbcKotlinTest.kt[example].
+See https://github.com/davidmoten/rxjava2-jdbc/blob/master/rxjava2-jdbc-kotlin-example/src/test/kotlin/RxJava2JdbcKotlinTest.kt[example]. Below is how you annotate an interface in Kotlin for automap:
+
+```kotlin
+@Query("select name from person order by name")
+interface Person {
+    @Column("name")
+    fun nm() : String
+}
+```
 
 === Auto mappings
 The automatic mappings below of objects are used in the ```autoMap()``` method and for typed ```getAs()``` calls.
