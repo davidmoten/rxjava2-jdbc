@@ -95,6 +95,18 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
             this.url = url;
             return this;
         }
+        
+        public Builder<T> user(String user) {
+            properties.put("user", user);
+            return this;
+        }
+        
+        public Builder<T> password(String password) {
+            properties.put("password", password);
+            return this;
+        }
+        
+        
 
         /**
          * Sets the JDBC properties that will be passed to
