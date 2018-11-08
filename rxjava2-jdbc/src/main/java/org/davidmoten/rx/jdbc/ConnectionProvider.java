@@ -8,6 +8,7 @@ import java.util.Properties;
 import javax.annotation.Nonnull;
 
 import org.davidmoten.rx.jdbc.exceptions.SQLRuntimeException;
+import org.davidmoten.rx.jdbc.internal.SingletonConnectionProvider;
 
 import com.github.davidmoten.guavamini.Preconditions;
 
@@ -44,19 +45,8 @@ public interface ConnectionProvider {
      * @return singleton connection provider (don't use with connection pools!)
      */
     static ConnectionProvider from(@Nonnull Connection connection) {
-        Preconditions.checkNotNull(connection, "connection cannot be null");
-        return new ConnectionProvider() {
-
-            @Override
-            public Connection get() {
-                return connection;
-            }
-
-            @Override
-            public void close() {
-                // do nothing as con was not created by this provider
-            }
-        };
+        Preconditions.checkNotNull(connection, "connection  cannot be null");
+        return new SingletonConnectionProvider(connection);
     }
 
     static ConnectionProvider from(@Nonnull String url) {

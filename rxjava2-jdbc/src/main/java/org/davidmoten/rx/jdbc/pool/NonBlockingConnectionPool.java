@@ -13,6 +13,7 @@ import javax.sql.DataSource;
 
 import org.davidmoten.rx.jdbc.ConnectionProvider;
 import org.davidmoten.rx.jdbc.Util;
+import org.davidmoten.rx.jdbc.internal.SingletonConnectionProvider;
 import org.davidmoten.rx.jdbc.pool.internal.HealthCheckPredicate;
 import org.davidmoten.rx.jdbc.pool.internal.PooledConnection;
 import org.davidmoten.rx.jdbc.pool.internal.SerializedConnectionListener;
@@ -69,6 +70,10 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
          * @return this
          */
         public Builder<T> connectionProvider(ConnectionProvider cp) {
+            Preconditions.checkArgument(!(cp instanceof SingletonConnectionProvider), //
+                    "connection provider should not return a singleton connection because " //
+                    + "a pool needs control over the creation and closing of connections. " //
+                    + "Use ConnectionProvider.from(url,...) instead.");
             this.cp = cp;
             return this;
         }
