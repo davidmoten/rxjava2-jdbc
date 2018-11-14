@@ -153,6 +153,15 @@ public final class NonBlockingPool<T> implements Pool<T> {
             return this;
         }
         
+        /**
+         * Sets the maximum time a connection can remaing idle before being scheduled
+         * for release (closure). If set to 0 (regardless of unit) then idle connections
+         * are not released.
+         * 
+         * @param value duration
+         * @param unit  unit of the duration
+         * @return this
+         */
         public Builder<T> maxIdleTime(long value, TimeUnit unit) {
             this.maxIdleTimeMs = unit.toMillis(value);
             return this;
