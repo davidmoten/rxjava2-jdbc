@@ -156,7 +156,7 @@ public final class NonBlockingPool<T> implements Pool<T> {
         /**
          * Sets the maximum time a connection can remaing idle before being scheduled
          * for release (closure). If set to 0 (regardless of unit) then idle connections
-         * are not released.
+         * are not released. If not set the default value is 30 minutes.
          * 
          * @param value duration
          * @param unit  unit of the duration
