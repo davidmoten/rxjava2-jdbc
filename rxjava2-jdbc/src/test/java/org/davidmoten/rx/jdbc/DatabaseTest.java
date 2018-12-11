@@ -1935,6 +1935,31 @@ public class DatabaseTest {
                     .assertComplete();
         }
     }
+    
+    @Test
+    public void testAutomapClobIssue32() {
+        try (Database db = db()) {
+            db.update("insert into person_clob(name, document) values(?, ? )") //
+                    .parameters("fred", "hello there") //
+                    .complete() //
+                    .blockingAwait(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            db.select("select * from person_clob") //
+            .autoMap(PersonClob.class) //
+            .doOnNext(pc -> pc.document().length()) //
+            .doOnNext(pc -> pc.document().length()) //
+            .test() //
+            .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+            .assertValueCount(1) //
+            .assertComplete();
+        }
+    }
+    
+    private static interface PersonClob {
+        @Column
+        String name();
+        @Column
+        String document();
+    }
 
     private static void insertNullClob(Database db) {
         db.update("insert into person_clob(name,document) values(?,?)") //
