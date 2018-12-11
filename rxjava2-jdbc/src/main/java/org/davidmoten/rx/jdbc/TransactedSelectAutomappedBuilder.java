@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
 
 import io.reactivex.Flowable;
+import io.reactivex.functions.Function;
 
 public final class TransactedSelectAutomappedBuilder<T> {
 
@@ -70,6 +71,11 @@ public final class TransactedSelectAutomappedBuilder<T> {
             return createFlowable(b.selectBuilder, db) //
                     .flatMap(Tx.flattenToValuesOnly());
         }
+
+        public <R> Flowable<R> get(@Nonnull Function<? super T, ? extends R> function) {
+            return get().map(function);
+        }
+        
     }
 
     public Flowable<Tx<T>> get() {
@@ -80,7 +86,7 @@ public final class TransactedSelectAutomappedBuilder<T> {
             return o;
         }
     }
-
+    
     private static <T> Flowable<Tx<T>> createFlowable(SelectAutomappedBuilder<T> sb, Database db) {
         return Flowable.defer(() -> {
             AtomicReference<Connection> connection = new AtomicReference<Connection>();

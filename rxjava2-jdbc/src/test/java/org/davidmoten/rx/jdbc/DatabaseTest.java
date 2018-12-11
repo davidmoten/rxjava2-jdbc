@@ -3488,8 +3488,7 @@ public class DatabaseTest {
             db.select(Person10.class) //
                     .transacted() //
                     .valuesOnly() //
-                    .get() //
-                    .map(m -> m.name()) //
+                    .get(x -> x.name()) //
                     .sorted() //
                     .test() //
                     .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
