@@ -3481,6 +3481,22 @@ public class DatabaseTest {
             assertTrue(e.getMessage().toLowerCase().contains("no suitable driver"));
         }
     }
+    
+    @Test
+    public void testAutoMapInTransactionIssue35() {
+        try (Database db = Database.test()) {
+            db.select(Person10.class) //
+                    .transacted() //
+                    .valuesOnly() //
+                    .get() //
+                    .map(m -> m.name()) //
+                    .sorted() //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues("FRED", "JOSEPH", "MARMADUKE") //
+                    .assertComplete();
+        }
+    }
 
     public interface PersonWithDefaultMethod {
         @Column
