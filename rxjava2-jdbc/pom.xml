@@ -184,6 +184,14 @@
                         </goals>
                         <configuration>
                             <additionalparam>-Xdoclint:none</additionalparam>
+<!-- workaround for https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+                                    <javaApiLinks>
+                                        <property>
+                                            <name>foo</name>
+                                            <value>bar</value>
+                                        </property>
+                                    </javaApiLinks>
+
                         </configuration>
                     </execution>
                 </executions>
@@ -354,6 +362,14 @@
                 <version>${javadoc.version}</version>
                 <configuration>
                     <aggregate>true</aggregate>
+                    <!-- workaround for https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+                                    <javaApiLinks>
+                                        <property>
+                                            <name>foo</name>
+                                            <value>bar</value>
+                                        </property>
+                                    </javaApiLinks>
+
                 </configuration>
             </plugin>
             <!-- commented this plugin out because cannot run offline (e.g. 
