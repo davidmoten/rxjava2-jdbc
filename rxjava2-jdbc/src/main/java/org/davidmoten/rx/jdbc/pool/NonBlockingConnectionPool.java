@@ -294,7 +294,7 @@ public final class NonBlockingConnectionPool implements Pool<Connection> {
         public T build() {
             if (scheduler == null) {
                 ExecutorService executor = Executors.newFixedThreadPool(maxPoolSize);
-                scheduler = new ExecutorScheduler(executor);
+                scheduler = new ExecutorScheduler(executor, false);
             }
             if (url != null) {
                 cp = Util.connectionProvider(url, properties);
