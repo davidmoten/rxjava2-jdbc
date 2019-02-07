@@ -105,6 +105,14 @@
                         </goals>
                         <configuration>
                             <additionalparam>-Xdoclint:none</additionalparam>
+                                    <!-- workaround for https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+                                    <javaApiLinks>
+                                        <property>
+                                            <name>foo</name>
+                                            <value>bar</value>
+                                        </property>
+                                    </javaApiLinks>
+
                         </configuration>
                     </execution>
                 </executions>
