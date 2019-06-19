@@ -111,6 +111,7 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
                     .doOnNext(tx -> {
                         if (tx.isComplete()) {
                             ((TxImpl<T>) tx).connection().commit();
+                            ((TxImpl<T>) tx).connection().close();
                         }
                     });
         });
