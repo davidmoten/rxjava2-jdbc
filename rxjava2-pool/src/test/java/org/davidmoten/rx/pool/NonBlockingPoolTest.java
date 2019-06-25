@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.log4j.Logger;
 import org.davidmoten.rx.internal.FlowableSingleDeferUntilRequest;
 import org.junit.Test;
 
@@ -32,6 +33,8 @@ import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.TestSubscriber;
 
 public class NonBlockingPoolTest {
+
+    private static final Logger log = Logger.getLogger(NonBlockingPoolTest.class);
 
     @Test
     public void testMaxIdleTime() throws InterruptedException {
@@ -58,6 +61,58 @@ public class NonBlockingPoolTest {
         s.advanceTimeBy(1, TimeUnit.MINUTES);
         s.triggerActions();
         assertEquals(1, disposed.get());
+    }
+
+    @Test
+    public void testMaxIdleTimeoutRemovesFromPool() throws InterruptedException {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger count = new AtomicInteger();
+        AtomicInteger disposed = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthCheck(n -> true) //
+                .maxSize(2) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .disposer(n -> disposed.incrementAndGet()) //
+                .scheduler(s) //
+                .build();
+        TestSubscriber<Member<Integer>> ts = new FlowableSingleDeferUntilRequest<>( //
+                pool.member()) //
+                        .doOnNext(m -> log.info("checked out " + m.value())) //
+                        .doOnNext(m -> m.checkin()) //
+                        .doOnNext(System.out::println) //
+                        .doOnRequest(t -> System.out.println("test request=" + t)) //
+                        .test(1);
+        s.triggerActions();
+        ts.assertValueCount(1);
+        assertEquals(0, disposed.get());
+        s.advanceTimeBy(1, TimeUnit.MINUTES);
+        s.triggerActions();
+        assertEquals(1, disposed.get());
+        // get another member from pool, should not be the disposed one
+        {
+            TestSubscriber<Member<Integer>> ts2 = new FlowableSingleDeferUntilRequest<>( //
+                    pool.member()) //
+                            .doOnNext(m -> log.info("checked out " + m.value())) //
+                            .doOnNext(System.out::println) //
+                            .doOnRequest(t -> System.out.println("test request=" + t)) //
+                            .test(1);
+            s.triggerActions();
+            ts2.assertValueCount(1);
+            assertEquals(2, count.get());
+        }
+        
+        {
+            TestSubscriber<Member<Integer>> ts2 = new FlowableSingleDeferUntilRequest<>( //
+                    pool.member()) //
+                            .doOnNext(m -> log.info("checked out " + m.value())) //
+                            .doOnNext(System.out::println) //
+                            .doOnRequest(t -> System.out.println("test request=" + t)) //
+                            .test(1);
+            s.triggerActions();
+            ts2.assertValueCount(1);
+            assertEquals(3, count.get());
+        }
     }
 
     @Test
@@ -430,17 +485,17 @@ public class NonBlockingPoolTest {
     public void testConcurrentUseWithPoolSizeOf1DoesNotHang() {
         checkDoesNotHang(1);
     }
-    
+
     @Test
     public void testConcurrentUseWithPoolSizeOf2DoesNotHang() {
         checkDoesNotHang(2);
     }
-    
+
     @Test
     public void testConcurrentUseWithPoolSizeOf10DoesNotHang() {
         checkDoesNotHang(10);
     }
-    
+
     private static void checkDoesNotHang(int poolSize) {
         Scheduler io = Schedulers.from(Executors.newFixedThreadPool(2));
         AtomicInteger count = new AtomicInteger();
