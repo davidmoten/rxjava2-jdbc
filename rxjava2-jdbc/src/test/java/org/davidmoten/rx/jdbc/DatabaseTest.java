@@ -3474,6 +3474,17 @@ public class DatabaseTest {
                 .assertValues(1, 2) //
                 .assertComplete();
     }
+    
+    @Test
+    public void testMapInTransactionIssue35() {
+        Database.test() //
+                .select(Person10.class) //
+                .transacted() //
+                .valuesOnly() //
+                .get() //
+                .map(p -> p.name()) //
+                .blockingForEach(System.out::println);
+    }
 
     private static final class Plugins {
 

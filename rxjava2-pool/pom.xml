@@ -69,6 +69,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.davidmoten</groupId>
+            <artifactId>state-machine-generator</artifactId>
+            <version>0.2.15</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
