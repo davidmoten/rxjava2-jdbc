@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
+import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.exceptions.UndeliverableException;
@@ -54,6 +55,36 @@ public class NonBlockingPoolTest {
                         .test(1);
         s.triggerActions();
         ts.assertValueCount(1);
+        assertEquals(0, disposed.get());
+        s.advanceTimeBy(1, TimeUnit.MINUTES);
+        s.triggerActions();
+        assertEquals(1, disposed.get());
+    }
+    
+    @Test
+    public void testMaxIdleTimeResetIfUsed() throws InterruptedException {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger count = new AtomicInteger();
+        AtomicInteger disposed = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthCheck(n -> true) //
+                .maxSize(1) //
+                .maxIdleTime(2, TimeUnit.MINUTES) //
+                .disposer(n -> disposed.incrementAndGet()) //
+                .scheduler(s) //
+                .build();
+        Single<Member<Integer>> member = pool.member() //
+                .doOnSuccess(System.out::println) //
+                .doOnSuccess(m -> m.checkin());
+        member.subscribe();
+        s.triggerActions();
+        assertEquals(0, disposed.get());
+        s.advanceTimeBy(1, TimeUnit.MINUTES);
+        s.triggerActions();
+        member.subscribe();
+        s.advanceTimeBy(1, TimeUnit.MINUTES);
+        s.triggerActions();
         assertEquals(0, disposed.get());
         s.advanceTimeBy(1, TimeUnit.MINUTES);
         s.triggerActions();

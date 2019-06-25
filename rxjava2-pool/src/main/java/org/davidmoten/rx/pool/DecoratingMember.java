@@ -96,9 +96,11 @@ final class DecoratingMember<T> implements Member<T> {
         long maxIdleTimeMs = memberSingle.pool.maxIdleTimeMs;
         if (maxIdleTimeMs > 0) {
             // TODO make `this` runnable to save lambda allocation
-            scheduled = memberSingle.pool.scheduler.scheduleDirect(() -> {
-                memberSingle.addToBeReleased(this);
-            }, maxIdleTimeMs, TimeUnit.MILLISECONDS);
+            scheduled = memberSingle.pool.scheduler //
+                    .scheduleDirect( //
+                            () -> memberSingle.addToBeReleased(this), //
+                            maxIdleTimeMs, //
+                            TimeUnit.MILLISECONDS);
             log.debug("scheduled release in {}ms of {}", maxIdleTimeMs, this);
         }
     }

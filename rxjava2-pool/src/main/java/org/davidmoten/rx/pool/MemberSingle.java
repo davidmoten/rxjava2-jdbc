@@ -147,8 +147,8 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
             int missed = 1;
             while (true) {
                 // we schedule release of members even if no requests exist
-                scheduleReleases();
-                scheduleChecks();
+                scheduleReleasesNoDelay();
+                scheduleChecksNoDelay();
 
                 Observers<T> obs = observers.get();
                 log.debug("requested={}", obs.requested);
@@ -174,7 +174,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
                             break;
                         } else {
                             // only schedule member initialization if there is enough demand,
-                            boolean used = trySchedulingInitialization(r, e, m2);
+                            boolean used = trySchedulingInitializationNoDelay(r, e, m2);
                             if (!used) {
                                 break;
                             }
@@ -197,9 +197,9 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
                     }
                     // schedule release immediately of any member
                     // queued for releasing
-                    scheduleReleases();
+                    scheduleReleasesNoDelay();
                     // schedule check of any member queued for checking
-                    scheduleChecks();
+                    scheduleChecksNoDelay();
                 }
                 missed = wip.addAndGet(-missed);
                 if (missed == 0) {
@@ -209,7 +209,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
         }
     }
 
-    private boolean trySchedulingInitialization(long r, long e, final DecoratingMember<T> m) {
+    private boolean trySchedulingInitializationNoDelay(long r, long e, final DecoratingMember<T> m) {
         // check initializeScheduled using a CAS loop
         while (true) {
             long cs = initializeScheduled.get();
@@ -234,7 +234,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
         return pool.idleTimeBeforeHealthCheckMs > 0 && now - m.lastCheckTime() >= pool.idleTimeBeforeHealthCheckMs;
     }
 
-    private void scheduleChecks() {
+    private void scheduleChecksNoDelay() {
         DecoratingMember<T> m;
         while ((m = toBeChecked.poll()) != null) {
             if (!m.isReleasing()) {
@@ -247,7 +247,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
         }
     }
 
-    private void scheduleReleases() {
+    private void scheduleReleasesNoDelay() {
         DecoratingMember<T> m;
         while ((m = toBeReleased.poll()) != null) {
             log.debug("scheduling release of {}", m);
@@ -264,7 +264,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
         // checkout-checkins could otherwise provoke stack
         // overflow)
 
-        // advance counter so the next and choose an Observer to emit to (round robin)
+        // advance counter to the next and choose an Observer to emit to (round robin)
 
         int index = obs.index;
         MemberSingleObserver<T> o = obs.observers[index];
