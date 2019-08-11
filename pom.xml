@@ -9,7 +9,7 @@
         <version>0.1</version>
     </parent>
     <artifactId>rxjava2-jdbc-parent</artifactId>
-    <version>0.2.4</version>
+    <version>0.2.5-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <packaging>pom</packaging>
     <url>http://github.com/davidmoten/rxjava2-jdbc</url>
