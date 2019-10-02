@@ -289,7 +289,7 @@ public final class Database implements AutoCloseable {
             } finally {
                 member.checkin();
             }
-        }).toCompletable();
+        }).ignoreElement();
     }
 
 }
