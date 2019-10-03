@@ -490,7 +490,7 @@ public class NonBlockingPoolTest {
                         .doOnSuccess((Member<Integer> m) -> {
                             checkouts.incrementAndGet();
                             m.checkin();
-                        }).toCompletable()) //
+                        }).ignoreElement()) //
                 .blockingGet(60, TimeUnit.SECONDS);
         assertNull(result);
     }

@@ -846,7 +846,7 @@ Completable completable = db.member()
        // don't close the connection, just hand it back to the pool
        // and don't use this member again!
        member.checkin();
-     }).toCompletable();
+     }).ignoreElements();
 ```
 
 == Logging
