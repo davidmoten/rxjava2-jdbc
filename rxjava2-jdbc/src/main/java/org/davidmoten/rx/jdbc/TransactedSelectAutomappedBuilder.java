@@ -96,7 +96,8 @@ public final class TransactedSelectAutomappedBuilder<T> {
                     sb.selectBuilder.sql, //
                     sb.selectBuilder.fetchSize, //
                     Util.autoMap(sb.cls), //
-                    false) //
+                    false, //
+                    sb.selectBuilder.queryTimeoutSec) //
                     .materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                     .doOnNext(tx -> {

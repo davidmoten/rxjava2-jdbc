@@ -64,6 +64,7 @@ public enum Util {
     ;
 
     private static final Logger log = LoggerFactory.getLogger(Util.class);
+    public static final int QUERY_TIMEOUT_NOT_SET = -1;
 
     /**
      * Sets parameters for the {@link PreparedStatement}.
@@ -287,38 +288,42 @@ public enum Util {
         closePreparedStatementAndConnection(stmt.stmt);
     }
 
-    static NamedPreparedStatement prepare(Connection con, String sql) throws SQLException {
-        return prepare(con, 0, sql);
+    static NamedPreparedStatement prepare(Connection con, String sql, int queryTimeoutSec) throws SQLException {
+        return prepare(con, 0, sql, queryTimeoutSec);
     }
 
-    static NamedPreparedStatement prepare(Connection con, int fetchSize, String sql) throws SQLException {
+    static NamedPreparedStatement prepare(Connection con, int fetchSize, String sql, int queryTimeoutSec) throws SQLException {
         // TODO can we parse SqlInfo through because already calculated by
         // builder?
         SqlInfo info = SqlInfo.parse(sql);
         log.debug("preparing statement: {}", sql);
-        return prepare(con, fetchSize, info);
+        return prepare(con, fetchSize, info, queryTimeoutSec);
     }
 
-    static PreparedStatement prepare(Connection connection, int fetchSize, String sql, List<Parameter> parameters)
+    static PreparedStatement prepare(Connection connection, int fetchSize, String sql, List<Parameter> parameters, int queryTimeoutSec)
             throws SQLException {
         // should only get here when parameters contains a collection
         SqlInfo info = SqlInfo.parse(sql, parameters);
         log.debug("preparing statement: {}", info.sql());
-        return createPreparedStatement(connection, fetchSize, info);
+        return createPreparedStatement(connection, fetchSize, info, queryTimeoutSec);
     }
 
-    private static NamedPreparedStatement prepare(Connection con, int fetchSize, SqlInfo info) throws SQLException {
-        PreparedStatement ps = createPreparedStatement(con, fetchSize, info);
+    private static NamedPreparedStatement prepare(Connection con, int fetchSize, SqlInfo info, int queryTimeoutSec) throws SQLException {
+        PreparedStatement ps = createPreparedStatement(con, fetchSize, info, queryTimeoutSec);
         return new NamedPreparedStatement(ps, info.names());
     }
 
-    private static PreparedStatement createPreparedStatement(Connection con, int fetchSize, SqlInfo info)
+    private static PreparedStatement createPreparedStatement(Connection con, int fetchSize, SqlInfo info, int queryTimeoutSec)
             throws SQLException {
         PreparedStatement ps = null;
         try {
             ps = con.prepareStatement(info.sql(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             if (fetchSize > 0) {
                 ps.setFetchSize(fetchSize);
+            }
+
+            if (queryTimeoutSec != QUERY_TIMEOUT_NOT_SET) {
+                ps.setQueryTimeout(queryTimeoutSec);
             }
         } catch (RuntimeException | SQLException e) {
             if (ps != null) {

@@ -137,7 +137,8 @@ public final class TransactedUpdateBuilder implements DependsOn<TransactedUpdate
                             ub.parameterGroupsToFlowable(), //
                             ub.sql, //
                             ub.batchSize, //
-                            false) //
+                            false, //
+                            ub.queryTimeoutSec) //
                             .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                             .doOnNext(tx -> {
                                 t[0] = ((TxImpl<Integer>) tx);

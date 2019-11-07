@@ -105,7 +105,8 @@ public final class TransactedSelectBuilder implements DependsOn<TransactedSelect
                     sb.sql, //
                     sb.fetchSize, //
                     mapper, //
-                    false) //
+                    false, //
+                    sb.queryTimeoutSec) //
                     .materialize() //
                     .flatMap(n -> Tx.toTx(n, connection.get(), db)) //
                     .doOnNext(tx -> {

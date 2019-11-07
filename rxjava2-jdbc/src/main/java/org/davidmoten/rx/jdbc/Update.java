@@ -28,18 +28,18 @@ final class Update {
     }
 
     static Flowable<Notification<Integer>> create(Single<Connection> connection,
-            Flowable<List<Object>> parameterGroups, String sql, int batchSize,
-            boolean eagerDispose) {
+                                                  Flowable<List<Object>> parameterGroups, String sql, int batchSize,
+                                                  boolean eagerDispose, int queryTimeoutSec) {
         return connection //
                 .toFlowable() //
-                .flatMap(con -> create(con, sql, parameterGroups, batchSize, eagerDispose), true,
+                .flatMap(con -> create(con, sql, parameterGroups, batchSize, eagerDispose, queryTimeoutSec), true,
                         1);
     }
 
     private static Flowable<Notification<Integer>> create(Connection con, String sql,
-            Flowable<List<Object>> parameterGroups, int batchSize, boolean eagerDispose) {
+                                                          Flowable<List<Object>> parameterGroups, int batchSize, boolean eagerDispose, int queryTimeoutSec) {
         log.debug("Update.create {}", sql);
-        Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql);
+        Callable<NamedPreparedStatement> resourceFactory = () -> Util.prepare(con, sql, queryTimeoutSec);
         final Function<NamedPreparedStatement, Flowable<Notification<Integer>>> flowableFactory;
         if (batchSize == 0) {
             flowableFactory = ps -> parameterGroups //
@@ -101,7 +101,7 @@ final class Update {
                 if (hasCollection) {
                     // create a new prepared statement with the collection ? substituted with
                     // ?s to match the size of the collection parameter
-                    ps2 = Util.prepare(ps.ps.getConnection(), 0, sql, params);
+                    ps2 = Util.prepare(ps.ps.getConnection(), 0, sql, params, ps.ps.getQueryTimeout());
                 } else {
                     ps2 = ps.ps;
                 }
