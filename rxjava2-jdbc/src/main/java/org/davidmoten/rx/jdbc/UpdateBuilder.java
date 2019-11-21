@@ -20,6 +20,7 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> implem
     private final Database db;
     Flowable<?> dependsOn;
     int batchSize = DEFAULT_BATCH_SIZE;
+    int queryTimeoutSec = Util.QUERY_TIMEOUT_NOT_SET;
 
     UpdateBuilder(String sql, Single<Connection> connections, Database db) {
         super(sql);
@@ -40,6 +41,12 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> implem
         return this;
     }
 
+    public UpdateBuilder queryTimeoutSec(int queryTimeoutSec) {
+        Preconditions.checkArgument(queryTimeoutSec >= 0);
+        this.queryTimeoutSec = queryTimeoutSec;
+        return this;
+    }
+
     /**
      * Returns a builder used to specify how to process the generated keys
      * {@link ResultSet}. Not all jdbc drivers support this functionality and
@@ -56,7 +63,7 @@ public final class UpdateBuilder extends ParametersBuilder<UpdateBuilder> implem
 
     public Flowable<Integer> counts() {
         return startWithDependency(
-                Update.create(connections, super.parameterGroupsToFlowable(), sql, batchSize, true).dematerialize());
+                Update.create(connections, super.parameterGroupsToFlowable(), sql, batchSize, true, queryTimeoutSec).dematerialize());
     }
 
     <T> Flowable<T> startWithDependency(@Nonnull Flowable<T> f) {

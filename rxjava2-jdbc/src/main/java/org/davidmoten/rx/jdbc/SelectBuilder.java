@@ -18,6 +18,7 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder>
     private final Database db;
 
     int fetchSize = 0; // default
+    int queryTimeoutSec = Util.QUERY_TIMEOUT_NOT_SET; //default
     private Flowable<?> dependsOn;
 
     SelectBuilder(String sql, Single<Connection> connection, Database db) {
@@ -43,6 +44,12 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder>
         return this;
     }
 
+    public SelectBuilder queryTimeoutSec(int timeoutSec) {
+        Preconditions.checkArgument(timeoutSec >= 0);
+        this.queryTimeoutSec = timeoutSec;
+        return this;
+    }
+
     public TransactedSelectBuilder transacted() {
         return new TransactedSelectBuilder(this, db);
     }
@@ -55,7 +62,7 @@ public final class SelectBuilder extends ParametersBuilder<SelectBuilder>
     public <T> Flowable<T> get(@Nonnull ResultSetMapper<? extends T> mapper) {
         Preconditions.checkNotNull(mapper, "mapper cannot be null");
         Flowable<List<Object>> pg = super.parameterGroupsToFlowable();
-        Flowable<T> f = Select.<T>create(connection, pg, sql, fetchSize, mapper, true);
+        Flowable<T> f = Select.<T>create(connection, pg, sql, fetchSize, mapper, true, queryTimeoutSec);
         if (dependsOn != null) {
             return dependsOn.ignoreElements().andThen(f);
         } else {
