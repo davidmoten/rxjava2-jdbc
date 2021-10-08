@@ -16,7 +16,7 @@ image:https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxj
 
 JDBC is so much simpler with _rxjava2-jdbc_.
 
-Status: _release candidates on Maven Central_
+Status: _published to Maven Central_
 
 Maven site reports are https://davidmoten.github.io/rxjava2-jdbc/index.html[here] including https://davidmoten.github.io/rxjava2-jdbc/apidocs/index.html[javadoc].
 
