@@ -1,6 +1,5 @@
 package org.davidmoten.rx.jdbc;
 
-import org.davidmoten.rx.jdbc.Select;
 import org.junit.Test;
 
 import com.github.davidmoten.junit.Asserts;
