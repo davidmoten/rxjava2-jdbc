@@ -48,13 +48,6 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
 
     final NonBlockingPool<T> pool;
 
-    // represents the number of outstanding member requests.
-    // the number is decremented when a new member value is
-    // initialized (a scheduled action with a subsequent drain call)
-    // or an existing value is available from the pool (queue) (and is then
-    // emitted).
-    // private final AtomicLong requested = new AtomicLong();
-
     private final AtomicLong initializeScheduled = new AtomicLong();
 
     // mutable
