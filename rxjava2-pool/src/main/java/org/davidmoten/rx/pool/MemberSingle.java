@@ -472,10 +472,15 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
     }
 
     private static final class Observers<T> {
+        
         final MemberSingleObserver<T>[] observers;
+        
         // an observer is active until it is emitted to
         final boolean[] active;
+        
+        // the number of true values in the active array
         final int activeCount;
+        
         final int index;
         final int requested;
 
