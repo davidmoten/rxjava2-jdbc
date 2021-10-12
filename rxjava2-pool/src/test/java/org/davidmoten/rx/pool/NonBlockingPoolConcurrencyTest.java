@@ -13,7 +13,7 @@ import io.reactivex.schedulers.Schedulers;
 
 public class NonBlockingPoolConcurrencyTest {
 
-    @Test
+    @Test(timeout=30000)
     public void memberSingleCoverage() throws Exception {
         // attempt to get coverage of x.activeCount > 0 expression in tryEmit
         // has not been successful but covers the other statements in tryEmit
