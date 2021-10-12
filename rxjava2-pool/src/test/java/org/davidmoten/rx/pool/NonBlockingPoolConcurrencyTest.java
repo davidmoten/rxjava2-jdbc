@@ -1,6 +1,7 @@
 package org.davidmoten.rx.pool;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -13,13 +14,13 @@ import io.reactivex.schedulers.Schedulers;
 
 public class NonBlockingPoolConcurrencyTest {
 
-    @Test(timeout=30000)
+    @Test
     public void memberSingleCoverage() throws Exception {
         // attempt to get coverage of x.activeCount > 0 expression in tryEmit
         // has not been successful but covers the other statements in tryEmit
         AtomicLong count = new AtomicLong();
         AtomicLong disposed = new AtomicLong();
-        int poolSize = 4;
+        int poolSize = 5;
         try (Pool<Long> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
                 .healthCheck(n -> true) //
@@ -27,14 +28,22 @@ public class NonBlockingPoolConcurrencyTest {
                 .maxIdleTime(1, TimeUnit.MINUTES) //
                 .disposer(n -> disposed.incrementAndGet()) //
                 .build()) {
+            long n = Long.parseLong(System.getProperty("n", "100000"));
+            long[] c = new long[1];
             Flowable //
-                    .rangeLong(0, 100000) //
-                    .flatMapSingle(x -> pool.member(), false, 4) //
+                    .rangeLong(0, n) //
+                    .flatMapSingle(x -> pool.member(), false, poolSize * 2) //
+                    .doOnNext(x -> c[0]++) //
                     .observeOn(Schedulers.from(Executors.newFixedThreadPool(1))) //
                     .doOnNext(member -> member.checkin()) //
+                    .timeout(10, TimeUnit.SECONDS) //
+                    .doOnError(e -> {
+                        System.out.println("emitted " + c[0] + ", count=" + count);
+                    }) //
                     .count() //
                     .blockingGet();
-            assertEquals(poolSize, count.get());
+            // note that the last member in particular may
+            assertEquals(c[0], n);
             assertEquals(0, disposed.get());
         }
         assertEquals(poolSize, disposed.get());
