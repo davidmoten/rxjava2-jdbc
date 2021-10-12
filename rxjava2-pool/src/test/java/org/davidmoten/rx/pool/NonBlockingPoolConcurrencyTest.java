@@ -1,7 +1,6 @@
 package org.davidmoten.rx.pool;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +19,7 @@ public class NonBlockingPoolConcurrencyTest {
         // has not been successful but covers the other statements in tryEmit
         AtomicLong count = new AtomicLong();
         AtomicLong disposed = new AtomicLong();
-        int poolSize = 5;
+        int poolSize = 4;
         try (Pool<Long> pool = NonBlockingPool //
                 .factory(() -> count.incrementAndGet()) //
                 .healthCheck(n -> true) //
@@ -32,9 +31,11 @@ public class NonBlockingPoolConcurrencyTest {
             long[] c = new long[1];
             Flowable //
                     .rangeLong(0, n) //
-                    .flatMapSingle(x -> pool.member(), false, poolSize * 2) //
+                    .flatMapSingle(x -> pool.member(), false, poolSize) //
                     .doOnNext(x -> c[0]++) //
-                    .observeOn(Schedulers.from(Executors.newFixedThreadPool(1))) //
+                    // have to keep the observeOn buffer small so members don't get buffered
+                    // and not checked in
+                    .observeOn(Schedulers.from(Executors.newFixedThreadPool(1)), false, 1) //
                     .doOnNext(member -> member.checkin()) //
                     .timeout(10, TimeUnit.SECONDS) //
                     .doOnError(e -> {
