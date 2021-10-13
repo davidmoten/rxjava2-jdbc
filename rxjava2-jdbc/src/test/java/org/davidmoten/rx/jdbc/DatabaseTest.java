@@ -1253,6 +1253,20 @@ public class DatabaseTest {
     }
 
     @Test
+    public void testAutoMapToInterfaceWithEnum() {
+        try (Database db = db()) {
+            db //
+                    .select("select name from person") //
+                    .autoMap(Person.class) //
+                    .map(p -> p.name()) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValueCount(3) //
+                    .assertComplete();
+        }
+    }
+
+    @Test
     public void testAutoMapToInterfaceWithoutAnnotationstsError() {
         try (Database db = db()) {
             db //
@@ -1935,7 +1949,7 @@ public class DatabaseTest {
                     .assertComplete();
         }
     }
-    
+
     @Test
     public void testAutomapClobIssue32() {
         try (Database db = db()) {
@@ -1955,10 +1969,11 @@ public class DatabaseTest {
                     .assertComplete();
         }
     }
-    
+
     private static interface PersonClob {
         @Column
         String name();
+
         @Column
         String document();
     }
@@ -3397,7 +3412,7 @@ public class DatabaseTest {
         db().apply(con -> {
             try (PreparedStatement ps = con
                     .prepareStatement("select count(*) from person where name in (?)")) {
-                ps.setArray(1, con.createArrayOf("VARCHAR", new String[] { "FRED", "JOSEPH" }));
+                ps.setArray(1, con.createArrayOf("VARCHAR", new String[] {"FRED", "JOSEPH"}));
                 ResultSet rs = ps.executeQuery();
                 rs.next();
                 return rs.getInt(1);
@@ -3474,7 +3489,7 @@ public class DatabaseTest {
                 .assertValues(1, 2) //
                 .assertComplete();
     }
-    
+
     @Test
     public void testMapInTransactionIssue35() {
         Database.test() //
@@ -3519,7 +3534,7 @@ public class DatabaseTest {
             assertTrue(e.getMessage().toLowerCase().contains("no suitable driver"));
         }
     }
-    
+
     @Test
     public void testAutoMapInTransactionIssue35() {
         try (Database db = Database.test()) {
@@ -3532,6 +3547,53 @@ public class DatabaseTest {
                     .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
                     .assertValues("FRED", "JOSEPH", "MARMADUKE") //
                     .assertComplete();
+        }
+    }
+
+    @Test
+    public void testAutoMapToEnum() {
+        try (Database db = Database.test()) {
+            db.select(PersonWithEnum.class) //
+                    .get(x -> x.gender()) //
+                    .test() //
+                    .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                    .assertValues(Gender.MALE, Gender.FEMALE, Gender.MALE) //
+                    .assertComplete();
+        }
+    }
+
+    public enum Gender {
+        MALE("M"), FEMALE("F"), OTHER("O");
+
+        private final String code;
+
+        private Gender(String code) {
+            this.code = code;
+        }
+
+        public static Gender fromCode(String code) {
+            if (code == null) {
+                return null;
+            }
+            for (Gender g : Gender.values()) {
+                if (code.equals(g.code)) {
+                    return g;
+                }
+            }
+            return OTHER;
+        }
+    }
+
+    @Query("select name, gender from person order by name")
+    public interface PersonWithEnum {
+        @Column
+        String name();
+
+        @Column("gender")
+        String genderCharacter();
+
+        default Gender gender() {
+            return Gender.fromCode(genderCharacter());
         }
     }
 

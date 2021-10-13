@@ -1,7 +1,7 @@
-create table person (name varchar(50) primary key, score int not null, date_of_birth date, registered timestamp);
-insert into person(name,score) values('FRED',21);
-insert into person(name,score) values('JOSEPH',34);
-insert into person(name,score) values('MARMADUKE',25);
+create table person (name varchar(50) primary key, gender char(1), score int not null, date_of_birth date, registered timestamp);
+insert into person(name,gender,score) values('FRED','M',21);
+insert into person(name,gender,score) values('JOSEPH','F',34);
+insert into person(name,gender,score) values('MARMADUKE','M',25);
 
 create table address (address_id int primary key, full_address varchar(255) not null);
 insert into address(address_id, full_address) values(1,'57 Something St, El Barrio, Big Place');
