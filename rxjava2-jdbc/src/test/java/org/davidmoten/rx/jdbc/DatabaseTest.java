@@ -3576,7 +3576,7 @@ public class DatabaseTest {
                 return null;
             }
             for (Gender g : Gender.values()) {
-                if (code.equals(g.code)) {
+                if (g.code.equals(code)) {
                     return g;
                 }
             }
