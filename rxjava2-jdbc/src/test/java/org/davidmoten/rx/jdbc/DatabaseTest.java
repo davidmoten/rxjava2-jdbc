@@ -3551,6 +3551,7 @@ public class DatabaseTest {
     }
 
     @Test
+    @Ignore
     public void testAutoMapToEnum() {
         try (Database db = Database.test()) {
             db.select(PersonWithEnum.class) //
