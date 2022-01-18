@@ -22,7 +22,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.sql.Statement;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
@@ -72,7 +71,7 @@ import org.davidmoten.rx.jdbc.tuple.Tuple6;
 import org.davidmoten.rx.jdbc.tuple.Tuple7;
 import org.davidmoten.rx.jdbc.tuple.TupleN;
 import org.davidmoten.rx.pool.PoolClosedException;
-import org.h2.jdbc.JdbcSQLException;
+import org.h2.jdbc.JdbcSQLSyntaxErrorException;
 import org.hsqldb.jdbc.JDBCBlobFile;
 import org.hsqldb.jdbc.JDBCClobFile;
 import org.junit.Assert;
@@ -1106,7 +1105,7 @@ public class DatabaseTest {
                 .count() //
                 .test() //
                 .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
-                .assertError(JdbcSQLException.class);
+                .assertError(JdbcSQLSyntaxErrorException.class);
     }
 
     @Test
@@ -2270,9 +2269,9 @@ public class DatabaseTest {
     }
 
     @Test
-    public void testUpdateTimeParameter() {
+    public void testUpdateTimeParameter() throws InterruptedException {
         try (Database db = db()) {
-            Time t = new Time(1234);
+            Timestamp t = new Timestamp(1234);
             db.update("update person set registered=?") //
                     .parameter(t) //
                     .counts() //
