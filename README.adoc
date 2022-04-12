@@ -172,12 +172,14 @@ Tuples are defined from `Tuple2` to `Tuple7` and for above that to `TupleN`.
 
 == Manual mapping
 
-You can map each row of the JDBC ResultSet to your own object like this:
+You can map each row of the JDBC ResultSet to your own object using the `get` method:
 
 ```java
 Database db = Database.test();
 db.select("select name, score from person order by name")
   .get(rs -> new Person(rs.getString("name"), rs.getInt("score")))
+  .doOnNext(System.out::println) //
+  .subscribe();
 ```
 By the way it is definitely not a good idea to hang on to a bunch of rs objects as their state will always be that of the latest read row. For this reason you immediately map it to something else either by manually mapping or automapping.
 
