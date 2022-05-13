@@ -3561,6 +3561,24 @@ public class DatabaseTest {
                     .assertComplete();
         }
     }
+    
+    @Test
+    public void testClosureOfTransactedSelectsIssue46() {
+        try (Database db = db()) {
+            for (int i = 0; i < 10; i++) {
+                db //
+                        .select("select name, score from person") //
+                        .transacted() //
+                        .valuesOnly() //
+                        .autoMap(Person2.class) //
+                        .doOnNext(System.out::println) //
+                        .test() //
+                        .awaitDone(TIMEOUT_SECONDS, TimeUnit.SECONDS) //
+                        .assertValueCount(3) //
+                        .assertComplete();
+                }
+        }
+    }
 
     public enum Gender {
         MALE("M"), FEMALE("F"), OTHER("O");
