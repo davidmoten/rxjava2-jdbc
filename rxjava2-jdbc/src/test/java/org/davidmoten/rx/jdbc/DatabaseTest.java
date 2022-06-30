@@ -43,8 +43,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.davidmoten.rx.jdbc.annotations.Column;
 import org.davidmoten.rx.jdbc.annotations.Index;
 import org.davidmoten.rx.jdbc.annotations.Query;
@@ -1879,11 +1880,11 @@ public class DatabaseTest {
     }
 
     private static void info() {
-        LogManager.getRootLogger().setLevel(Level.INFO);
+        Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.INFO);
     }
 
     private static void debug() {
-        LogManager.getRootLogger().setLevel(Level.INFO);
+        Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.DEBUG);
     }
 
     @Test
