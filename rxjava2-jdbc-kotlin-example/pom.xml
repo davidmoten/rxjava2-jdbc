@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.github.davidmoten</groupId>
         <artifactId>rxjava2-jdbc-parent</artifactId>
-        <version>0.2.11</version>
+        <version>0.2.12-SNAPSHOT</version>
     </parent>
     <artifactId>rxjava2-jdbc-kotlin-example</artifactId>
 
