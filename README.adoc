@@ -28,6 +28,7 @@ Use maven:
 ```bash
 mvn clean install
 ```
+The project builds fine on Java 8 to 17.
 
 == Getting started
 Use this maven dependency:
@@ -45,7 +46,7 @@ If you want to use the built-in test database then add the Apache Derby dependen
 <dependency>
   <groupId>org.apache.derby</groupId>
   <artifactId>derby</artifactId>
-  <version>10.14.1.0</version>
+  <version>10.14.2.0</version>
 </dependency>
 ```
 
@@ -70,7 +71,7 @@ To use the built-in test database you will need the Apache Derby dependency:
 <dependency>
   <groupId>org.apache.derby</groupId>
   <artifactId>derby</artifactId>
-  <version>10.14.1.1</version>
+  <version>10.14.2.0</version>
 </dependency>
 ```
 
