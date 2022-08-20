@@ -75,7 +75,7 @@ To use the built-in test database you will need the Apache Derby dependency:
 </dependency>
 ```
 
-The test database has a few tables (see link:src/main/resources/database-test.sql[script]) including `Person` and `Address` with three rows in `Person` and two rows in `Address`:
+The test database has a few tables (see link:rxjava2-jdbc/src/main/resources/database-test.sql[script]) including `Person` and `Address` with three rows in `Person` and two rows in `Address`:
 
 image::https://raw.githubusercontent.com/davidmoten/rxjava2-jdbc/master/rxjava2-jdbc/src/docs/tables.png?raw=true[schema]
 
