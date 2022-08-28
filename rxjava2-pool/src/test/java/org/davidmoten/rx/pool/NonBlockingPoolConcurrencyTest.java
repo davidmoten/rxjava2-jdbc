@@ -35,7 +35,7 @@ public class NonBlockingPoolConcurrencyTest {
                     .doOnNext(x -> c[0]++) //
                     // have to keep the observeOn buffer small so members don't get buffered
                     // and not checked in
-                    .observeOn(Schedulers.from(Executors.newFixedThreadPool(1)), false, 1) //
+                    .observeOn(Schedulers.from(Executors.newFixedThreadPool(poolSize)), false, 1) //
                     .doOnNext(member -> member.checkin()) //
                     .timeout(10, TimeUnit.SECONDS) //
                     .doOnError(e -> {

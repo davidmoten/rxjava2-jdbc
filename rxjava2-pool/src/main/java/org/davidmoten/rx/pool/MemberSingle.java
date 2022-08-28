@@ -1,6 +1,8 @@
 package org.davidmoten.rx.pool;
 
 import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -22,21 +24,26 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.MpscLinkedQueue;
+import io.reactivex.internal.util.EmptyComponent;
 import io.reactivex.plugins.RxJavaPlugins;
+
 
 final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
 
-    final AtomicReference<Observers<T>> observers;
+    final Observers<T> observers;
 
     private static final Logger log = LoggerFactory.getLogger(MemberSingle.class);
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    static final Observers EMPTY = new Observers(new MemberSingleObserver[0], new boolean[0], 0, 0, 0);
+    // sentinel object representing remove all observers that is added to
+    // toBeRemoved queue
+    private final MemberSingleObserver<T> removeAll;
 
     private final SimplePlainQueue<DecoratingMember<T>> initializedAvailable;
     private final SimplePlainQueue<DecoratingMember<T>> notInitialized;
     private final SimplePlainQueue<DecoratingMember<T>> toBeReleased;
     private final SimplePlainQueue<DecoratingMember<T>> toBeChecked;
+    private final SimplePlainQueue<MemberSingleObserver<T>> toBeAdded;
+    private final SimplePlainQueue<MemberSingleObserver<T>> toBeRemoved;
 
     private final AtomicInteger wip = new AtomicInteger();
     private final DecoratingMember<T>[] members;
@@ -53,21 +60,23 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
     // mutable
     private volatile boolean cancelled;
 
-    @SuppressWarnings("unchecked")
     MemberSingle(NonBlockingPool<T> pool) {
         Preconditions.checkNotNull(pool);
-        this.initializedAvailable = new MpscLinkedQueue<DecoratingMember<T>>();
-        this.notInitialized = new MpscLinkedQueue<DecoratingMember<T>>();
-        this.toBeReleased = new MpscLinkedQueue<DecoratingMember<T>>();
-        this.toBeChecked = new MpscLinkedQueue<DecoratingMember<T>>();
+        this.notInitialized = new MpscLinkedQueue<>();
+        this.initializedAvailable = new MpscLinkedQueue<>();
+        this.toBeReleased = new MpscLinkedQueue<>();
+        this.toBeChecked = new MpscLinkedQueue<>();
+        this.toBeAdded = new MpscLinkedQueue<>();
+        this.toBeRemoved = new MpscLinkedQueue<>();
         this.members = createMembersArray(pool.maxSize, pool.checkinDecorator);
         for (DecoratingMember<T> m : members) {
             notInitialized.offer(m);
         }
         this.scheduler = pool.scheduler;
         this.createRetryIntervalMs = pool.createRetryIntervalMs;
-        this.observers = new AtomicReference<>(EMPTY);
+        this.observers = new Observers<T>();
         this.pool = pool;
+        this.removeAll = new MemberSingleObserver<T>(EmptyComponent.INSTANCE, this);
     }
 
     private DecoratingMember<T>[] createMembersArray(int poolMaxSize,
@@ -82,27 +91,16 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
 
     @Override
     protected void subscribeActual(SingleObserver<? super Member<T>> observer) {
+        log.debug("subscribeActual");
         // the action of checking out a member from the pool is implemented as a
         // subscription to the singleton MemberSingle
-        MemberSingleObserver<T> m = new MemberSingleObserver<T>(observer, this);
-        observer.onSubscribe(m);
+        MemberSingleObserver<T> o = new MemberSingleObserver<T>(observer, this);
+        observer.onSubscribe(o);
         if (pool.isClosed()) {
             observer.onError(new PoolClosedException());
             return;
         }
-        add(m);
-        if (m.isDisposed()) {
-            remove(m);
-        } else {
-            // atomically change requested
-            while (true) {
-                Observers<T> a = observers.get();
-                if (observers.compareAndSet(a, a.withRequested(a.requested + 1))) {
-                    break;
-                }
-            }
-        }
-        log.debug("subscribed");
+        toBeAdded.offer(o);
         drain();
     }
 
@@ -112,7 +110,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
 
     public void checkin(Member<T> member, boolean decrementInitializeScheduled) {
         log.debug("checking in {}", member);
-        DecoratingMember<T> d = ((DecoratingMember<T>) member);
+        DecoratingMember<T> d = (DecoratingMember<T>) member;
         d.scheduleRelease();
         d.markAsChecked();
         initializedAvailable.offer((DecoratingMember<T>) member);
@@ -139,19 +137,19 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
             log.debug("drain loop starting");
             int missed = 1;
             while (true) {
-                // we schedule release of members even if no requests exist
+                // we add observers or schedule release of members even if no requests exist
+                removeObservers();
+                addObservers();
+
                 scheduleReleasesNoDelay();
                 scheduleChecksNoDelay();
 
-                Observers<T> obs = observers.get();
+                Observers<T> obs = observers;
                 log.debug("requested={}", obs.requested);
                 // max we can emit is the number of active (available) resources in pool
-                long r = Math.min(obs.activeCount, obs.requested);
+                long r = Math.min(obs.readyCount, obs.requested);
                 long e = 0; // emitted
-                // record number of attempted emits in case all observers have been cancelled
-                // while are in the loop and we want to break
-                long attempts = 0;
-                while (e != r && attempts != obs.activeCount) {
+                while (e != r && obs.readyCount > 0) {
                     if (cancelled) {
                         disposeAll();
                         return;
@@ -180,17 +178,21 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
                         } else {
                             log.debug("no health check required for {}", m);
                             // this should not block because it just schedules emissions to observers
-                            if (tryEmit(obs, m)) {
-                                e++;
-                            } else {
-                                log.debug("no active observers");
-                            }
-                            attempts++;
+                            emit(obs, m);
+                            log.debug("emitted");
+                            e++;
                         }
                     }
+                    // else otherwise leave off the initializedAvailable queue because it is being
+                    // released or checked
+
+                    removeObservers();
+                    addObservers();
+                    
                     // schedule release immediately of any member
                     // queued for releasing
                     scheduleReleasesNoDelay();
+                    
                     // schedule check of any member queued for checking
                     scheduleChecksNoDelay();
                 }
@@ -198,6 +200,25 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
                 if (missed == 0) {
                     return;
                 }
+            }
+        }
+    }
+
+    private void addObservers() {
+        MemberSingleObserver<T> o;
+        while ((o = toBeAdded.poll()) != null) {
+            observers.add(o);
+        }
+    }
+
+    private void removeObservers() {
+        MemberSingleObserver<T> o;
+        while ((o = toBeRemoved.poll()) != null) {
+            if (o == removeAll) {
+                observers.removeAll();
+                return;
+            } else {
+                observers.remove(o);
             }
         }
     }
@@ -224,7 +245,12 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
     private boolean shouldPerformHealthCheck(final DecoratingMember<T> m) {
         long now = scheduler.now(TimeUnit.MILLISECONDS);
         log.debug("schedule.now={}, lastCheck={}", now, m.lastCheckTime());
-        return pool.idleTimeBeforeHealthCheckMs > 0 && now - m.lastCheckTime() >= pool.idleTimeBeforeHealthCheckMs;
+        return shouldPerformHealthCheck(m, pool.idleTimeBeforeHealthCheckMs, now);
+    }
+
+    @VisibleForTesting
+    static <T> boolean shouldPerformHealthCheck(DecoratingMember<T> m, long idleTimeBeforeHealthCheckMs, long now) {
+        return idleTimeBeforeHealthCheckMs > 0 && now - m.lastCheckTime() >= idleTimeBeforeHealthCheckMs;
     }
 
     private void scheduleChecksNoDelay() {
@@ -251,51 +277,29 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
         }
     }
 
-    private boolean tryEmit(Observers<T> obs, DecoratingMember<T> m) {
-        // note that tryEmit is protected by the drain method so will 
-        // not be run concurrently. We do have to be careful with 
-        // concurrent disposal of observers though.
-        
-        
+    private void emit(Observers<T> obs, DecoratingMember<T> m) {
+        // note that tryEmit is protected by the drain method so will
+        // not be run concurrently.
         // advance counter to the next and choose an Observer to emit to (round robin)
 
+        // a precondition of this method is that obs.activeCount > 0 (enforced by drain
+        // method)
+
         int index = obs.index;
-        // a precondition of this method is that obs.activeCount > 0 (enforced by drain method)
-        MemberSingleObserver<T> o = obs.observers[index];
-        MemberSingleObserver<T> oNext = o;
-        
-        // atomically bump up the index to select the next Observer by round-robin
-        // (if that entry has not been deleted in the meantime by disposal). Need 
-        // to be careful too that ALL observers have not been deleted via a race 
-        // with disposal.
-        while (true) {
-            Observers<T> x = observers.get();
-            if (x.index == index && x.activeCount > 0 && x.observers[index] == o) {
-                boolean[] active = new boolean[x.active.length];
-                System.arraycopy(x.active, 0, active, 0, active.length);
-                int nextIndex = (index + 1) % active.length;
-                while (nextIndex != index && !active[nextIndex]) {
-                    nextIndex = (nextIndex + 1) % active.length;
-                }
-                active[nextIndex] = false;
-                if (observers.compareAndSet(x,
-                        new Observers<T>(x.observers, active, x.activeCount - 1, nextIndex, x.requested - 1))) {
-                    oNext = x.observers[nextIndex];
-                    break;
-                }
-            } else {
-                // checkin because no active observers
-                m.checkin();
-                return false;
-            }
+        int nextIndex = (index + 1) % observers.ready.size();
+        while (nextIndex != index && !observers.ready.get(nextIndex)) {
+            nextIndex = (nextIndex + 1) % observers.ready.size();
         }
+        observers.ready.set(nextIndex, Boolean.FALSE);
+        observers.readyCount--;
+        observers.requested--;
+        MemberSingleObserver<T> oNext = obs.observers.get(nextIndex);
         // get a fresh worker each time so we jump threads to
         // break the stack-trace (a long-enough chain of
         // checkout-checkins could otherwise provoke stack
         // overflow)
         Worker worker = scheduler.createWorker();
         worker.schedule(new Emitter<T>(worker, oNext, m));
-        return true;
     }
 
     @VisibleForTesting
@@ -400,102 +404,69 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
         }
     }
 
-    void add(@NonNull MemberSingleObserver<T> inner) {
-        while (true) {
-            Observers<T> a = observers.get();
-            int n = a.observers.length;
-            @SuppressWarnings("unchecked")
-            MemberSingleObserver<T>[] b = new MemberSingleObserver[n + 1];
-            System.arraycopy(a.observers, 0, b, 0, n);
-            b[n] = inner;
-            boolean[] active = new boolean[n + 1];
-            System.arraycopy(a.active, 0, active, 0, n);
-            active[n] = true;
-            if (observers.compareAndSet(a, new Observers<T>(b, active, a.activeCount + 1, a.index, a.requested))) {
-                return;
-            }
-        }
-    }
-
-    @SuppressWarnings("unchecked")
     private void removeAllObservers() {
-        while (true) {
-            Observers<T> a = observers.get();
-            if (observers.compareAndSet(a, EMPTY.withRequested(a.requested))) {
-                return;
-            }
-        }
+        toBeRemoved.offer(removeAll);
+        drain();
     }
 
-    @SuppressWarnings("unchecked")
     void remove(@NonNull MemberSingleObserver<T> inner) {
-        while (true) {
-            Observers<T> a = observers.get();
-            int n = a.observers.length;
-            if (n == 0) {
-                return;
-            }
-
-            int j = -1;
-
-            for (int i = 0; i < n; i++) {
-                if (a.observers[i] == inner) {
-                    j = i;
-                    break;
-                }
-            }
-
-            if (j < 0) {
-                return;
-            }
-            Observers<T> next;
-            if (n == 1) {
-                next = EMPTY.withRequested(a.requested);
-            } else {
-                MemberSingleObserver<T>[] b = new MemberSingleObserver[n - 1];
-                System.arraycopy(a.observers, 0, b, 0, j);
-                System.arraycopy(a.observers, j + 1, b, j, n - j - 1);
-                boolean[] active = new boolean[n - 1];
-                System.arraycopy(a.active, 0, active, 0, j);
-                System.arraycopy(a.active, j + 1, active, j, n - j - 1);
-                int nextActiveCount = a.active[j] ? a.activeCount - 1 : a.activeCount;
-                if (a.index >= j && a.index > 0) {
-                    next = new Observers<T>(b, active, nextActiveCount, a.index - 1, a.requested);
-                } else {
-                    next = new Observers<T>(b, active, nextActiveCount, a.index, a.requested);
-                }
-            }
-            if (observers.compareAndSet(a, next)) {
-                break;
-            }
-        }
+        toBeRemoved.offer(inner);
+        drain();
     }
 
     private static final class Observers<T> {
-        
-        final MemberSingleObserver<T>[] observers;
-        
-        // an observer is active until it is emitted to
-        final boolean[] active;
-        
-        // the number of true values in the active array
-        final int activeCount;
-        
-        final int index;
-        final int requested;
 
-        Observers(MemberSingleObserver<T>[] observers, boolean[] active, int activeCount, int index, int requested) {
-            Preconditions.checkArgument(observers.length > 0 || index == 0, "index must be 0 for zero length array");
-            Preconditions.checkArgument(observers.length == active.length);
-            this.observers = observers;
-            this.index = index;
-            this.active = active;
-            this.activeCount = activeCount;
-            this.requested = requested;
+        final List<MemberSingleObserver<T>> observers;
+
+        // an observer is ready until it is emitted to
+        final List<Boolean> ready;
+
+        // the number of true values in the ready array
+        // which is the number of observers that can be
+        // emitted to
+        int readyCount;
+
+        // used as the starting point of the next check for an
+        // observer to emit to (for a round-robin). Is 0 when no
+        // observers
+        int index;
+
+        int requested;
+
+        Observers() {
+            observers = new ArrayList<>();
+            ready = new ArrayList<>();
+            readyCount = 0;
+            index = 0;
+            requested = 0;
         }
 
-        Observers<T> withRequested(int r) {
-            return new Observers<T>(observers, active, activeCount, index, r);
+        void add(MemberSingleObserver<T> o) {
+            observers.add(o);
+            ready.add(Boolean.TRUE);
+            readyCount++;
+            requested++;
+        }
+
+        void remove(MemberSingleObserver<T> o) {
+            int i = observers.indexOf(o);
+            if (i == -1) {
+                // not present
+                return;
+            }
+            readyCount = ready.get(i) ? readyCount - 1 : readyCount;
+            if (index >= i && index > 0) {
+                index--;
+            }
+            observers.remove(i);
+            ready.remove(i);
+        }
+
+        void removeAll() {
+            observers.clear();
+            ready.clear();
+            readyCount = 0;
+            index = 0;
         }
     }
 
@@ -546,7 +517,6 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
             MemberSingle<T> parent = getAndSet(null);
             if (parent != null) {
                 parent.remove(this);
-                parent.drain();
             }
         }
 
