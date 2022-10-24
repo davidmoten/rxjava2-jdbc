@@ -16,7 +16,7 @@ image:https://maven-badges.herokuapp.com/maven-central/com.github.davidmoten/rxj
 
 JDBC is so much simpler with _rxjava2-jdbc_.
 
-For Rxjava 3.x see [rxjava3-jdbc](https://github.com/davidmoten/rxjava3-jdbc).
+For Rxjava 3.x see https://github.com/davidmoten/rxjava3-jdbc[rxjava3-jdbc].
 
 Status: _published to Maven Central_
 
