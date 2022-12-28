@@ -13,7 +13,7 @@
     <description>RxJava2 streams for jdbc</description>
     <packaging>pom</packaging>
     <properties>
-        <kotlin.version>1.7.22</kotlin.version>
+        <kotlin.version>1.8.0</kotlin.version>
     </properties>
     <dependencies>
         <dependency>
