@@ -5,6 +5,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.annotations.Nullable;
 
+/**
+ * Thread-safe Last-In-First-Out queue. Current usage is multi-producer, single
+ * consumer but LIFO use case doesn't seem to offer opportunity for performance
+ * enhancements like the MpscLinkedQueue does for FIFO use case.
+ *
+ * @param <T> queued item type
+ */
 public final class LifoQueue<T> {
 
     private final AtomicReference<Node<T>> head = new AtomicReference<>();
@@ -19,7 +26,7 @@ public final class LifoQueue<T> {
         }
     }
 
-    public T poll() {
+    public @Nullable T poll() {
         Node<T> a = head.get();
         if (a == null) {
             return null;
@@ -33,7 +40,7 @@ public final class LifoQueue<T> {
             }
         }
     }
-    
+
     public void clear() {
         head.set(null);
     }
