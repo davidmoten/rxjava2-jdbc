@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
+import org.davidmoten.rx.internal.LifoQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
     // toBeRemoved queue
     private final MemberSingleObserver<T> removeAll;
 
-    private final SimplePlainQueue<DecoratingMember<T>> initializedAvailable;
+    private final LifoQueue<DecoratingMember<T>> initializedAvailable;
     private final SimplePlainQueue<DecoratingMember<T>> notInitialized;
     private final SimplePlainQueue<DecoratingMember<T>> toBeReleased;
     private final SimplePlainQueue<DecoratingMember<T>> toBeChecked;
@@ -63,7 +64,7 @@ final class MemberSingle<T> extends Single<Member<T>> implements Closeable {
     MemberSingle(NonBlockingPool<T> pool) {
         Preconditions.checkNotNull(pool);
         this.notInitialized = new MpscLinkedQueue<>();
-        this.initializedAvailable = new MpscLinkedQueue<>();
+        this.initializedAvailable = new LifoQueue<>();
         this.toBeReleased = new MpscLinkedQueue<>();
         this.toBeChecked = new MpscLinkedQueue<>();
         this.toBeAdded = new MpscLinkedQueue<>();
