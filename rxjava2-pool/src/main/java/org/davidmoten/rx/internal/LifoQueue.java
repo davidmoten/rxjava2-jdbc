@@ -2,11 +2,14 @@ package org.davidmoten.rx.internal;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.reactivex.annotations.NonNull;
+import io.reactivex.annotations.Nullable;
+
 public final class LifoQueue<T> {
 
     private final AtomicReference<Node<T>> head = new AtomicReference<>();
 
-    public void offer(T t) {
+    public void offer(@NonNull T t) {
         while (true) {
             Node<T> a = head.get();
             Node<T> b = new Node<>(t, a);
@@ -36,8 +39,8 @@ public final class LifoQueue<T> {
     }
 
     static final class Node<T> {
-        final T value;
-        final Node<T> next;
+        final @NonNull T value;
+        final @Nullable Node<T> next;
 
         Node(T value, Node<T> next) {
             this.value = value;

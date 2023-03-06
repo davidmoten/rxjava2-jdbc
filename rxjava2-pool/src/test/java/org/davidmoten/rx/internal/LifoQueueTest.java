@@ -16,5 +16,14 @@ public class LifoQueueTest {
         assertEquals(1, (int) q.poll());
         assertNull(q.poll());
     }
+    
+    @Test
+    public void testClear() {
+        LifoQueue<Integer> q = new LifoQueue<>();
+        q.offer(1);
+        q.offer(2);
+        q.clear();
+        assertNull(q.poll());
+    }
 
 }
