@@ -2,6 +2,7 @@ package org.davidmoten.rx.pool;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -255,6 +256,51 @@ public class NonBlockingPoolTest {
             Member<Integer> m3 = pool.member().blockingGet();
             assertTrue(m2 == m3);
         }
+    }
+    
+    @Test
+    public void testMaxIdleTimeIsAppliedGivenConcurrentWorkThenMultipleSingleThreadedWorkBeforeMaxIdleTime() throws InterruptedException {
+        TestScheduler s = new TestScheduler();
+        AtomicInteger count = new AtomicInteger();
+        AtomicInteger disposed = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthCheck(n -> true) //
+                .maxSize(4) //
+                .maxIdleTime(2, TimeUnit.MINUTES) //
+                .disposer(n -> disposed.incrementAndGet()) //
+                .scheduler(s) //
+                .build();
+        // checkout two members concurrently
+        AtomicReference<Member<Integer>> a = new AtomicReference<>();
+        AtomicReference<Member<Integer>> b = new AtomicReference<>();
+        pool.member().doOnSuccess(a::set).subscribe();
+        pool.member().doOnSuccess(b::set).subscribe();
+        s.triggerActions();
+        assertNotNull(a.get());
+        assertFalse(a.get() == b.get());
+        
+        // check the two in again
+        a.get().checkin();
+        b.get().checkin();
+        s.triggerActions();
+        
+        // now advance time and do two non-concurrent uses of pool members
+        // if FIFO queue used then prevents idle timeout. Code should use LIFO 
+        // under the covers
+        s.advanceTimeBy(1, TimeUnit.MINUTES);
+        AtomicReference<Member<Integer>> c = new AtomicReference<>();
+        pool.member().doOnSuccess(c::set).subscribe();
+        s.triggerActions();
+        c.get().checkin();
+        pool.member().doOnSuccess(c::set).subscribe();
+        s.triggerActions();
+        c.get().checkin();
+        
+        // advance to timeout and ensure 1 member times out
+        s.advanceTimeBy(1, TimeUnit.MINUTES);
+        s.triggerActions();
+        assertEquals(1, disposed.get());
     }
     
     @Test
