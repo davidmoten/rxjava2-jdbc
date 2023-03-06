@@ -240,6 +240,23 @@ public class NonBlockingPoolTest {
     }
 
     @Test
+    public void testConnectionPoolRecylesLastInFirstOut() throws SQLException {
+        AtomicInteger count = new AtomicInteger();
+        Pool<Integer> pool = NonBlockingPool //
+                .factory(() -> count.incrementAndGet()) //
+                .healthCheck(n -> true) //
+                .maxSize(4) //
+                .maxIdleTime(1, TimeUnit.MINUTES) //
+                .build();
+        Member<Integer> m1 = pool.member().blockingGet();
+        Member<Integer> m2 = pool.member().blockingGet();
+        m1.checkin();
+        m2.checkin();
+        Member<Integer> m3 = pool.member().blockingGet();
+        assertTrue(m2 == m3);
+    }
+    
+    @Test
     public void testHealthCheckWhenFails() throws Exception {
         TestScheduler s = new TestScheduler();
         AtomicInteger count = new AtomicInteger();
