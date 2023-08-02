@@ -1,6 +1,5 @@
 package org.davidmoten.rx.jdbc.pool;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -345,9 +344,7 @@ public final class DatabaseCreator {
             exec(c, "create table note(id bigint auto_increment primary key, text varchar(255))");
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        } 
     }
 
     private static void exec(Connection c, String sql) throws SQLException {
