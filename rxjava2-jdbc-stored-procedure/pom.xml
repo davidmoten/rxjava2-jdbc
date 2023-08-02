@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.github.davidmoten</groupId>
         <artifactId>rxjava2-jdbc-parent</artifactId>
-        <version>0.2.14</version>
+        <version>0.2.15-SNAPSHOT</version>
     </parent>
     <artifactId>rxjava2-jdbc-stored-procedure</artifactId>
 
