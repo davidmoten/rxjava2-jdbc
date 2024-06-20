@@ -37,7 +37,7 @@
         <jmh.version>1.37</jmh.version>
         <junit.version>4.13.2</junit.version>
         <derby.version>10.14.2.0</derby.version>
-        <jar.plugin.version>3.4.1</jar.plugin.version>
+        <jar.plugin.version>3.4.2</jar.plugin.version>
         <jacoco.plugin.version>0.8.12</jacoco.plugin.version>
         <guava.mini.version>0.1.7</guava.mini.version>
         <log4j.version>2.23.1</log4j.version>
