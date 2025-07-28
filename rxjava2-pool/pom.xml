@@ -59,7 +59,7 @@
         <dependency>
             <groupId>com.github.davidmoten</groupId>
             <artifactId>state-machine-generator</artifactId>
-            <version>0.2.19</version>
+            <version>0.3.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
