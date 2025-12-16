@@ -40,7 +40,7 @@
         <jar.plugin.version>3.5.0</jar.plugin.version>
         <jacoco.plugin.version>0.8.14</jacoco.plugin.version>
         <guava.mini.version>0.1.7</guava.mini.version>
-        <log4j.version>2.25.2</log4j.version>
+        <log4j.version>2.25.3</log4j.version>
         <!--<nexus.staging.plugin.version>1.6.6</nexus.staging.plugin.version>-->
     </properties>
 
